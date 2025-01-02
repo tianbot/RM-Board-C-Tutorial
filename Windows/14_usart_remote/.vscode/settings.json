@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "remote_control.h": "c",
+        "bsp_rc.h": "c"
+    }
+}

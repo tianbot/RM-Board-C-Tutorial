@@ -1,0 +1,877 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"CAN_receive.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.HAL_CAN_RxFifo0MsgPendingCallback,"ax",%progbits
+  20              		.align	1
+  21              		.global	HAL_CAN_RxFifo0MsgPendingCallback
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	HAL_CAN_RxFifo0MsgPendingCallback:
+  27              	.LVL0:
+  28              	.LFB133:
+  29              		.file 1 "Core/Src/CAN_receive.c"
+   1:Core/Src/CAN_receive.c **** /**
+   2:Core/Src/CAN_receive.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Core/Src/CAN_receive.c ****   * @file       can_receive.c/h
+   4:Core/Src/CAN_receive.c ****   * @brief      there is CAN interrupt function  to receive motor data,
+   5:Core/Src/CAN_receive.c ****   *             and CAN send function to send motor current to control motor.
+   6:Core/Src/CAN_receive.c ****   *             这里是CAN中断接收函数，接收电机数据,CAN发送函数发送电机电�
+   7:Core/Src/CAN_receive.c ****   * @note       
+   8:Core/Src/CAN_receive.c ****   * @history
+   9:Core/Src/CAN_receive.c ****   *  Version    Date            Author          Modification
+  10:Core/Src/CAN_receive.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  11:Core/Src/CAN_receive.c ****   *
+  12:Core/Src/CAN_receive.c ****   @verbatim
+  13:Core/Src/CAN_receive.c ****   ==============================================================================
+  14:Core/Src/CAN_receive.c **** 
+  15:Core/Src/CAN_receive.c ****   ==============================================================================
+  16:Core/Src/CAN_receive.c ****   @endverbatim
+  17:Core/Src/CAN_receive.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  18:Core/Src/CAN_receive.c ****   */
+  19:Core/Src/CAN_receive.c **** 
+  20:Core/Src/CAN_receive.c **** #include "CAN_receive.h"
+  21:Core/Src/CAN_receive.c **** 
+  22:Core/Src/CAN_receive.c **** 
+  23:Core/Src/CAN_receive.c **** 
+  24:Core/Src/CAN_receive.c **** 
+  25:Core/Src/CAN_receive.c **** extern CAN_HandleTypeDef hcan1;
+  26:Core/Src/CAN_receive.c **** extern CAN_HandleTypeDef hcan2;
+  27:Core/Src/CAN_receive.c **** //motor data read
+  28:Core/Src/CAN_receive.c **** #define get_motor_measure(ptr, data)                                    \
+  29:Core/Src/CAN_receive.c ****     {                                                                   \
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 2
+
+
+  30:Core/Src/CAN_receive.c ****         (ptr)->last_ecd = (ptr)->ecd;                                   \
+  31:Core/Src/CAN_receive.c ****         (ptr)->ecd = (uint16_t)((data)[0] << 8 | (data)[1]);            \
+  32:Core/Src/CAN_receive.c ****         (ptr)->speed_rpm = (uint16_t)((data)[2] << 8 | (data)[3]);      \
+  33:Core/Src/CAN_receive.c ****         (ptr)->given_current = (uint16_t)((data)[4] << 8 | (data)[5]);  \
+  34:Core/Src/CAN_receive.c ****         (ptr)->temperate = (data)[6];                                   \
+  35:Core/Src/CAN_receive.c ****     }
+  36:Core/Src/CAN_receive.c **** /*
+  37:Core/Src/CAN_receive.c **** motor data,  0:chassis motor1 3508;1:chassis motor3 3508;2:chassis motor3 3508;3:chassis motor4 350
+  38:Core/Src/CAN_receive.c **** 4:yaw gimbal motor 6020;5:pitch gimbal motor 6020;6:trigger motor 2006;
+  39:Core/Src/CAN_receive.c **** 电机数据, 0:底盘电机1 3508电机,  1:底盘电机2 3508电机,2:底盘电机3 3508电机,3:
+  40:Core/Src/CAN_receive.c **** 4:yaw云台电机 6020电机; 5:pitch云台电机 6020电机; 6:拨弹电机 2006电机*/
+  41:Core/Src/CAN_receive.c **** motor_measure_t motor_chassis[7];
+  42:Core/Src/CAN_receive.c **** 
+  43:Core/Src/CAN_receive.c **** static CAN_TxHeaderTypeDef  gimbal_tx_message;
+  44:Core/Src/CAN_receive.c **** static uint8_t              gimbal_can_send_data[8];
+  45:Core/Src/CAN_receive.c **** static CAN_TxHeaderTypeDef  chassis_tx_message;
+  46:Core/Src/CAN_receive.c **** static uint8_t              chassis_can_send_data[8];
+  47:Core/Src/CAN_receive.c **** 
+  48:Core/Src/CAN_receive.c **** /**
+  49:Core/Src/CAN_receive.c ****   * @brief          hal CAN fifo call back, receive motor data
+  50:Core/Src/CAN_receive.c ****   * @param[in]      hcan, the point to CAN handle
+  51:Core/Src/CAN_receive.c ****   * @retval         none
+  52:Core/Src/CAN_receive.c ****   */
+  53:Core/Src/CAN_receive.c **** /**
+  54:Core/Src/CAN_receive.c ****   * @brief          hal库CAN回调函数,接收电机数据
+  55:Core/Src/CAN_receive.c ****   * @param[in]      hcan:CAN句柄指针
+  56:Core/Src/CAN_receive.c ****   * @retval         none
+  57:Core/Src/CAN_receive.c ****   */
+  58:Core/Src/CAN_receive.c **** void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+  59:Core/Src/CAN_receive.c **** {
+  30              		.loc 1 59 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 40
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		.loc 1 59 1 is_stmt 0 view .LVU1
+  35 0000 00B5     		push	{lr}
+  36              	.LCFI0:
+  37              		.cfi_def_cfa_offset 4
+  38              		.cfi_offset 14, -4
+  39 0002 8BB0     		sub	sp, sp, #44
+  40              	.LCFI1:
+  41              		.cfi_def_cfa_offset 48
+  60:Core/Src/CAN_receive.c ****     CAN_RxHeaderTypeDef rx_header;
+  42              		.loc 1 60 5 is_stmt 1 view .LVU2
+  61:Core/Src/CAN_receive.c ****     uint8_t rx_data[8];
+  43              		.loc 1 61 5 view .LVU3
+  62:Core/Src/CAN_receive.c **** 
+  63:Core/Src/CAN_receive.c ****     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data);
+  44              		.loc 1 63 5 view .LVU4
+  45 0004 01AB     		add	r3, sp, #4
+  46 0006 03AA     		add	r2, sp, #12
+  47 0008 0021     		movs	r1, #0
+  48 000a FFF7FEFF 		bl	HAL_CAN_GetRxMessage
+  49              	.LVL1:
+  64:Core/Src/CAN_receive.c **** 
+  65:Core/Src/CAN_receive.c ****     switch (rx_header.StdId)
+  50              		.loc 1 65 5 view .LVU5
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 3
+
+
+  51              		.loc 1 65 22 is_stmt 0 view .LVU6
+  52 000e 039B     		ldr	r3, [sp, #12]
+  53              		.loc 1 65 5 view .LVU7
+  54 0010 A3F20122 		subw	r2, r3, #513
+  55 0014 062A     		cmp	r2, #6
+  56 0016 2DD8     		bhi	.L1
+  57              	.LBB2:
+  66:Core/Src/CAN_receive.c ****     {
+  67:Core/Src/CAN_receive.c ****         case CAN_3508_M1_ID:
+  68:Core/Src/CAN_receive.c ****         case CAN_3508_M2_ID:
+  69:Core/Src/CAN_receive.c ****         case CAN_3508_M3_ID:
+  70:Core/Src/CAN_receive.c ****         case CAN_3508_M4_ID:
+  71:Core/Src/CAN_receive.c ****         case CAN_YAW_MOTOR_ID:
+  72:Core/Src/CAN_receive.c ****         case CAN_PIT_MOTOR_ID:
+  73:Core/Src/CAN_receive.c ****         case CAN_TRIGGER_MOTOR_ID:
+  74:Core/Src/CAN_receive.c ****         {
+  75:Core/Src/CAN_receive.c ****             static uint8_t i = 0;
+  58              		.loc 1 75 13 is_stmt 1 view .LVU8
+  76:Core/Src/CAN_receive.c ****             //get motor id
+  77:Core/Src/CAN_receive.c ****             i = rx_header.StdId - CAN_3508_M1_ID;
+  59              		.loc 1 77 13 view .LVU9
+  60              		.loc 1 77 33 is_stmt 0 view .LVU10
+  61 0018 013B     		subs	r3, r3, #1
+  62 001a DBB2     		uxtb	r3, r3
+  63              		.loc 1 77 15 view .LVU11
+  64 001c 174A     		ldr	r2, .L4
+  65 001e 1370     		strb	r3, [r2]
+  78:Core/Src/CAN_receive.c ****             get_motor_measure(&motor_chassis[i], rx_data);
+  66              		.loc 1 78 13 is_stmt 1 view .LVU12
+  67 0020 1749     		ldr	r1, .L4+4
+  68 0022 03EB8300 		add	r0, r3, r3, lsl #2
+  69 0026 4200     		lsls	r2, r0, #1
+  70 0028 8818     		adds	r0, r1, r2
+  71 002a 31F902C0 		ldrsh	ip, [r1, r2]
+  72 002e A0F808C0 		strh	ip, [r0, #8]	@ movhi
+  73              		.loc 1 78 13 view .LVU13
+  74 0032 9DF804E0 		ldrb	lr, [sp, #4]	@ zero_extendqisi2
+  75 0036 9DF805C0 		ldrb	ip, [sp, #5]	@ zero_extendqisi2
+  76 003a 4CEA0E2C 		orr	ip, ip, lr, lsl #8
+  77 003e 21F802C0 		strh	ip, [r1, r2]	@ movhi
+  78              		.loc 1 78 13 view .LVU14
+  79 0042 9DF80620 		ldrb	r2, [sp, #6]	@ zero_extendqisi2
+  80 0046 1202     		lsls	r2, r2, #8
+  81 0048 12B2     		sxth	r2, r2
+  82 004a 9DF807C0 		ldrb	ip, [sp, #7]	@ zero_extendqisi2
+  83 004e 42EA0C02 		orr	r2, r2, ip
+  84 0052 4280     		strh	r2, [r0, #2]	@ movhi
+  85              		.loc 1 78 13 view .LVU15
+  86 0054 9DF80820 		ldrb	r2, [sp, #8]	@ zero_extendqisi2
+  87 0058 1202     		lsls	r2, r2, #8
+  88 005a 12B2     		sxth	r2, r2
+  89 005c 9DF809C0 		ldrb	ip, [sp, #9]	@ zero_extendqisi2
+  90 0060 42EA0C02 		orr	r2, r2, ip
+  91 0064 8280     		strh	r2, [r0, #4]	@ movhi
+  92              		.loc 1 78 13 view .LVU16
+  93 0066 9DF80A00 		ldrb	r0, [sp, #10]	@ zero_extendqisi2
+  94 006a 03EB8303 		add	r3, r3, r3, lsl #2
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 4
+
+
+  95 006e 5A00     		lsls	r2, r3, #1
+  96 0070 8B18     		adds	r3, r1, r2
+  97 0072 9871     		strb	r0, [r3, #6]
+  98              		.loc 1 78 58 view .LVU17
+  79:Core/Src/CAN_receive.c ****             break;
+  99              		.loc 1 79 13 view .LVU18
+ 100              	.L1:
+ 101              	.LBE2:
+  80:Core/Src/CAN_receive.c ****         }
+  81:Core/Src/CAN_receive.c **** 
+  82:Core/Src/CAN_receive.c ****         default:
+  83:Core/Src/CAN_receive.c ****         {
+  84:Core/Src/CAN_receive.c ****             break;
+  85:Core/Src/CAN_receive.c ****         }
+  86:Core/Src/CAN_receive.c ****     }
+  87:Core/Src/CAN_receive.c **** }
+ 102              		.loc 1 87 1 is_stmt 0 view .LVU19
+ 103 0074 0BB0     		add	sp, sp, #44
+ 104              	.LCFI2:
+ 105              		.cfi_def_cfa_offset 4
+ 106              		@ sp needed
+ 107 0076 5DF804FB 		ldr	pc, [sp], #4
+ 108              	.L5:
+ 109 007a 00BF     		.align	2
+ 110              	.L4:
+ 111 007c 00000000 		.word	.LANCHOR0
+ 112 0080 00000000 		.word	.LANCHOR1
+ 113              		.cfi_endproc
+ 114              	.LFE133:
+ 116              		.section	.text.CAN_cmd_gimbal,"ax",%progbits
+ 117              		.align	1
+ 118              		.global	CAN_cmd_gimbal
+ 119              		.syntax unified
+ 120              		.thumb
+ 121              		.thumb_func
+ 123              	CAN_cmd_gimbal:
+ 124              	.LVL2:
+ 125              	.LFB134:
+  88:Core/Src/CAN_receive.c **** 
+  89:Core/Src/CAN_receive.c **** 
+  90:Core/Src/CAN_receive.c **** 
+  91:Core/Src/CAN_receive.c **** /**
+  92:Core/Src/CAN_receive.c ****   * @brief          send control current of motor (0x205, 0x206, 0x207, 0x208)
+  93:Core/Src/CAN_receive.c ****   * @param[in]      yaw: (0x205) 6020 motor control current, range [-30000,30000] 
+  94:Core/Src/CAN_receive.c ****   * @param[in]      pitch: (0x206) 6020 motor control current, range [-30000,30000]
+  95:Core/Src/CAN_receive.c ****   * @param[in]      shoot: (0x207) 2006 motor control current, range [-10000,10000]
+  96:Core/Src/CAN_receive.c ****   * @param[in]      rev: (0x208) reserve motor control current
+  97:Core/Src/CAN_receive.c ****   * @retval         none
+  98:Core/Src/CAN_receive.c ****   */
+  99:Core/Src/CAN_receive.c **** /**
+ 100:Core/Src/CAN_receive.c ****   * @brief          发送电机控制电流(0x205,0x206,0x207,0x208)
+ 101:Core/Src/CAN_receive.c ****   * @param[in]      yaw: (0x205) 6020电机控制电流, 范围 [-30000,30000]
+ 102:Core/Src/CAN_receive.c ****   * @param[in]      pitch: (0x206) 6020电机控制电流, 范围 [-30000,30000]
+ 103:Core/Src/CAN_receive.c ****   * @param[in]      shoot: (0x207) 2006电机控制电流, 范围 [-10000,10000]
+ 104:Core/Src/CAN_receive.c ****   * @param[in]      rev: (0x208) 保留，电机控制电流
+ 105:Core/Src/CAN_receive.c ****   * @retval         none
+ 106:Core/Src/CAN_receive.c ****   */
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 5
+
+
+ 107:Core/Src/CAN_receive.c **** void CAN_cmd_gimbal(int16_t yaw, int16_t pitch, int16_t shoot, int16_t rev)
+ 108:Core/Src/CAN_receive.c **** {
+ 126              		.loc 1 108 1 is_stmt 1 view -0
+ 127              		.cfi_startproc
+ 128              		@ args = 0, pretend = 0, frame = 8
+ 129              		@ frame_needed = 0, uses_anonymous_args = 0
+ 130              		.loc 1 108 1 is_stmt 0 view .LVU21
+ 131 0000 10B5     		push	{r4, lr}
+ 132              	.LCFI3:
+ 133              		.cfi_def_cfa_offset 8
+ 134              		.cfi_offset 4, -8
+ 135              		.cfi_offset 14, -4
+ 136 0002 82B0     		sub	sp, sp, #8
+ 137              	.LCFI4:
+ 138              		.cfi_def_cfa_offset 16
+ 139 0004 8E46     		mov	lr, r1
+ 140 0006 9446     		mov	ip, r2
+ 109:Core/Src/CAN_receive.c ****     uint32_t send_mail_box;
+ 141              		.loc 1 109 5 is_stmt 1 view .LVU22
+ 110:Core/Src/CAN_receive.c ****     gimbal_tx_message.StdId = CAN_GIMBAL_ALL_ID;
+ 142              		.loc 1 110 5 view .LVU23
+ 143              		.loc 1 110 29 is_stmt 0 view .LVU24
+ 144 0008 0F49     		ldr	r1, .L8
+ 145              	.LVL3:
+ 146              		.loc 1 110 29 view .LVU25
+ 147 000a 40F2FF12 		movw	r2, #511
+ 148              	.LVL4:
+ 149              		.loc 1 110 29 view .LVU26
+ 150 000e 0A60     		str	r2, [r1]
+ 111:Core/Src/CAN_receive.c ****     gimbal_tx_message.IDE = CAN_ID_STD;
+ 151              		.loc 1 111 5 is_stmt 1 view .LVU27
+ 152              		.loc 1 111 27 is_stmt 0 view .LVU28
+ 153 0010 0022     		movs	r2, #0
+ 154 0012 8A60     		str	r2, [r1, #8]
+ 112:Core/Src/CAN_receive.c ****     gimbal_tx_message.RTR = CAN_RTR_DATA;
+ 155              		.loc 1 112 5 is_stmt 1 view .LVU29
+ 156              		.loc 1 112 27 is_stmt 0 view .LVU30
+ 157 0014 CA60     		str	r2, [r1, #12]
+ 113:Core/Src/CAN_receive.c ****     gimbal_tx_message.DLC = 0x08;
+ 158              		.loc 1 113 5 is_stmt 1 view .LVU31
+ 159              		.loc 1 113 27 is_stmt 0 view .LVU32
+ 160 0016 0822     		movs	r2, #8
+ 161 0018 0A61     		str	r2, [r1, #16]
+ 114:Core/Src/CAN_receive.c ****     gimbal_can_send_data[0] = (yaw >> 8);
+ 162              		.loc 1 114 5 is_stmt 1 view .LVU33
+ 163              		.loc 1 114 29 is_stmt 0 view .LVU34
+ 164 001a 0C4A     		ldr	r2, .L8+4
+ 165 001c 0412     		asrs	r4, r0, #8
+ 166 001e 1470     		strb	r4, [r2]
+ 115:Core/Src/CAN_receive.c ****     gimbal_can_send_data[1] = yaw;
+ 167              		.loc 1 115 5 is_stmt 1 view .LVU35
+ 168              		.loc 1 115 29 is_stmt 0 view .LVU36
+ 169 0020 5070     		strb	r0, [r2, #1]
+ 116:Core/Src/CAN_receive.c ****     gimbal_can_send_data[2] = (pitch >> 8);
+ 170              		.loc 1 116 5 is_stmt 1 view .LVU37
+ 171              		.loc 1 116 29 is_stmt 0 view .LVU38
+ 172 0022 4FEA2E20 		asr	r0, lr, #8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 6
+
+
+ 173              	.LVL5:
+ 174              		.loc 1 116 29 view .LVU39
+ 175 0026 9070     		strb	r0, [r2, #2]
+ 117:Core/Src/CAN_receive.c ****     gimbal_can_send_data[3] = pitch;
+ 176              		.loc 1 117 5 is_stmt 1 view .LVU40
+ 177              		.loc 1 117 29 is_stmt 0 view .LVU41
+ 178 0028 82F803E0 		strb	lr, [r2, #3]
+ 118:Core/Src/CAN_receive.c ****     gimbal_can_send_data[4] = (shoot >> 8);
+ 179              		.loc 1 118 5 is_stmt 1 view .LVU42
+ 180              		.loc 1 118 29 is_stmt 0 view .LVU43
+ 181 002c 4FEA2C20 		asr	r0, ip, #8
+ 182 0030 1071     		strb	r0, [r2, #4]
+ 119:Core/Src/CAN_receive.c ****     gimbal_can_send_data[5] = shoot;
+ 183              		.loc 1 119 5 is_stmt 1 view .LVU44
+ 184              		.loc 1 119 29 is_stmt 0 view .LVU45
+ 185 0032 82F805C0 		strb	ip, [r2, #5]
+ 120:Core/Src/CAN_receive.c ****     gimbal_can_send_data[6] = (rev >> 8);
+ 186              		.loc 1 120 5 is_stmt 1 view .LVU46
+ 187              		.loc 1 120 29 is_stmt 0 view .LVU47
+ 188 0036 1812     		asrs	r0, r3, #8
+ 189 0038 9071     		strb	r0, [r2, #6]
+ 121:Core/Src/CAN_receive.c ****     gimbal_can_send_data[7] = rev;
+ 190              		.loc 1 121 5 is_stmt 1 view .LVU48
+ 191              		.loc 1 121 29 is_stmt 0 view .LVU49
+ 192 003a D371     		strb	r3, [r2, #7]
+ 122:Core/Src/CAN_receive.c ****     HAL_CAN_AddTxMessage(&GIMBAL_CAN, &gimbal_tx_message, gimbal_can_send_data, &send_mail_box);
+ 193              		.loc 1 122 5 is_stmt 1 view .LVU50
+ 194 003c 01AB     		add	r3, sp, #4
+ 195              	.LVL6:
+ 196              		.loc 1 122 5 is_stmt 0 view .LVU51
+ 197 003e 0448     		ldr	r0, .L8+8
+ 198 0040 FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 199              	.LVL7:
+ 123:Core/Src/CAN_receive.c **** }
+ 200              		.loc 1 123 1 view .LVU52
+ 201 0044 02B0     		add	sp, sp, #8
+ 202              	.LCFI5:
+ 203              		.cfi_def_cfa_offset 8
+ 204              		@ sp needed
+ 205 0046 10BD     		pop	{r4, pc}
+ 206              	.L9:
+ 207              		.align	2
+ 208              	.L8:
+ 209 0048 00000000 		.word	.LANCHOR2
+ 210 004c 00000000 		.word	.LANCHOR3
+ 211 0050 00000000 		.word	hcan2
+ 212              		.cfi_endproc
+ 213              	.LFE134:
+ 215              		.section	.text.CAN_cmd_chassis_reset_ID,"ax",%progbits
+ 216              		.align	1
+ 217              		.global	CAN_cmd_chassis_reset_ID
+ 218              		.syntax unified
+ 219              		.thumb
+ 220              		.thumb_func
+ 222              	CAN_cmd_chassis_reset_ID:
+ 223              	.LFB135:
+ 124:Core/Src/CAN_receive.c **** 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 7
+
+
+ 125:Core/Src/CAN_receive.c **** /**
+ 126:Core/Src/CAN_receive.c ****   * @brief          send CAN packet of ID 0x700, it will set chassis motor 3508 to quick ID setting
+ 127:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 128:Core/Src/CAN_receive.c ****   * @retval         none
+ 129:Core/Src/CAN_receive.c ****   */
+ 130:Core/Src/CAN_receive.c **** /**
+ 131:Core/Src/CAN_receive.c ****   * @brief          发送ID为0x700的CAN包,它会设置3508电机进入快速设置ID
+ 132:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 133:Core/Src/CAN_receive.c ****   * @retval         none
+ 134:Core/Src/CAN_receive.c ****   */
+ 135:Core/Src/CAN_receive.c **** void CAN_cmd_chassis_reset_ID(void)
+ 136:Core/Src/CAN_receive.c **** {
+ 224              		.loc 1 136 1 is_stmt 1 view -0
+ 225              		.cfi_startproc
+ 226              		@ args = 0, pretend = 0, frame = 8
+ 227              		@ frame_needed = 0, uses_anonymous_args = 0
+ 228 0000 00B5     		push	{lr}
+ 229              	.LCFI6:
+ 230              		.cfi_def_cfa_offset 4
+ 231              		.cfi_offset 14, -4
+ 232 0002 83B0     		sub	sp, sp, #12
+ 233              	.LCFI7:
+ 234              		.cfi_def_cfa_offset 16
+ 137:Core/Src/CAN_receive.c ****     uint32_t send_mail_box;
+ 235              		.loc 1 137 5 view .LVU54
+ 138:Core/Src/CAN_receive.c ****     chassis_tx_message.StdId = 0x700;
+ 236              		.loc 1 138 5 view .LVU55
+ 237              		.loc 1 138 30 is_stmt 0 view .LVU56
+ 238 0004 0C49     		ldr	r1, .L12
+ 239 0006 4FF4E063 		mov	r3, #1792
+ 240 000a 0B60     		str	r3, [r1]
+ 139:Core/Src/CAN_receive.c ****     chassis_tx_message.IDE = CAN_ID_STD;
+ 241              		.loc 1 139 5 is_stmt 1 view .LVU57
+ 242              		.loc 1 139 28 is_stmt 0 view .LVU58
+ 243 000c 0023     		movs	r3, #0
+ 244 000e 8B60     		str	r3, [r1, #8]
+ 140:Core/Src/CAN_receive.c ****     chassis_tx_message.RTR = CAN_RTR_DATA;
+ 245              		.loc 1 140 5 is_stmt 1 view .LVU59
+ 246              		.loc 1 140 28 is_stmt 0 view .LVU60
+ 247 0010 CB60     		str	r3, [r1, #12]
+ 141:Core/Src/CAN_receive.c ****     chassis_tx_message.DLC = 0x08;
+ 248              		.loc 1 141 5 is_stmt 1 view .LVU61
+ 249              		.loc 1 141 28 is_stmt 0 view .LVU62
+ 250 0012 0822     		movs	r2, #8
+ 251 0014 0A61     		str	r2, [r1, #16]
+ 142:Core/Src/CAN_receive.c ****     chassis_can_send_data[0] = 0;
+ 252              		.loc 1 142 5 is_stmt 1 view .LVU63
+ 253              		.loc 1 142 30 is_stmt 0 view .LVU64
+ 254 0016 094A     		ldr	r2, .L12+4
+ 255 0018 1370     		strb	r3, [r2]
+ 143:Core/Src/CAN_receive.c ****     chassis_can_send_data[1] = 0;
+ 256              		.loc 1 143 5 is_stmt 1 view .LVU65
+ 257              		.loc 1 143 30 is_stmt 0 view .LVU66
+ 258 001a 5370     		strb	r3, [r2, #1]
+ 144:Core/Src/CAN_receive.c ****     chassis_can_send_data[2] = 0;
+ 259              		.loc 1 144 5 is_stmt 1 view .LVU67
+ 260              		.loc 1 144 30 is_stmt 0 view .LVU68
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 8
+
+
+ 261 001c 9370     		strb	r3, [r2, #2]
+ 145:Core/Src/CAN_receive.c ****     chassis_can_send_data[3] = 0;
+ 262              		.loc 1 145 5 is_stmt 1 view .LVU69
+ 263              		.loc 1 145 30 is_stmt 0 view .LVU70
+ 264 001e D370     		strb	r3, [r2, #3]
+ 146:Core/Src/CAN_receive.c ****     chassis_can_send_data[4] = 0;
+ 265              		.loc 1 146 5 is_stmt 1 view .LVU71
+ 266              		.loc 1 146 30 is_stmt 0 view .LVU72
+ 267 0020 1371     		strb	r3, [r2, #4]
+ 147:Core/Src/CAN_receive.c ****     chassis_can_send_data[5] = 0;
+ 268              		.loc 1 147 5 is_stmt 1 view .LVU73
+ 269              		.loc 1 147 30 is_stmt 0 view .LVU74
+ 270 0022 5371     		strb	r3, [r2, #5]
+ 148:Core/Src/CAN_receive.c ****     chassis_can_send_data[6] = 0;
+ 271              		.loc 1 148 5 is_stmt 1 view .LVU75
+ 272              		.loc 1 148 30 is_stmt 0 view .LVU76
+ 273 0024 9371     		strb	r3, [r2, #6]
+ 149:Core/Src/CAN_receive.c ****     chassis_can_send_data[7] = 0;
+ 274              		.loc 1 149 5 is_stmt 1 view .LVU77
+ 275              		.loc 1 149 30 is_stmt 0 view .LVU78
+ 276 0026 D371     		strb	r3, [r2, #7]
+ 150:Core/Src/CAN_receive.c **** 
+ 151:Core/Src/CAN_receive.c ****     HAL_CAN_AddTxMessage(&CHASSIS_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
+ 277              		.loc 1 151 5 is_stmt 1 view .LVU79
+ 278 0028 01AB     		add	r3, sp, #4
+ 279 002a 0548     		ldr	r0, .L12+8
+ 280 002c FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 281              	.LVL8:
+ 152:Core/Src/CAN_receive.c **** }
+ 282              		.loc 1 152 1 is_stmt 0 view .LVU80
+ 283 0030 03B0     		add	sp, sp, #12
+ 284              	.LCFI8:
+ 285              		.cfi_def_cfa_offset 4
+ 286              		@ sp needed
+ 287 0032 5DF804FB 		ldr	pc, [sp], #4
+ 288              	.L13:
+ 289 0036 00BF     		.align	2
+ 290              	.L12:
+ 291 0038 00000000 		.word	.LANCHOR4
+ 292 003c 00000000 		.word	.LANCHOR5
+ 293 0040 00000000 		.word	hcan1
+ 294              		.cfi_endproc
+ 295              	.LFE135:
+ 297              		.section	.text.CAN_cmd_chassis,"ax",%progbits
+ 298              		.align	1
+ 299              		.global	CAN_cmd_chassis
+ 300              		.syntax unified
+ 301              		.thumb
+ 302              		.thumb_func
+ 304              	CAN_cmd_chassis:
+ 305              	.LVL9:
+ 306              	.LFB136:
+ 153:Core/Src/CAN_receive.c **** 
+ 154:Core/Src/CAN_receive.c **** 
+ 155:Core/Src/CAN_receive.c **** /**
+ 156:Core/Src/CAN_receive.c ****   * @brief          send control current of motor (0x201, 0x202, 0x203, 0x204)
+ 157:Core/Src/CAN_receive.c ****   * @param[in]      motor1: (0x201) 3508 motor control current, range [-16384,16384] 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 9
+
+
+ 158:Core/Src/CAN_receive.c ****   * @param[in]      motor2: (0x202) 3508 motor control current, range [-16384,16384] 
+ 159:Core/Src/CAN_receive.c ****   * @param[in]      motor3: (0x203) 3508 motor control current, range [-16384,16384] 
+ 160:Core/Src/CAN_receive.c ****   * @param[in]      motor4: (0x204) 3508 motor control current, range [-16384,16384] 
+ 161:Core/Src/CAN_receive.c ****   * @retval         none
+ 162:Core/Src/CAN_receive.c ****   */
+ 163:Core/Src/CAN_receive.c **** /**
+ 164:Core/Src/CAN_receive.c ****   * @brief          发送电机控制电流(0x201,0x202,0x203,0x204)
+ 165:Core/Src/CAN_receive.c ****   * @param[in]      motor1: (0x201) 3508电机控制电流, 范围 [-16384,16384]
+ 166:Core/Src/CAN_receive.c ****   * @param[in]      motor2: (0x202) 3508电机控制电流, 范围 [-16384,16384]
+ 167:Core/Src/CAN_receive.c ****   * @param[in]      motor3: (0x203) 3508电机控制电流, 范围 [-16384,16384]
+ 168:Core/Src/CAN_receive.c ****   * @param[in]      motor4: (0x204) 3508电机控制电流, 范围 [-16384,16384]
+ 169:Core/Src/CAN_receive.c ****   * @retval         none
+ 170:Core/Src/CAN_receive.c ****   */
+ 171:Core/Src/CAN_receive.c **** void CAN_cmd_chassis(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4)
+ 172:Core/Src/CAN_receive.c **** {
+ 307              		.loc 1 172 1 is_stmt 1 view -0
+ 308              		.cfi_startproc
+ 309              		@ args = 0, pretend = 0, frame = 8
+ 310              		@ frame_needed = 0, uses_anonymous_args = 0
+ 311              		.loc 1 172 1 is_stmt 0 view .LVU82
+ 312 0000 10B5     		push	{r4, lr}
+ 313              	.LCFI9:
+ 314              		.cfi_def_cfa_offset 8
+ 315              		.cfi_offset 4, -8
+ 316              		.cfi_offset 14, -4
+ 317 0002 82B0     		sub	sp, sp, #8
+ 318              	.LCFI10:
+ 319              		.cfi_def_cfa_offset 16
+ 320 0004 8E46     		mov	lr, r1
+ 321 0006 9446     		mov	ip, r2
+ 173:Core/Src/CAN_receive.c ****     uint32_t send_mail_box;
+ 322              		.loc 1 173 5 is_stmt 1 view .LVU83
+ 174:Core/Src/CAN_receive.c ****     chassis_tx_message.StdId = CAN_CHASSIS_ALL_ID;
+ 323              		.loc 1 174 5 view .LVU84
+ 324              		.loc 1 174 30 is_stmt 0 view .LVU85
+ 325 0008 0F49     		ldr	r1, .L16
+ 326              	.LVL10:
+ 327              		.loc 1 174 30 view .LVU86
+ 328 000a 4FF40072 		mov	r2, #512
+ 329              	.LVL11:
+ 330              		.loc 1 174 30 view .LVU87
+ 331 000e 0A60     		str	r2, [r1]
+ 175:Core/Src/CAN_receive.c ****     chassis_tx_message.IDE = CAN_ID_STD;
+ 332              		.loc 1 175 5 is_stmt 1 view .LVU88
+ 333              		.loc 1 175 28 is_stmt 0 view .LVU89
+ 334 0010 0022     		movs	r2, #0
+ 335 0012 8A60     		str	r2, [r1, #8]
+ 176:Core/Src/CAN_receive.c ****     chassis_tx_message.RTR = CAN_RTR_DATA;
+ 336              		.loc 1 176 5 is_stmt 1 view .LVU90
+ 337              		.loc 1 176 28 is_stmt 0 view .LVU91
+ 338 0014 CA60     		str	r2, [r1, #12]
+ 177:Core/Src/CAN_receive.c ****     chassis_tx_message.DLC = 0x08;
+ 339              		.loc 1 177 5 is_stmt 1 view .LVU92
+ 340              		.loc 1 177 28 is_stmt 0 view .LVU93
+ 341 0016 0822     		movs	r2, #8
+ 342 0018 0A61     		str	r2, [r1, #16]
+ 178:Core/Src/CAN_receive.c ****     chassis_can_send_data[0] = motor1 >> 8;
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 10
+
+
+ 343              		.loc 1 178 5 is_stmt 1 view .LVU94
+ 344              		.loc 1 178 30 is_stmt 0 view .LVU95
+ 345 001a 0C4A     		ldr	r2, .L16+4
+ 346 001c 0412     		asrs	r4, r0, #8
+ 347 001e 1470     		strb	r4, [r2]
+ 179:Core/Src/CAN_receive.c ****     chassis_can_send_data[1] = motor1;
+ 348              		.loc 1 179 5 is_stmt 1 view .LVU96
+ 349              		.loc 1 179 30 is_stmt 0 view .LVU97
+ 350 0020 5070     		strb	r0, [r2, #1]
+ 180:Core/Src/CAN_receive.c ****     chassis_can_send_data[2] = motor2 >> 8;
+ 351              		.loc 1 180 5 is_stmt 1 view .LVU98
+ 352              		.loc 1 180 30 is_stmt 0 view .LVU99
+ 353 0022 4FEA2E20 		asr	r0, lr, #8
+ 354              	.LVL12:
+ 355              		.loc 1 180 30 view .LVU100
+ 356 0026 9070     		strb	r0, [r2, #2]
+ 181:Core/Src/CAN_receive.c ****     chassis_can_send_data[3] = motor2;
+ 357              		.loc 1 181 5 is_stmt 1 view .LVU101
+ 358              		.loc 1 181 30 is_stmt 0 view .LVU102
+ 359 0028 82F803E0 		strb	lr, [r2, #3]
+ 182:Core/Src/CAN_receive.c ****     chassis_can_send_data[4] = motor3 >> 8;
+ 360              		.loc 1 182 5 is_stmt 1 view .LVU103
+ 361              		.loc 1 182 30 is_stmt 0 view .LVU104
+ 362 002c 4FEA2C20 		asr	r0, ip, #8
+ 363 0030 1071     		strb	r0, [r2, #4]
+ 183:Core/Src/CAN_receive.c ****     chassis_can_send_data[5] = motor3;
+ 364              		.loc 1 183 5 is_stmt 1 view .LVU105
+ 365              		.loc 1 183 30 is_stmt 0 view .LVU106
+ 366 0032 82F805C0 		strb	ip, [r2, #5]
+ 184:Core/Src/CAN_receive.c ****     chassis_can_send_data[6] = motor4 >> 8;
+ 367              		.loc 1 184 5 is_stmt 1 view .LVU107
+ 368              		.loc 1 184 30 is_stmt 0 view .LVU108
+ 369 0036 1812     		asrs	r0, r3, #8
+ 370 0038 9071     		strb	r0, [r2, #6]
+ 185:Core/Src/CAN_receive.c ****     chassis_can_send_data[7] = motor4;
+ 371              		.loc 1 185 5 is_stmt 1 view .LVU109
+ 372              		.loc 1 185 30 is_stmt 0 view .LVU110
+ 373 003a D371     		strb	r3, [r2, #7]
+ 186:Core/Src/CAN_receive.c **** 
+ 187:Core/Src/CAN_receive.c ****     HAL_CAN_AddTxMessage(&CHASSIS_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
+ 374              		.loc 1 187 5 is_stmt 1 view .LVU111
+ 375 003c 01AB     		add	r3, sp, #4
+ 376              	.LVL13:
+ 377              		.loc 1 187 5 is_stmt 0 view .LVU112
+ 378 003e 0448     		ldr	r0, .L16+8
+ 379 0040 FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 380              	.LVL14:
+ 188:Core/Src/CAN_receive.c **** }
+ 381              		.loc 1 188 1 view .LVU113
+ 382 0044 02B0     		add	sp, sp, #8
+ 383              	.LCFI11:
+ 384              		.cfi_def_cfa_offset 8
+ 385              		@ sp needed
+ 386 0046 10BD     		pop	{r4, pc}
+ 387              	.L17:
+ 388              		.align	2
+ 389              	.L16:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 11
+
+
+ 390 0048 00000000 		.word	.LANCHOR4
+ 391 004c 00000000 		.word	.LANCHOR5
+ 392 0050 00000000 		.word	hcan1
+ 393              		.cfi_endproc
+ 394              	.LFE136:
+ 396              		.section	.text.get_yaw_gimbal_motor_measure_point,"ax",%progbits
+ 397              		.align	1
+ 398              		.global	get_yaw_gimbal_motor_measure_point
+ 399              		.syntax unified
+ 400              		.thumb
+ 401              		.thumb_func
+ 403              	get_yaw_gimbal_motor_measure_point:
+ 404              	.LFB137:
+ 189:Core/Src/CAN_receive.c **** 
+ 190:Core/Src/CAN_receive.c **** /**
+ 191:Core/Src/CAN_receive.c ****   * @brief          return the yaw 6020 motor data point
+ 192:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 193:Core/Src/CAN_receive.c ****   * @retval         motor data point
+ 194:Core/Src/CAN_receive.c ****   */
+ 195:Core/Src/CAN_receive.c **** /**
+ 196:Core/Src/CAN_receive.c ****   * @brief          返回yaw 6020电机数据指针
+ 197:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 198:Core/Src/CAN_receive.c ****   * @retval         电机数据指针
+ 199:Core/Src/CAN_receive.c ****   */
+ 200:Core/Src/CAN_receive.c **** const motor_measure_t *get_yaw_gimbal_motor_measure_point(void)
+ 201:Core/Src/CAN_receive.c **** {
+ 405              		.loc 1 201 1 is_stmt 1 view -0
+ 406              		.cfi_startproc
+ 407              		@ args = 0, pretend = 0, frame = 0
+ 408              		@ frame_needed = 0, uses_anonymous_args = 0
+ 409              		@ link register save eliminated.
+ 202:Core/Src/CAN_receive.c ****     return &motor_chassis[4];
+ 410              		.loc 1 202 5 view .LVU115
+ 203:Core/Src/CAN_receive.c **** }
+ 411              		.loc 1 203 1 is_stmt 0 view .LVU116
+ 412 0000 0048     		ldr	r0, .L19
+ 413 0002 7047     		bx	lr
+ 414              	.L20:
+ 415              		.align	2
+ 416              	.L19:
+ 417 0004 28000000 		.word	.LANCHOR1+40
+ 418              		.cfi_endproc
+ 419              	.LFE137:
+ 421              		.section	.text.get_pitch_gimbal_motor_measure_point,"ax",%progbits
+ 422              		.align	1
+ 423              		.global	get_pitch_gimbal_motor_measure_point
+ 424              		.syntax unified
+ 425              		.thumb
+ 426              		.thumb_func
+ 428              	get_pitch_gimbal_motor_measure_point:
+ 429              	.LFB138:
+ 204:Core/Src/CAN_receive.c **** 
+ 205:Core/Src/CAN_receive.c **** /**
+ 206:Core/Src/CAN_receive.c ****   * @brief          return the pitch 6020 motor data point
+ 207:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 208:Core/Src/CAN_receive.c ****   * @retval         motor data point
+ 209:Core/Src/CAN_receive.c ****   */
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 12
+
+
+ 210:Core/Src/CAN_receive.c **** /**
+ 211:Core/Src/CAN_receive.c ****   * @brief          返回pitch 6020电机数据指针
+ 212:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 213:Core/Src/CAN_receive.c ****   * @retval         电机数据指针
+ 214:Core/Src/CAN_receive.c ****   */
+ 215:Core/Src/CAN_receive.c **** const motor_measure_t *get_pitch_gimbal_motor_measure_point(void)
+ 216:Core/Src/CAN_receive.c **** {
+ 430              		.loc 1 216 1 is_stmt 1 view -0
+ 431              		.cfi_startproc
+ 432              		@ args = 0, pretend = 0, frame = 0
+ 433              		@ frame_needed = 0, uses_anonymous_args = 0
+ 434              		@ link register save eliminated.
+ 217:Core/Src/CAN_receive.c ****     return &motor_chassis[5];
+ 435              		.loc 1 217 5 view .LVU118
+ 218:Core/Src/CAN_receive.c **** }
+ 436              		.loc 1 218 1 is_stmt 0 view .LVU119
+ 437 0000 0048     		ldr	r0, .L22
+ 438 0002 7047     		bx	lr
+ 439              	.L23:
+ 440              		.align	2
+ 441              	.L22:
+ 442 0004 32000000 		.word	.LANCHOR1+50
+ 443              		.cfi_endproc
+ 444              	.LFE138:
+ 446              		.section	.text.get_trigger_motor_measure_point,"ax",%progbits
+ 447              		.align	1
+ 448              		.global	get_trigger_motor_measure_point
+ 449              		.syntax unified
+ 450              		.thumb
+ 451              		.thumb_func
+ 453              	get_trigger_motor_measure_point:
+ 454              	.LFB139:
+ 219:Core/Src/CAN_receive.c **** 
+ 220:Core/Src/CAN_receive.c **** 
+ 221:Core/Src/CAN_receive.c **** /**
+ 222:Core/Src/CAN_receive.c ****   * @brief          return the trigger 2006 motor data point
+ 223:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 224:Core/Src/CAN_receive.c ****   * @retval         motor data point
+ 225:Core/Src/CAN_receive.c ****   */
+ 226:Core/Src/CAN_receive.c **** /**
+ 227:Core/Src/CAN_receive.c ****   * @brief          返回拨弹电机 2006电机数据指针
+ 228:Core/Src/CAN_receive.c ****   * @param[in]      none
+ 229:Core/Src/CAN_receive.c ****   * @retval         电机数据指针
+ 230:Core/Src/CAN_receive.c ****   */
+ 231:Core/Src/CAN_receive.c **** const motor_measure_t *get_trigger_motor_measure_point(void)
+ 232:Core/Src/CAN_receive.c **** {
+ 455              		.loc 1 232 1 is_stmt 1 view -0
+ 456              		.cfi_startproc
+ 457              		@ args = 0, pretend = 0, frame = 0
+ 458              		@ frame_needed = 0, uses_anonymous_args = 0
+ 459              		@ link register save eliminated.
+ 233:Core/Src/CAN_receive.c ****     return &motor_chassis[6];
+ 460              		.loc 1 233 5 view .LVU121
+ 234:Core/Src/CAN_receive.c **** }
+ 461              		.loc 1 234 1 is_stmt 0 view .LVU122
+ 462 0000 0048     		ldr	r0, .L25
+ 463 0002 7047     		bx	lr
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 13
+
+
+ 464              	.L26:
+ 465              		.align	2
+ 466              	.L25:
+ 467 0004 3C000000 		.word	.LANCHOR1+60
+ 468              		.cfi_endproc
+ 469              	.LFE139:
+ 471              		.section	.text.get_chassis_motor_measure_point,"ax",%progbits
+ 472              		.align	1
+ 473              		.global	get_chassis_motor_measure_point
+ 474              		.syntax unified
+ 475              		.thumb
+ 476              		.thumb_func
+ 478              	get_chassis_motor_measure_point:
+ 479              	.LVL15:
+ 480              	.LFB140:
+ 235:Core/Src/CAN_receive.c **** 
+ 236:Core/Src/CAN_receive.c **** 
+ 237:Core/Src/CAN_receive.c **** /**
+ 238:Core/Src/CAN_receive.c ****   * @brief          return the chassis 3508 motor data point
+ 239:Core/Src/CAN_receive.c ****   * @param[in]      i: motor number,range [0,3]
+ 240:Core/Src/CAN_receive.c ****   * @retval         motor data point
+ 241:Core/Src/CAN_receive.c ****   */
+ 242:Core/Src/CAN_receive.c **** /**
+ 243:Core/Src/CAN_receive.c ****   * @brief          返回底盘电机 3508电机数据指针
+ 244:Core/Src/CAN_receive.c ****   * @param[in]      i: 电机编号,范围[0,3]
+ 245:Core/Src/CAN_receive.c ****   * @retval         电机数据指针
+ 246:Core/Src/CAN_receive.c ****   */
+ 247:Core/Src/CAN_receive.c **** const motor_measure_t *get_chassis_motor_measure_point(uint8_t i)
+ 248:Core/Src/CAN_receive.c **** {
+ 481              		.loc 1 248 1 is_stmt 1 view -0
+ 482              		.cfi_startproc
+ 483              		@ args = 0, pretend = 0, frame = 0
+ 484              		@ frame_needed = 0, uses_anonymous_args = 0
+ 485              		@ link register save eliminated.
+ 249:Core/Src/CAN_receive.c ****     return &motor_chassis[(i & 0x03)];
+ 486              		.loc 1 249 5 view .LVU124
+ 487              		.loc 1 249 30 is_stmt 0 view .LVU125
+ 488 0000 00F00300 		and	r0, r0, #3
+ 489              	.LVL16:
+ 490              		.loc 1 249 12 view .LVU126
+ 491 0004 00EB8000 		add	r0, r0, r0, lsl #2
+ 250:Core/Src/CAN_receive.c **** }
+ 492              		.loc 1 250 1 view .LVU127
+ 493 0008 014B     		ldr	r3, .L28
+ 494 000a 03EB4000 		add	r0, r3, r0, lsl #1
+ 495 000e 7047     		bx	lr
+ 496              	.L29:
+ 497              		.align	2
+ 498              	.L28:
+ 499 0010 00000000 		.word	.LANCHOR1
+ 500              		.cfi_endproc
+ 501              	.LFE140:
+ 503              		.global	motor_chassis
+ 504              		.section	.bss.chassis_can_send_data,"aw",%nobits
+ 505              		.align	2
+ 506              		.set	.LANCHOR5,. + 0
+ 509              	chassis_can_send_data:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 14
+
+
+ 510 0000 00000000 		.space	8
+ 510      00000000 
+ 511              		.section	.bss.chassis_tx_message,"aw",%nobits
+ 512              		.align	2
+ 513              		.set	.LANCHOR4,. + 0
+ 516              	chassis_tx_message:
+ 517 0000 00000000 		.space	24
+ 517      00000000 
+ 517      00000000 
+ 517      00000000 
+ 517      00000000 
+ 518              		.section	.bss.gimbal_can_send_data,"aw",%nobits
+ 519              		.align	2
+ 520              		.set	.LANCHOR3,. + 0
+ 523              	gimbal_can_send_data:
+ 524 0000 00000000 		.space	8
+ 524      00000000 
+ 525              		.section	.bss.gimbal_tx_message,"aw",%nobits
+ 526              		.align	2
+ 527              		.set	.LANCHOR2,. + 0
+ 530              	gimbal_tx_message:
+ 531 0000 00000000 		.space	24
+ 531      00000000 
+ 531      00000000 
+ 531      00000000 
+ 531      00000000 
+ 532              		.section	.bss.i.0,"aw",%nobits
+ 533              		.set	.LANCHOR0,. + 0
+ 536              	i.0:
+ 537 0000 00       		.space	1
+ 538              		.section	.bss.motor_chassis,"aw",%nobits
+ 539              		.align	2
+ 540              		.set	.LANCHOR1,. + 0
+ 543              	motor_chassis:
+ 544 0000 00000000 		.space	70
+ 544      00000000 
+ 544      00000000 
+ 544      00000000 
+ 544      00000000 
+ 545              		.text
+ 546              	.Letext0:
+ 547              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 548              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 549              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 550              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 551              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h"
+ 552              		.file 7 "Core/Inc/CAN_receive.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s 			page 15
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 CAN_receive.c
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:20     .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:26     .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 HAL_CAN_RxFifo0MsgPendingCallback
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:111    .text.HAL_CAN_RxFifo0MsgPendingCallback:0000007c $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:117    .text.CAN_cmd_gimbal:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:123    .text.CAN_cmd_gimbal:00000000 CAN_cmd_gimbal
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:209    .text.CAN_cmd_gimbal:00000048 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:216    .text.CAN_cmd_chassis_reset_ID:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:222    .text.CAN_cmd_chassis_reset_ID:00000000 CAN_cmd_chassis_reset_ID
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:291    .text.CAN_cmd_chassis_reset_ID:00000038 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:298    .text.CAN_cmd_chassis:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:304    .text.CAN_cmd_chassis:00000000 CAN_cmd_chassis
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:390    .text.CAN_cmd_chassis:00000048 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:397    .text.get_yaw_gimbal_motor_measure_point:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:403    .text.get_yaw_gimbal_motor_measure_point:00000000 get_yaw_gimbal_motor_measure_point
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:417    .text.get_yaw_gimbal_motor_measure_point:00000004 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:422    .text.get_pitch_gimbal_motor_measure_point:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:428    .text.get_pitch_gimbal_motor_measure_point:00000000 get_pitch_gimbal_motor_measure_point
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:442    .text.get_pitch_gimbal_motor_measure_point:00000004 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:447    .text.get_trigger_motor_measure_point:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:453    .text.get_trigger_motor_measure_point:00000000 get_trigger_motor_measure_point
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:467    .text.get_trigger_motor_measure_point:00000004 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:472    .text.get_chassis_motor_measure_point:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:478    .text.get_chassis_motor_measure_point:00000000 get_chassis_motor_measure_point
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:499    .text.get_chassis_motor_measure_point:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:543    .bss.motor_chassis:00000000 motor_chassis
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:505    .bss.chassis_can_send_data:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:509    .bss.chassis_can_send_data:00000000 chassis_can_send_data
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:512    .bss.chassis_tx_message:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:516    .bss.chassis_tx_message:00000000 chassis_tx_message
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:519    .bss.gimbal_can_send_data:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:523    .bss.gimbal_can_send_data:00000000 gimbal_can_send_data
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:526    .bss.gimbal_tx_message:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:530    .bss.gimbal_tx_message:00000000 gimbal_tx_message
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:536    .bss.i.0:00000000 i.0
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:537    .bss.i.0:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\cc33ttGB.s:539    .bss.motor_chassis:00000000 $d
+
+UNDEFINED SYMBOLS
+HAL_CAN_GetRxMessage
+HAL_CAN_AddTxMessage
+hcan2
+hcan1

@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "main.h": "c",
+        "bmi088middleware.h": "c",
+        "bmi088reg.h": "c",
+        "stm32f4xx_hal.h": "c",
+        "bmi088driver.h": "c"
+    }
+}

@@ -1,0 +1,596 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"ist8310driver.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.ist8310_init,"ax",%progbits
+  20              		.align	1
+  21              		.global	ist8310_init
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	ist8310_init:
+  27              	.LFB133:
+  28              		.file 1 "Core/Src/ist8310driver.c"
+   1:Core/Src/ist8310driver.c **** 
+   2:Core/Src/ist8310driver.c ****   /**
+   3:Core/Src/ist8310driver.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   4:Core/Src/ist8310driver.c ****   * @file       IST8310driver.c/h
+   5:Core/Src/ist8310driver.c ****   * @brief      ist8310 is a 3-axis digital magnetometer, the file includes initialization function
+   6:Core/Src/ist8310driver.c ****   *             read magnetic field strength data function.
+   7:Core/Src/ist8310driver.c ****   *             IST8310是一款三轴数字磁力计，本文件包括初始化函数，读取磁�
+   8:Core/Src/ist8310driver.c ****   * @note       IST8310 only support I2C. IST8310只支持I2C。
+   9:Core/Src/ist8310driver.c ****   * @history
+  10:Core/Src/ist8310driver.c ****   *  Version    Date            Author          Modification
+  11:Core/Src/ist8310driver.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  12:Core/Src/ist8310driver.c ****   *
+  13:Core/Src/ist8310driver.c ****   @verbatim
+  14:Core/Src/ist8310driver.c ****   ==============================================================================
+  15:Core/Src/ist8310driver.c **** 
+  16:Core/Src/ist8310driver.c ****   ==============================================================================
+  17:Core/Src/ist8310driver.c ****   @endverbatim
+  18:Core/Src/ist8310driver.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  19:Core/Src/ist8310driver.c ****   */
+  20:Core/Src/ist8310driver.c **** 
+  21:Core/Src/ist8310driver.c **** #include "ist8310driver.h"
+  22:Core/Src/ist8310driver.c **** #include "ist8310driver_middleware.h"
+  23:Core/Src/ist8310driver.c **** 
+  24:Core/Src/ist8310driver.c **** #define MAG_SEN 0.3f //raw int16 data change to uT unit. 原始整型数据变成 单位ut
+  25:Core/Src/ist8310driver.c **** 
+  26:Core/Src/ist8310driver.c **** #define IST8310_WHO_AM_I 0x00       //ist8310 "who am I " 
+  27:Core/Src/ist8310driver.c **** #define IST8310_WHO_AM_I_VALUE 0x10 //device ID
+  28:Core/Src/ist8310driver.c **** 
+  29:Core/Src/ist8310driver.c **** #define IST8310_WRITE_REG_NUM 4 
+  30:Core/Src/ist8310driver.c **** 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 2
+
+
+  31:Core/Src/ist8310driver.c **** //the first column:the registers of IST8310. 第一列:IST8310的寄存器
+  32:Core/Src/ist8310driver.c **** //the second column: the value to be writed to the registers.第二列:需要写入的寄存器值
+  33:Core/Src/ist8310driver.c **** //the third column: return error value.第三列:返回的错误码
+  34:Core/Src/ist8310driver.c **** static const uint8_t ist8310_write_reg_data_error[IST8310_WRITE_REG_NUM][3] ={
+  35:Core/Src/ist8310driver.c ****         {0x0B, 0x08, 0x01},     //enalbe interrupt  and low pin polarity.开启中断，并且设�
+  36:Core/Src/ist8310driver.c ****         {0x41, 0x09, 0x02},     //average 2 times.平均采样两次
+  37:Core/Src/ist8310driver.c ****         {0x42, 0xC0, 0x03},     //must be 0xC0. 必须是0xC0
+  38:Core/Src/ist8310driver.c ****         {0x0A, 0x0B, 0x04}};    //200Hz output rate.200Hz输出频率
+  39:Core/Src/ist8310driver.c **** 
+  40:Core/Src/ist8310driver.c **** 
+  41:Core/Src/ist8310driver.c **** 
+  42:Core/Src/ist8310driver.c **** /**
+  43:Core/Src/ist8310driver.c ****   * @brief          initialize ist8310
+  44:Core/Src/ist8310driver.c ****   * @param[in]      none
+  45:Core/Src/ist8310driver.c ****   * @retval         error value
+  46:Core/Src/ist8310driver.c ****   */
+  47:Core/Src/ist8310driver.c **** /**
+  48:Core/Src/ist8310driver.c ****   * @brief          初始化IST8310
+  49:Core/Src/ist8310driver.c ****   * @param[in]      none
+  50:Core/Src/ist8310driver.c ****   * @retval         error value
+  51:Core/Src/ist8310driver.c ****   */
+  52:Core/Src/ist8310driver.c **** uint8_t ist8310_init(void)
+  53:Core/Src/ist8310driver.c **** {
+  29              		.loc 1 53 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 24
+  36              		.cfi_offset 3, -24
+  37              		.cfi_offset 4, -20
+  38              		.cfi_offset 5, -16
+  39              		.cfi_offset 6, -12
+  40              		.cfi_offset 7, -8
+  41              		.cfi_offset 14, -4
+  54:Core/Src/ist8310driver.c ****     static const uint8_t wait_time = 150;
+  42              		.loc 1 54 5 view .LVU1
+  55:Core/Src/ist8310driver.c ****     static const uint8_t sleepTime = 50;
+  43              		.loc 1 55 5 view .LVU2
+  56:Core/Src/ist8310driver.c ****     uint8_t res = 0;
+  44              		.loc 1 56 5 view .LVU3
+  45              	.LVL0:
+  57:Core/Src/ist8310driver.c ****     uint8_t writeNum = 0;
+  46              		.loc 1 57 5 view .LVU4
+  58:Core/Src/ist8310driver.c **** 
+  59:Core/Src/ist8310driver.c ****     ist8310_GPIO_init();
+  47              		.loc 1 59 5 view .LVU5
+  48 0002 FFF7FEFF 		bl	ist8310_GPIO_init
+  49              	.LVL1:
+  60:Core/Src/ist8310driver.c ****     ist8310_com_init();
+  50              		.loc 1 60 5 view .LVU6
+  51 0006 FFF7FEFF 		bl	ist8310_com_init
+  52              	.LVL2:
+  61:Core/Src/ist8310driver.c **** 
+  62:Core/Src/ist8310driver.c ****     ist8310_RST_L();
+  53              		.loc 1 62 5 view .LVU7
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 3
+
+
+  54 000a FFF7FEFF 		bl	ist8310_RST_L
+  55              	.LVL3:
+  63:Core/Src/ist8310driver.c ****     ist8310_delay_ms(sleepTime);
+  56              		.loc 1 63 5 view .LVU8
+  57 000e 3220     		movs	r0, #50
+  58 0010 FFF7FEFF 		bl	ist8310_delay_ms
+  59              	.LVL4:
+  64:Core/Src/ist8310driver.c ****     ist8310_RST_H();
+  60              		.loc 1 64 5 view .LVU9
+  61 0014 FFF7FEFF 		bl	ist8310_RST_H
+  62              	.LVL5:
+  65:Core/Src/ist8310driver.c ****     ist8310_delay_ms(sleepTime);
+  63              		.loc 1 65 5 view .LVU10
+  64 0018 3220     		movs	r0, #50
+  65 001a FFF7FEFF 		bl	ist8310_delay_ms
+  66              	.LVL6:
+  66:Core/Src/ist8310driver.c **** 
+  67:Core/Src/ist8310driver.c ****     res = ist8310_IIC_read_single_reg(IST8310_WHO_AM_I);
+  67              		.loc 1 67 5 view .LVU11
+  68              		.loc 1 67 11 is_stmt 0 view .LVU12
+  69 001e 0020     		movs	r0, #0
+  70 0020 FFF7FEFF 		bl	ist8310_IIC_read_single_reg
+  71              	.LVL7:
+  68:Core/Src/ist8310driver.c ****     if (res != IST8310_WHO_AM_I_VALUE)
+  72              		.loc 1 68 5 is_stmt 1 view .LVU13
+  73              		.loc 1 68 8 is_stmt 0 view .LVU14
+  74 0024 1028     		cmp	r0, #16
+  75 0026 23D1     		bne	.L6
+  69:Core/Src/ist8310driver.c ****     {
+  70:Core/Src/ist8310driver.c ****         return IST8310_NO_SENSOR;
+  71:Core/Src/ist8310driver.c ****     }
+  72:Core/Src/ist8310driver.c **** 
+  73:Core/Src/ist8310driver.c ****     //set mpu6500 sonsor config and check
+  74:Core/Src/ist8310driver.c ****     for (writeNum = 0; writeNum < IST8310_WRITE_REG_NUM; writeNum++)
+  76              		.loc 1 74 19 view .LVU15
+  77 0028 0024     		movs	r4, #0
+  78              	.LVL8:
+  79              	.L3:
+  80              		.loc 1 74 24 is_stmt 1 discriminator 1 view .LVU16
+  81              		.loc 1 74 5 is_stmt 0 discriminator 1 view .LVU17
+  82 002a 032C     		cmp	r4, #3
+  83 002c 1ED8     		bhi	.L8
+  75:Core/Src/ist8310driver.c ****     {
+  76:Core/Src/ist8310driver.c ****         ist8310_IIC_write_single_reg(ist8310_write_reg_data_error[writeNum][0], ist8310_write_reg_d
+  84              		.loc 1 76 9 is_stmt 1 view .LVU18
+  85 002e 114A     		ldr	r2, .L10
+  86 0030 04EB4403 		add	r3, r4, r4, lsl #1
+  87 0034 D118     		adds	r1, r2, r3
+  88 0036 D55C     		ldrb	r5, [r2, r3]	@ zero_extendqisi2
+  89 0038 4E78     		ldrb	r6, [r1, #1]	@ zero_extendqisi2
+  90 003a 3146     		mov	r1, r6
+  91 003c 2846     		mov	r0, r5
+  92 003e FFF7FEFF 		bl	ist8310_IIC_write_single_reg
+  93              	.LVL9:
+  77:Core/Src/ist8310driver.c ****         ist8310_delay_us(wait_time);
+  94              		.loc 1 77 9 view .LVU19
+  95 0042 9620     		movs	r0, #150
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 4
+
+
+  96 0044 FFF7FEFF 		bl	ist8310_delay_us
+  97              	.LVL10:
+  78:Core/Src/ist8310driver.c ****         res = ist8310_IIC_read_single_reg(ist8310_write_reg_data_error[writeNum][0]);
+  98              		.loc 1 78 9 view .LVU20
+  99              		.loc 1 78 15 is_stmt 0 view .LVU21
+ 100 0048 2846     		mov	r0, r5
+ 101 004a FFF7FEFF 		bl	ist8310_IIC_read_single_reg
+ 102              	.LVL11:
+ 103 004e 0546     		mov	r5, r0
+ 104              	.LVL12:
+  79:Core/Src/ist8310driver.c ****         ist8310_delay_us(wait_time);
+ 105              		.loc 1 79 9 is_stmt 1 view .LVU22
+ 106 0050 9620     		movs	r0, #150
+ 107 0052 FFF7FEFF 		bl	ist8310_delay_us
+ 108              	.LVL13:
+  80:Core/Src/ist8310driver.c ****         if (res != ist8310_write_reg_data_error[writeNum][1])
+ 109              		.loc 1 80 9 view .LVU23
+ 110              		.loc 1 80 12 is_stmt 0 view .LVU24
+ 111 0056 AE42     		cmp	r6, r5
+ 112 0058 02D1     		bne	.L9
+  74:Core/Src/ist8310driver.c ****     {
+ 113              		.loc 1 74 58 is_stmt 1 discriminator 2 view .LVU25
+  74:Core/Src/ist8310driver.c ****     {
+ 114              		.loc 1 74 66 is_stmt 0 discriminator 2 view .LVU26
+ 115 005a 0134     		adds	r4, r4, #1
+ 116              	.LVL14:
+  74:Core/Src/ist8310driver.c ****     {
+ 117              		.loc 1 74 66 discriminator 2 view .LVU27
+ 118 005c E4B2     		uxtb	r4, r4
+ 119              	.LVL15:
+  74:Core/Src/ist8310driver.c ****     {
+ 120              		.loc 1 74 66 discriminator 2 view .LVU28
+ 121 005e E4E7     		b	.L3
+ 122              	.L9:
+  81:Core/Src/ist8310driver.c ****         {
+  82:Core/Src/ist8310driver.c ****             return ist8310_write_reg_data_error[writeNum][2];
+ 123              		.loc 1 82 13 is_stmt 1 view .LVU29
+ 124              		.loc 1 82 58 is_stmt 0 view .LVU30
+ 125 0060 04EB4407 		add	r7, r4, r4, lsl #1
+ 126 0064 034B     		ldr	r3, .L10
+ 127 0066 1F44     		add	r7, r7, r3
+ 128 0068 B878     		ldrb	r0, [r7, #2]	@ zero_extendqisi2
+ 129 006a 00E0     		b	.L2
+ 130              	.LVL16:
+ 131              	.L8:
+  83:Core/Src/ist8310driver.c ****         }
+  84:Core/Src/ist8310driver.c ****     }
+  85:Core/Src/ist8310driver.c ****     return IST8310_NO_ERROR;
+ 132              		.loc 1 85 12 view .LVU31
+ 133 006c 0020     		movs	r0, #0
+ 134              	.LVL17:
+ 135              	.L2:
+  86:Core/Src/ist8310driver.c **** }
+ 136              		.loc 1 86 1 view .LVU32
+ 137 006e F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 138              	.LVL18:
+ 139              	.L6:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 5
+
+
+  70:Core/Src/ist8310driver.c ****     }
+ 140              		.loc 1 70 16 view .LVU33
+ 141 0070 4020     		movs	r0, #64
+ 142              	.LVL19:
+  70:Core/Src/ist8310driver.c ****     }
+ 143              		.loc 1 70 16 view .LVU34
+ 144 0072 FCE7     		b	.L2
+ 145              	.L11:
+ 146              		.align	2
+ 147              	.L10:
+ 148 0074 00000000 		.word	.LANCHOR0
+ 149              		.cfi_endproc
+ 150              	.LFE133:
+ 152              		.section	.text.ist8310_read_over,"ax",%progbits
+ 153              		.align	1
+ 154              		.global	ist8310_read_over
+ 155              		.syntax unified
+ 156              		.thumb
+ 157              		.thumb_func
+ 159              	ist8310_read_over:
+ 160              	.LVL20:
+ 161              	.LFB134:
+  87:Core/Src/ist8310driver.c **** 
+  88:Core/Src/ist8310driver.c **** /**
+  89:Core/Src/ist8310driver.c ****   * @brief          if you have read the data from STAT1 to DATAZL usaully by I2C DMA , you can use
+  90:Core/Src/ist8310driver.c ****   * @param[in]      status_buf:the data point from the STAT1(0x02) register of IST8310 to the DATAZ
+  91:Core/Src/ist8310driver.c ****   * @param[out]     ist8310_real_data:ist8310 data struct 
+  92:Core/Src/ist8310driver.c ****   * @retval         none
+  93:Core/Src/ist8310driver.c ****   */
+  94:Core/Src/ist8310driver.c **** /**
+  95:Core/Src/ist8310driver.c ****   * @brief          如果已经通过I2C的DMA方式读取到了从STAT1到DATAZL的数据，可�
+  96:Core/Src/ist8310driver.c ****   * @param[in]      status_buf:数据指针,从STAT1(0x02) 寄存器到 DATAZL(0x08)寄存器 
+  97:Core/Src/ist8310driver.c ****   * @param[out]     ist8310_real_data:ist8310的数据结构
+  98:Core/Src/ist8310driver.c ****   * @retval         none
+  99:Core/Src/ist8310driver.c ****   */
+ 100:Core/Src/ist8310driver.c **** void ist8310_read_over(uint8_t *status_buf, ist8310_real_data_t *ist8310_real_data)
+ 101:Core/Src/ist8310driver.c **** {
+ 162              		.loc 1 101 1 is_stmt 1 view -0
+ 163              		.cfi_startproc
+ 164              		@ args = 0, pretend = 0, frame = 0
+ 165              		@ frame_needed = 0, uses_anonymous_args = 0
+ 166              		@ link register save eliminated.
+ 102:Core/Src/ist8310driver.c **** 
+ 103:Core/Src/ist8310driver.c ****     if (status_buf[0] & 0x01)
+ 167              		.loc 1 103 5 view .LVU36
+ 168              		.loc 1 103 19 is_stmt 0 view .LVU37
+ 169 0000 0378     		ldrb	r3, [r0]	@ zero_extendqisi2
+ 170              		.loc 1 103 8 view .LVU38
+ 171 0002 13F0010F 		tst	r3, #1
+ 172 0006 2DD0     		beq	.L13
+ 173              	.LBB2:
+ 104:Core/Src/ist8310driver.c ****     {
+ 105:Core/Src/ist8310driver.c ****         int16_t temp_ist8310_data = 0;
+ 174              		.loc 1 105 9 is_stmt 1 view .LVU39
+ 175              	.LVL21:
+ 106:Core/Src/ist8310driver.c ****         ist8310_real_data->status |= 1 << IST8310_DATA_READY_BIT;
+ 176              		.loc 1 106 9 view .LVU40
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 6
+
+
+ 177              		.loc 1 106 35 is_stmt 0 view .LVU41
+ 178 0008 0B78     		ldrb	r3, [r1]	@ zero_extendqisi2
+ 179 000a 43F00403 		orr	r3, r3, #4
+ 180 000e 0B70     		strb	r3, [r1]
+ 107:Core/Src/ist8310driver.c **** 
+ 108:Core/Src/ist8310driver.c ****         temp_ist8310_data = (int16_t)((status_buf[2] << 8) | status_buf[1]);
+ 181              		.loc 1 108 9 is_stmt 1 view .LVU42
+ 182              		.loc 1 108 50 is_stmt 0 view .LVU43
+ 183 0010 8378     		ldrb	r3, [r0, #2]	@ zero_extendqisi2
+ 184              		.loc 1 108 54 view .LVU44
+ 185 0012 1B02     		lsls	r3, r3, #8
+ 186              		.loc 1 108 29 view .LVU45
+ 187 0014 1BB2     		sxth	r3, r3
+ 188              		.loc 1 108 72 view .LVU46
+ 189 0016 4278     		ldrb	r2, [r0, #1]	@ zero_extendqisi2
+ 190              		.loc 1 108 27 view .LVU47
+ 191 0018 1343     		orrs	r3, r3, r2
+ 192 001a 07EE103A 		vmov	s14, r3	@ int
+ 193              	.LVL22:
+ 109:Core/Src/ist8310driver.c ****         ist8310_real_data->mag[0] = MAG_SEN * temp_ist8310_data;
+ 194              		.loc 1 109 9 is_stmt 1 view .LVU48
+ 195              		.loc 1 109 45 is_stmt 0 view .LVU49
+ 196 001e B8EEC77A 		vcvt.f32.s32	s14, s14
+ 197              	.LVL23:
+ 198              		.loc 1 109 45 view .LVU50
+ 199 0022 DFED136A 		vldr.32	s13, .L15
+ 200 0026 27EE267A 		vmul.f32	s14, s14, s13
+ 201              		.loc 1 109 35 view .LVU51
+ 202 002a 81ED017A 		vstr.32	s14, [r1, #4]
+ 110:Core/Src/ist8310driver.c ****         temp_ist8310_data = (int16_t)((status_buf[4] << 8) | status_buf[3]);
+ 203              		.loc 1 110 9 is_stmt 1 view .LVU52
+ 204              		.loc 1 110 50 is_stmt 0 view .LVU53
+ 205 002e 0379     		ldrb	r3, [r0, #4]	@ zero_extendqisi2
+ 206              	.LVL24:
+ 207              		.loc 1 110 54 view .LVU54
+ 208 0030 1B02     		lsls	r3, r3, #8
+ 209              		.loc 1 110 29 view .LVU55
+ 210 0032 1BB2     		sxth	r3, r3
+ 211              		.loc 1 110 72 view .LVU56
+ 212 0034 C278     		ldrb	r2, [r0, #3]	@ zero_extendqisi2
+ 213              		.loc 1 110 27 view .LVU57
+ 214 0036 1343     		orrs	r3, r3, r2
+ 215 0038 07EE103A 		vmov	s14, r3	@ int
+ 216              	.LVL25:
+ 111:Core/Src/ist8310driver.c ****         ist8310_real_data->mag[1] = MAG_SEN * temp_ist8310_data;
+ 217              		.loc 1 111 9 is_stmt 1 view .LVU58
+ 218              		.loc 1 111 45 is_stmt 0 view .LVU59
+ 219 003c B8EEC77A 		vcvt.f32.s32	s14, s14
+ 220              	.LVL26:
+ 221              		.loc 1 111 45 view .LVU60
+ 222 0040 27EE267A 		vmul.f32	s14, s14, s13
+ 223              		.loc 1 111 35 view .LVU61
+ 224 0044 81ED027A 		vstr.32	s14, [r1, #8]
+ 112:Core/Src/ist8310driver.c ****         temp_ist8310_data = (int16_t)((status_buf[6] << 8) | status_buf[5]);
+ 225              		.loc 1 112 9 is_stmt 1 view .LVU62
+ 226              		.loc 1 112 50 is_stmt 0 view .LVU63
+ 227 0048 8379     		ldrb	r3, [r0, #6]	@ zero_extendqisi2
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 7
+
+
+ 228              	.LVL27:
+ 229              		.loc 1 112 54 view .LVU64
+ 230 004a 1B02     		lsls	r3, r3, #8
+ 231              		.loc 1 112 29 view .LVU65
+ 232 004c 1BB2     		sxth	r3, r3
+ 233              		.loc 1 112 72 view .LVU66
+ 234 004e 4279     		ldrb	r2, [r0, #5]	@ zero_extendqisi2
+ 235              		.loc 1 112 27 view .LVU67
+ 236 0050 1343     		orrs	r3, r3, r2
+ 237 0052 07EE903A 		vmov	s15, r3	@ int
+ 238              	.LVL28:
+ 113:Core/Src/ist8310driver.c ****         ist8310_real_data->mag[2] = MAG_SEN * temp_ist8310_data;
+ 239              		.loc 1 113 9 is_stmt 1 view .LVU68
+ 240              		.loc 1 113 45 is_stmt 0 view .LVU69
+ 241 0056 F8EEE77A 		vcvt.f32.s32	s15, s15
+ 242              	.LVL29:
+ 243              		.loc 1 113 45 view .LVU70
+ 244 005a 67EEA67A 		vmul.f32	s15, s15, s13
+ 245              		.loc 1 113 35 view .LVU71
+ 246 005e C1ED037A 		vstr.32	s15, [r1, #12]
+ 247              	.LBE2:
+ 248 0062 7047     		bx	lr
+ 249              	.LVL30:
+ 250              	.L13:
+ 114:Core/Src/ist8310driver.c ****     }
+ 115:Core/Src/ist8310driver.c ****     else
+ 116:Core/Src/ist8310driver.c ****     {
+ 117:Core/Src/ist8310driver.c ****         ist8310_real_data->status &= ~(1 << IST8310_DATA_READY_BIT);
+ 251              		.loc 1 117 9 is_stmt 1 view .LVU72
+ 252              		.loc 1 117 35 is_stmt 0 view .LVU73
+ 253 0064 0B78     		ldrb	r3, [r1]	@ zero_extendqisi2
+ 254 0066 23F00403 		bic	r3, r3, #4
+ 255 006a 0B70     		strb	r3, [r1]
+ 118:Core/Src/ist8310driver.c ****     }
+ 119:Core/Src/ist8310driver.c **** }
+ 256              		.loc 1 119 1 view .LVU74
+ 257 006c 7047     		bx	lr
+ 258              	.L16:
+ 259 006e 00BF     		.align	2
+ 260              	.L15:
+ 261 0070 9A99993E 		.word	1050253722
+ 262              		.cfi_endproc
+ 263              	.LFE134:
+ 265              		.section	.text.ist8310_read_mag,"ax",%progbits
+ 266              		.align	1
+ 267              		.global	ist8310_read_mag
+ 268              		.syntax unified
+ 269              		.thumb
+ 270              		.thumb_func
+ 272              	ist8310_read_mag:
+ 273              	.LVL31:
+ 274              	.LFB135:
+ 120:Core/Src/ist8310driver.c **** 
+ 121:Core/Src/ist8310driver.c **** /**
+ 122:Core/Src/ist8310driver.c ****   * @brief          read mag magnetic field strength data of IST8310 by I2C
+ 123:Core/Src/ist8310driver.c ****   * @param[out]     mag variable
+ 124:Core/Src/ist8310driver.c ****   * @retval         none
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 8
+
+
+ 125:Core/Src/ist8310driver.c ****   */
+ 126:Core/Src/ist8310driver.c **** /**
+ 127:Core/Src/ist8310driver.c ****   * @brief          通过读取磁场数据
+ 128:Core/Src/ist8310driver.c ****   * @param[out]     磁场数组
+ 129:Core/Src/ist8310driver.c ****   * @retval         none
+ 130:Core/Src/ist8310driver.c ****   */
+ 131:Core/Src/ist8310driver.c **** void ist8310_read_mag(float mag[3])
+ 132:Core/Src/ist8310driver.c **** {
+ 275              		.loc 1 132 1 is_stmt 1 view -0
+ 276              		.cfi_startproc
+ 277              		@ args = 0, pretend = 0, frame = 8
+ 278              		@ frame_needed = 0, uses_anonymous_args = 0
+ 279              		.loc 1 132 1 is_stmt 0 view .LVU76
+ 280 0000 10B5     		push	{r4, lr}
+ 281              	.LCFI1:
+ 282              		.cfi_def_cfa_offset 8
+ 283              		.cfi_offset 4, -8
+ 284              		.cfi_offset 14, -4
+ 285 0002 82B0     		sub	sp, sp, #8
+ 286              	.LCFI2:
+ 287              		.cfi_def_cfa_offset 16
+ 288 0004 0446     		mov	r4, r0
+ 133:Core/Src/ist8310driver.c ****     uint8_t buf[6];
+ 289              		.loc 1 133 5 is_stmt 1 view .LVU77
+ 134:Core/Src/ist8310driver.c ****     int16_t temp_ist8310_data = 0;
+ 290              		.loc 1 134 5 view .LVU78
+ 291              	.LVL32:
+ 135:Core/Src/ist8310driver.c ****     //read the "DATAXL" register (0x03)
+ 136:Core/Src/ist8310driver.c ****     ist8310_IIC_read_muli_reg(0x03, buf, 6);
+ 292              		.loc 1 136 5 view .LVU79
+ 293 0006 0622     		movs	r2, #6
+ 294 0008 6946     		mov	r1, sp
+ 295 000a 0320     		movs	r0, #3
+ 296              	.LVL33:
+ 297              		.loc 1 136 5 is_stmt 0 view .LVU80
+ 298 000c FFF7FEFF 		bl	ist8310_IIC_read_muli_reg
+ 299              	.LVL34:
+ 137:Core/Src/ist8310driver.c **** 
+ 138:Core/Src/ist8310driver.c ****     temp_ist8310_data = (int16_t)((buf[1] << 8) | buf[0]);
+ 300              		.loc 1 138 5 is_stmt 1 view .LVU81
+ 301              		.loc 1 138 39 is_stmt 0 view .LVU82
+ 302 0010 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+ 303              		.loc 1 138 43 view .LVU83
+ 304 0014 1B02     		lsls	r3, r3, #8
+ 305              		.loc 1 138 25 view .LVU84
+ 306 0016 1BB2     		sxth	r3, r3
+ 307              		.loc 1 138 54 view .LVU85
+ 308 0018 9DF80020 		ldrb	r2, [sp]	@ zero_extendqisi2
+ 309              		.loc 1 138 23 view .LVU86
+ 310 001c 1343     		orrs	r3, r3, r2
+ 311 001e 07EE103A 		vmov	s14, r3	@ int
+ 312              	.LVL35:
+ 139:Core/Src/ist8310driver.c ****     mag[0] = MAG_SEN * temp_ist8310_data;
+ 313              		.loc 1 139 5 is_stmt 1 view .LVU87
+ 314              		.loc 1 139 22 is_stmt 0 view .LVU88
+ 315 0022 B8EEC77A 		vcvt.f32.s32	s14, s14
+ 316              	.LVL36:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 9
+
+
+ 317              		.loc 1 139 22 view .LVU89
+ 318 0026 DFED136A 		vldr.32	s13, .L19
+ 319 002a 27EE267A 		vmul.f32	s14, s14, s13
+ 320              		.loc 1 139 12 view .LVU90
+ 321 002e 84ED007A 		vstr.32	s14, [r4]
+ 140:Core/Src/ist8310driver.c ****     temp_ist8310_data = (int16_t)((buf[3] << 8) | buf[2]);
+ 322              		.loc 1 140 5 is_stmt 1 view .LVU91
+ 323              		.loc 1 140 39 is_stmt 0 view .LVU92
+ 324 0032 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 325              	.LVL37:
+ 326              		.loc 1 140 43 view .LVU93
+ 327 0036 1B02     		lsls	r3, r3, #8
+ 328              		.loc 1 140 25 view .LVU94
+ 329 0038 1BB2     		sxth	r3, r3
+ 330              		.loc 1 140 54 view .LVU95
+ 331 003a 9DF80220 		ldrb	r2, [sp, #2]	@ zero_extendqisi2
+ 332              		.loc 1 140 23 view .LVU96
+ 333 003e 1343     		orrs	r3, r3, r2
+ 334 0040 07EE103A 		vmov	s14, r3	@ int
+ 335              	.LVL38:
+ 141:Core/Src/ist8310driver.c ****     mag[1] = MAG_SEN * temp_ist8310_data;
+ 336              		.loc 1 141 5 is_stmt 1 view .LVU97
+ 337              		.loc 1 141 22 is_stmt 0 view .LVU98
+ 338 0044 B8EEC77A 		vcvt.f32.s32	s14, s14
+ 339              	.LVL39:
+ 340              		.loc 1 141 22 view .LVU99
+ 341 0048 27EE267A 		vmul.f32	s14, s14, s13
+ 342              		.loc 1 141 12 view .LVU100
+ 343 004c 84ED017A 		vstr.32	s14, [r4, #4]
+ 142:Core/Src/ist8310driver.c ****     temp_ist8310_data = (int16_t)((buf[5] << 8) | buf[4]);
+ 344              		.loc 1 142 5 is_stmt 1 view .LVU101
+ 345              		.loc 1 142 39 is_stmt 0 view .LVU102
+ 346 0050 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 347              	.LVL40:
+ 348              		.loc 1 142 43 view .LVU103
+ 349 0054 1B02     		lsls	r3, r3, #8
+ 350              		.loc 1 142 25 view .LVU104
+ 351 0056 1BB2     		sxth	r3, r3
+ 352              		.loc 1 142 54 view .LVU105
+ 353 0058 9DF80420 		ldrb	r2, [sp, #4]	@ zero_extendqisi2
+ 354              	.LVL41:
+ 355              		.loc 1 142 23 view .LVU106
+ 356 005c 1343     		orrs	r3, r3, r2
+ 357 005e 07EE903A 		vmov	s15, r3	@ int
+ 358              	.LVL42:
+ 143:Core/Src/ist8310driver.c ****     mag[2] = MAG_SEN * temp_ist8310_data;
+ 359              		.loc 1 143 5 is_stmt 1 view .LVU107
+ 360              		.loc 1 143 22 is_stmt 0 view .LVU108
+ 361 0062 F8EEE77A 		vcvt.f32.s32	s15, s15
+ 362              	.LVL43:
+ 363              		.loc 1 143 22 view .LVU109
+ 364 0066 67EEA67A 		vmul.f32	s15, s15, s13
+ 365              		.loc 1 143 12 view .LVU110
+ 366 006a C4ED027A 		vstr.32	s15, [r4, #8]
+ 144:Core/Src/ist8310driver.c **** }
+ 367              		.loc 1 144 1 view .LVU111
+ 368 006e 02B0     		add	sp, sp, #8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 10
+
+
+ 369              	.LCFI3:
+ 370              		.cfi_def_cfa_offset 8
+ 371              		@ sp needed
+ 372 0070 10BD     		pop	{r4, pc}
+ 373              	.LVL44:
+ 374              	.L20:
+ 375              		.loc 1 144 1 view .LVU112
+ 376 0072 00BF     		.align	2
+ 377              	.L19:
+ 378 0074 9A99993E 		.word	1050253722
+ 379              		.cfi_endproc
+ 380              	.LFE135:
+ 382              		.section	.rodata.ist8310_write_reg_data_error,"a"
+ 383              		.align	2
+ 384              		.set	.LANCHOR0,. + 0
+ 387              	ist8310_write_reg_data_error:
+ 388 0000 0B0801   		.ascii	"\013\010\001"
+ 389 0003 410902   		.ascii	"A\011\002"
+ 390 0006 42C003   		.ascii	"B\300\003"
+ 391 0009 0A0B04   		.ascii	"\012\013\004"
+ 392              		.text
+ 393              	.Letext0:
+ 394              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 395              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 396              		.file 4 "Core/Inc/ist8310driver.h"
+ 397              		.file 5 "Core/Inc/ist8310driver_middleware.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s 			page 11
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 ist8310driver.c
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:20     .text.ist8310_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:26     .text.ist8310_init:00000000 ist8310_init
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:148    .text.ist8310_init:00000074 $d
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:153    .text.ist8310_read_over:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:159    .text.ist8310_read_over:00000000 ist8310_read_over
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:261    .text.ist8310_read_over:00000070 $d
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:266    .text.ist8310_read_mag:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:272    .text.ist8310_read_mag:00000000 ist8310_read_mag
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:378    .text.ist8310_read_mag:00000074 $d
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:383    .rodata.ist8310_write_reg_data_error:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccoDIyiE.s:387    .rodata.ist8310_write_reg_data_error:00000000 ist8310_write_reg_data_error
+
+UNDEFINED SYMBOLS
+ist8310_GPIO_init
+ist8310_com_init
+ist8310_RST_L
+ist8310_delay_ms
+ist8310_RST_H
+ist8310_IIC_read_single_reg
+ist8310_IIC_write_single_reg
+ist8310_delay_us
+ist8310_IIC_read_muli_reg

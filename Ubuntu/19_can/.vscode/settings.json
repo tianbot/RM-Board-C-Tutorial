@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "bsp_can.h": "c",
+        "can_receive.h": "c",
+        "main.h": "c"
+    }
+}

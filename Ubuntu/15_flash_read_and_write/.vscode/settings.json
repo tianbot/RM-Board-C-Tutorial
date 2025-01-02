@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "bsp_flash.h": "c"
+    },
+    "cortex-debug.variableUseNaturalFormat": true
+}

@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "./build/led_toggle.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "device": "stm32f407",
+            "servertype": "openocd",
+  
+            "configFiles": [
+                "interface/stlink.cfg",        
+                "target/stm32f4x.cfg"
+            ]  
+        }
+    ]
+  }
+  

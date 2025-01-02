@@ -1,0 +1,497 @@
+ARM GAS  /tmp/ccHEgHrZ.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"bsp_adc.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.adcx_get_chx_value,"ax",%progbits
+  20              		.align	1
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	adcx_get_chx_value:
+  26              	.LVL0:
+  27              	.LFB235:
+  28              		.file 1 "bsp/boards/bsp_adc.c"
+   1:bsp/boards/bsp_adc.c **** #include "bsp_adc.h"
+   2:bsp/boards/bsp_adc.c **** #include "main.h"
+   3:bsp/boards/bsp_adc.c **** extern ADC_HandleTypeDef hadc1;
+   4:bsp/boards/bsp_adc.c **** extern ADC_HandleTypeDef hadc3;
+   5:bsp/boards/bsp_adc.c **** 
+   6:bsp/boards/bsp_adc.c **** 
+   7:bsp/boards/bsp_adc.c **** volatile fp32 voltage_vrefint_proportion = 8.0586080586080586080586080586081e-4f;
+   8:bsp/boards/bsp_adc.c **** 
+   9:bsp/boards/bsp_adc.c **** static uint16_t adcx_get_chx_value(ADC_HandleTypeDef *ADCx, uint32_t ch)
+  10:bsp/boards/bsp_adc.c **** {
+  29              		.loc 1 10 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		.loc 1 10 1 is_stmt 0 view .LVU1
+  34 0000 10B5     		push	{r4, lr}
+  35              	.LCFI0:
+  36              		.cfi_def_cfa_offset 8
+  37              		.cfi_offset 4, -8
+  38              		.cfi_offset 14, -4
+  39 0002 0446     		mov	r4, r0
+  11:bsp/boards/bsp_adc.c ****     static ADC_ChannelConfTypeDef sConfig = {0};
+  40              		.loc 1 11 5 is_stmt 1 view .LVU2
+  12:bsp/boards/bsp_adc.c ****     sConfig.Channel = ch;
+  41              		.loc 1 12 5 view .LVU3
+  42              		.loc 1 12 21 is_stmt 0 view .LVU4
+  43 0004 0C4B     		ldr	r3, .L5
+  44 0006 1960     		str	r1, [r3]
+  13:bsp/boards/bsp_adc.c ****     sConfig.Rank = 1;
+  45              		.loc 1 13 5 is_stmt 1 view .LVU5
+ARM GAS  /tmp/ccHEgHrZ.s 			page 2
+
+
+  46              		.loc 1 13 18 is_stmt 0 view .LVU6
+  47 0008 0122     		movs	r2, #1
+  48 000a 5A60     		str	r2, [r3, #4]
+  14:bsp/boards/bsp_adc.c ****     sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;//ADC_SAMPLETIME_3CYCLES;
+  49              		.loc 1 14 5 is_stmt 1 view .LVU7
+  50              		.loc 1 14 26 is_stmt 0 view .LVU8
+  51 000c 0022     		movs	r2, #0
+  52 000e 9A60     		str	r2, [r3, #8]
+  15:bsp/boards/bsp_adc.c **** 
+  16:bsp/boards/bsp_adc.c ****     if (HAL_ADC_ConfigChannel(ADCx, &sConfig) != HAL_OK)
+  53              		.loc 1 16 5 is_stmt 1 view .LVU9
+  54              		.loc 1 16 9 is_stmt 0 view .LVU10
+  55 0010 1946     		mov	r1, r3
+  56              	.LVL1:
+  57              		.loc 1 16 9 view .LVU11
+  58 0012 FFF7FEFF 		bl	HAL_ADC_ConfigChannel
+  59              	.LVL2:
+  60              		.loc 1 16 8 view .LVU12
+  61 0016 58B9     		cbnz	r0, .L4
+  62              	.L2:
+  17:bsp/boards/bsp_adc.c ****     {
+  18:bsp/boards/bsp_adc.c ****         Error_Handler();
+  19:bsp/boards/bsp_adc.c ****     }
+  20:bsp/boards/bsp_adc.c **** 
+  21:bsp/boards/bsp_adc.c ****     HAL_ADC_Start(ADCx);
+  63              		.loc 1 21 5 is_stmt 1 view .LVU13
+  64 0018 2046     		mov	r0, r4
+  65 001a FFF7FEFF 		bl	HAL_ADC_Start
+  66              	.LVL3:
+  22:bsp/boards/bsp_adc.c **** 
+  23:bsp/boards/bsp_adc.c ****     HAL_ADC_PollForConversion(ADCx, 10);
+  67              		.loc 1 23 5 view .LVU14
+  68 001e 0A21     		movs	r1, #10
+  69 0020 2046     		mov	r0, r4
+  70 0022 FFF7FEFF 		bl	HAL_ADC_PollForConversion
+  71              	.LVL4:
+  24:bsp/boards/bsp_adc.c ****     return (uint16_t)HAL_ADC_GetValue(ADCx);
+  72              		.loc 1 24 5 view .LVU15
+  73              		.loc 1 24 22 is_stmt 0 view .LVU16
+  74 0026 2046     		mov	r0, r4
+  75 0028 FFF7FEFF 		bl	HAL_ADC_GetValue
+  76              	.LVL5:
+  25:bsp/boards/bsp_adc.c **** 
+  26:bsp/boards/bsp_adc.c **** }
+  77              		.loc 1 26 1 view .LVU17
+  78 002c 80B2     		uxth	r0, r0
+  79 002e 10BD     		pop	{r4, pc}
+  80              	.LVL6:
+  81              	.L4:
+  18:bsp/boards/bsp_adc.c ****     }
+  82              		.loc 1 18 9 is_stmt 1 view .LVU18
+  83 0030 FFF7FEFF 		bl	Error_Handler
+  84              	.LVL7:
+  85 0034 F0E7     		b	.L2
+  86              	.L6:
+  87 0036 00BF     		.align	2
+  88              	.L5:
+ARM GAS  /tmp/ccHEgHrZ.s 			page 3
+
+
+  89 0038 00000000 		.word	.LANCHOR0
+  90              		.cfi_endproc
+  91              	.LFE235:
+  93              		.section	.text.init_vrefint_reciprocal,"ax",%progbits
+  94              		.align	1
+  95              		.global	init_vrefint_reciprocal
+  96              		.syntax unified
+  97              		.thumb
+  98              		.thumb_func
+ 100              	init_vrefint_reciprocal:
+ 101              	.LFB236:
+  27:bsp/boards/bsp_adc.c **** void init_vrefint_reciprocal(void)
+  28:bsp/boards/bsp_adc.c **** {
+ 102              		.loc 1 28 1 view -0
+ 103              		.cfi_startproc
+ 104              		@ args = 0, pretend = 0, frame = 0
+ 105              		@ frame_needed = 0, uses_anonymous_args = 0
+ 106 0000 38B5     		push	{r3, r4, r5, lr}
+ 107              	.LCFI1:
+ 108              		.cfi_def_cfa_offset 16
+ 109              		.cfi_offset 3, -16
+ 110              		.cfi_offset 4, -12
+ 111              		.cfi_offset 5, -8
+ 112              		.cfi_offset 14, -4
+  29:bsp/boards/bsp_adc.c ****     uint8_t i = 0;
+ 113              		.loc 1 29 5 view .LVU20
+ 114              	.LVL8:
+  30:bsp/boards/bsp_adc.c ****     uint32_t total_adc = 0;
+ 115              		.loc 1 30 5 view .LVU21
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 116              		.loc 1 31 5 view .LVU22
+  30:bsp/boards/bsp_adc.c ****     uint32_t total_adc = 0;
+ 117              		.loc 1 30 14 is_stmt 0 view .LVU23
+ 118 0002 0025     		movs	r5, #0
+ 119              		.loc 1 31 11 view .LVU24
+ 120 0004 2C46     		mov	r4, r5
+ 121              		.loc 1 31 5 view .LVU25
+ 122 0006 06E0     		b	.L8
+ 123              	.LVL9:
+ 124              	.L9:
+  32:bsp/boards/bsp_adc.c ****     {
+  33:bsp/boards/bsp_adc.c ****         total_adc += adcx_get_chx_value(&hadc1, ADC_CHANNEL_VREFINT);
+ 125              		.loc 1 33 9 is_stmt 1 discriminator 3 view .LVU26
+ 126              		.loc 1 33 22 is_stmt 0 discriminator 3 view .LVU27
+ 127 0008 1121     		movs	r1, #17
+ 128 000a 0A48     		ldr	r0, .L11
+ 129 000c FFF7FEFF 		bl	adcx_get_chx_value
+ 130              	.LVL10:
+ 131              		.loc 1 33 19 discriminator 3 view .LVU28
+ 132 0010 0544     		add	r5, r5, r0
+ 133              	.LVL11:
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 134              		.loc 1 31 25 is_stmt 1 discriminator 3 view .LVU29
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 135              		.loc 1 31 26 is_stmt 0 discriminator 3 view .LVU30
+ 136 0012 0134     		adds	r4, r4, #1
+ 137              	.LVL12:
+ARM GAS  /tmp/ccHEgHrZ.s 			page 4
+
+
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 138              		.loc 1 31 26 discriminator 3 view .LVU31
+ 139 0014 E4B2     		uxtb	r4, r4
+ 140              	.LVL13:
+ 141              	.L8:
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 142              		.loc 1 31 16 is_stmt 1 discriminator 1 view .LVU32
+  31:bsp/boards/bsp_adc.c ****     for(i = 0; i < 200; i++)
+ 143              		.loc 1 31 5 is_stmt 0 discriminator 1 view .LVU33
+ 144 0016 C72C     		cmp	r4, #199
+ 145 0018 F6D9     		bls	.L9
+  34:bsp/boards/bsp_adc.c ****     }
+  35:bsp/boards/bsp_adc.c **** 
+  36:bsp/boards/bsp_adc.c ****     voltage_vrefint_proportion = 200 * 1.2f / total_adc;
+ 146              		.loc 1 36 5 is_stmt 1 view .LVU34
+ 147              		.loc 1 36 45 is_stmt 0 view .LVU35
+ 148 001a 07EE905A 		vmov	s15, r5	@ int
+ 149 001e F8EE677A 		vcvt.f32.u32	s15, s15
+ 150 0022 DFED056A 		vldr.32	s13, .L11+4
+ 151 0026 86EEA77A 		vdiv.f32	s14, s13, s15
+ 152              		.loc 1 36 32 view .LVU36
+ 153 002a 044B     		ldr	r3, .L11+8
+ 154 002c 83ED007A 		vstr.32	s14, [r3]
+  37:bsp/boards/bsp_adc.c **** }
+ 155              		.loc 1 37 1 view .LVU37
+ 156 0030 38BD     		pop	{r3, r4, r5, pc}
+ 157              	.LVL14:
+ 158              	.L12:
+ 159              		.loc 1 37 1 view .LVU38
+ 160 0032 00BF     		.align	2
+ 161              	.L11:
+ 162 0034 00000000 		.word	hadc1
+ 163 0038 01007043 		.word	1131413505
+ 164 003c 00000000 		.word	.LANCHOR1
+ 165              		.cfi_endproc
+ 166              	.LFE236:
+ 168              		.section	.text.get_temprate,"ax",%progbits
+ 169              		.align	1
+ 170              		.global	get_temprate
+ 171              		.syntax unified
+ 172              		.thumb
+ 173              		.thumb_func
+ 175              	get_temprate:
+ 176              	.LFB237:
+  38:bsp/boards/bsp_adc.c **** fp32 get_temprate(void)
+  39:bsp/boards/bsp_adc.c **** {
+ 177              		.loc 1 39 1 is_stmt 1 view -0
+ 178              		.cfi_startproc
+ 179              		@ args = 0, pretend = 0, frame = 0
+ 180              		@ frame_needed = 0, uses_anonymous_args = 0
+ 181 0000 08B5     		push	{r3, lr}
+ 182              	.LCFI2:
+ 183              		.cfi_def_cfa_offset 8
+ 184              		.cfi_offset 3, -8
+ 185              		.cfi_offset 14, -4
+  40:bsp/boards/bsp_adc.c ****     uint16_t adcx = 0;
+ 186              		.loc 1 40 5 view .LVU40
+ARM GAS  /tmp/ccHEgHrZ.s 			page 5
+
+
+ 187              	.LVL15:
+  41:bsp/boards/bsp_adc.c ****     fp32 temperate;
+ 188              		.loc 1 41 5 view .LVU41
+  42:bsp/boards/bsp_adc.c **** 
+  43:bsp/boards/bsp_adc.c ****     adcx = adcx_get_chx_value(&hadc1, ADC_CHANNEL_TEMPSENSOR);
+ 189              		.loc 1 43 5 view .LVU42
+ 190              		.loc 1 43 12 is_stmt 0 view .LVU43
+ 191 0002 1021     		movs	r1, #16
+ 192 0004 0C48     		ldr	r0, .L15
+ 193 0006 FFF7FEFF 		bl	adcx_get_chx_value
+ 194              	.LVL16:
+ 195 000a 07EE900A 		vmov	s15, r0	@ int
+ 196              	.LVL17:
+  44:bsp/boards/bsp_adc.c ****     temperate = (fp32)adcx * voltage_vrefint_proportion;
+ 197              		.loc 1 44 5 is_stmt 1 view .LVU44
+ 198              		.loc 1 44 17 is_stmt 0 view .LVU45
+ 199 000e F8EE677A 		vcvt.f32.u32	s15, s15
+ 200              	.LVL18:
+ 201              		.loc 1 44 28 view .LVU46
+ 202 0012 0A4B     		ldr	r3, .L15+4
+ 203 0014 93ED000A 		vldr.32	s0, [r3]
+ 204              		.loc 1 44 15 view .LVU47
+ 205 0018 67EE807A 		vmul.f32	s15, s15, s0
+ 206              	.LVL19:
+  45:bsp/boards/bsp_adc.c ****     temperate = (temperate - 0.76f) * 400.0f + 25.0f;
+ 207              		.loc 1 45 5 is_stmt 1 view .LVU48
+ 208              		.loc 1 45 28 is_stmt 0 view .LVU49
+ 209 001c 9FED080A 		vldr.32	s0, .L15+8
+ 210 0020 77EEC07A 		vsub.f32	s15, s15, s0
+ 211              	.LVL20:
+ 212              		.loc 1 45 37 view .LVU50
+ 213 0024 9FED070A 		vldr.32	s0, .L15+12
+ 214 0028 67EE807A 		vmul.f32	s15, s15, s0
+ 215              	.LVL21:
+  46:bsp/boards/bsp_adc.c **** 
+  47:bsp/boards/bsp_adc.c ****     return temperate;
+ 216              		.loc 1 47 5 is_stmt 1 view .LVU51
+  48:bsp/boards/bsp_adc.c **** }
+ 217              		.loc 1 48 1 is_stmt 0 view .LVU52
+ 218 002c B3EE090A 		vmov.f32	s0, #2.5e+1
+ 219 0030 37EE800A 		vadd.f32	s0, s15, s0
+ 220              	.LVL22:
+ 221              		.loc 1 48 1 view .LVU53
+ 222 0034 08BD     		pop	{r3, pc}
+ 223              	.L16:
+ 224 0036 00BF     		.align	2
+ 225              	.L15:
+ 226 0038 00000000 		.word	hadc1
+ 227 003c 00000000 		.word	.LANCHOR1
+ 228 0040 5C8F423F 		.word	1061326684
+ 229 0044 0000C843 		.word	1137180672
+ 230              		.cfi_endproc
+ 231              	.LFE237:
+ 233              		.section	.text.get_battery_voltage,"ax",%progbits
+ 234              		.align	1
+ 235              		.global	get_battery_voltage
+ 236              		.syntax unified
+ARM GAS  /tmp/ccHEgHrZ.s 			page 6
+
+
+ 237              		.thumb
+ 238              		.thumb_func
+ 240              	get_battery_voltage:
+ 241              	.LFB238:
+  49:bsp/boards/bsp_adc.c **** 
+  50:bsp/boards/bsp_adc.c **** 
+  51:bsp/boards/bsp_adc.c **** fp32 get_battery_voltage(void)
+  52:bsp/boards/bsp_adc.c **** {
+ 242              		.loc 1 52 1 is_stmt 1 view -0
+ 243              		.cfi_startproc
+ 244              		@ args = 0, pretend = 0, frame = 0
+ 245              		@ frame_needed = 0, uses_anonymous_args = 0
+ 246 0000 08B5     		push	{r3, lr}
+ 247              	.LCFI3:
+ 248              		.cfi_def_cfa_offset 8
+ 249              		.cfi_offset 3, -8
+ 250              		.cfi_offset 14, -4
+  53:bsp/boards/bsp_adc.c ****     fp32 voltage;
+ 251              		.loc 1 53 5 view .LVU55
+  54:bsp/boards/bsp_adc.c ****     uint16_t adcx = 0;
+ 252              		.loc 1 54 5 view .LVU56
+ 253              	.LVL23:
+  55:bsp/boards/bsp_adc.c **** 
+  56:bsp/boards/bsp_adc.c ****     adcx = adcx_get_chx_value(&hadc3, ADC_CHANNEL_8);
+ 254              		.loc 1 56 5 view .LVU57
+ 255              		.loc 1 56 12 is_stmt 0 view .LVU58
+ 256 0002 0821     		movs	r1, #8
+ 257 0004 0848     		ldr	r0, .L19
+ 258 0006 FFF7FEFF 		bl	adcx_get_chx_value
+ 259              	.LVL24:
+ 260 000a 07EE900A 		vmov	s15, r0	@ int
+ 261              	.LVL25:
+  57:bsp/boards/bsp_adc.c ****     //(22K ¦¸ + 200K ¦¸)  / 22K ¦¸ = 10.090909090909090909090909090909
+  58:bsp/boards/bsp_adc.c ****     voltage =  (fp32)adcx * voltage_vrefint_proportion * 10.090909090909090909090909090909f;
+ 262              		.loc 1 58 5 is_stmt 1 view .LVU59
+ 263              		.loc 1 58 16 is_stmt 0 view .LVU60
+ 264 000e F8EE677A 		vcvt.f32.u32	s15, s15
+ 265              	.LVL26:
+ 266              		.loc 1 58 27 view .LVU61
+ 267 0012 064B     		ldr	r3, .L19+4
+ 268 0014 93ED000A 		vldr.32	s0, [r3]
+ 269 0018 67EE807A 		vmul.f32	s15, s15, s0
+ 270              	.LVL27:
+  59:bsp/boards/bsp_adc.c **** 
+  60:bsp/boards/bsp_adc.c ****     return voltage;
+ 271              		.loc 1 60 5 is_stmt 1 view .LVU62
+  61:bsp/boards/bsp_adc.c **** }
+ 272              		.loc 1 61 1 is_stmt 0 view .LVU63
+ 273 001c 9FED040A 		vldr.32	s0, .L19+8
+ 274 0020 27EE800A 		vmul.f32	s0, s15, s0
+ 275              	.LVL28:
+ 276              		.loc 1 61 1 view .LVU64
+ 277 0024 08BD     		pop	{r3, pc}
+ 278              	.L20:
+ 279 0026 00BF     		.align	2
+ 280              	.L19:
+ 281 0028 00000000 		.word	hadc3
+ARM GAS  /tmp/ccHEgHrZ.s 			page 7
+
+
+ 282 002c 00000000 		.word	.LANCHOR1
+ 283 0030 5D742141 		.word	1092711517
+ 284              		.cfi_endproc
+ 285              	.LFE238:
+ 287              		.section	.text.get_hardware_version,"ax",%progbits
+ 288              		.align	1
+ 289              		.global	get_hardware_version
+ 290              		.syntax unified
+ 291              		.thumb
+ 292              		.thumb_func
+ 294              	get_hardware_version:
+ 295              	.LFB239:
+  62:bsp/boards/bsp_adc.c **** 
+  63:bsp/boards/bsp_adc.c **** uint8_t get_hardware_version(void)
+  64:bsp/boards/bsp_adc.c **** {
+ 296              		.loc 1 64 1 is_stmt 1 view -0
+ 297              		.cfi_startproc
+ 298              		@ args = 0, pretend = 0, frame = 0
+ 299              		@ frame_needed = 0, uses_anonymous_args = 0
+ 300 0000 38B5     		push	{r3, r4, r5, lr}
+ 301              	.LCFI4:
+ 302              		.cfi_def_cfa_offset 16
+ 303              		.cfi_offset 3, -16
+ 304              		.cfi_offset 4, -12
+ 305              		.cfi_offset 5, -8
+ 306              		.cfi_offset 14, -4
+  65:bsp/boards/bsp_adc.c ****     uint8_t hardware_version;
+ 307              		.loc 1 65 5 view .LVU66
+  66:bsp/boards/bsp_adc.c ****     hardware_version = HAL_GPIO_ReadPin(HW0_GPIO_Port, HW0_Pin)
+ 308              		.loc 1 66 5 view .LVU67
+ 309              		.loc 1 66 24 is_stmt 0 view .LVU68
+ 310 0002 0A4D     		ldr	r5, .L23
+ 311 0004 0121     		movs	r1, #1
+ 312 0006 2846     		mov	r0, r5
+ 313 0008 FFF7FEFF 		bl	HAL_GPIO_ReadPin
+ 314              	.LVL29:
+ 315 000c 44B2     		sxtb	r4, r0
+  67:bsp/boards/bsp_adc.c ****                                 | (HAL_GPIO_ReadPin(HW1_GPIO_Port, HW1_Pin)<<1)
+ 316              		.loc 1 67 36 view .LVU69
+ 317 000e 0221     		movs	r1, #2
+ 318 0010 2846     		mov	r0, r5
+ 319 0012 FFF7FEFF 		bl	HAL_GPIO_ReadPin
+ 320              	.LVL30:
+ 321              		.loc 1 67 33 view .LVU70
+ 322 0016 44EA4004 		orr	r4, r4, r0, lsl #1
+ 323 001a 64B2     		sxtb	r4, r4
+  68:bsp/boards/bsp_adc.c ****                                 | (HAL_GPIO_ReadPin(HW2_GPIO_Port, HW2_Pin)<<2);
+ 324              		.loc 1 68 36 view .LVU71
+ 325 001c 0421     		movs	r1, #4
+ 326 001e 2846     		mov	r0, r5
+ 327 0020 FFF7FEFF 		bl	HAL_GPIO_ReadPin
+ 328              	.LVL31:
+ 329              		.loc 1 68 33 view .LVU72
+ 330 0024 44EA8000 		orr	r0, r4, r0, lsl #2
+ 331              	.LVL32:
+  69:bsp/boards/bsp_adc.c **** 
+  70:bsp/boards/bsp_adc.c **** 
+ARM GAS  /tmp/ccHEgHrZ.s 			page 8
+
+
+  71:bsp/boards/bsp_adc.c **** 
+  72:bsp/boards/bsp_adc.c ****     return hardware_version;
+ 332              		.loc 1 72 5 is_stmt 1 view .LVU73
+  73:bsp/boards/bsp_adc.c **** }
+ 333              		.loc 1 73 1 is_stmt 0 view .LVU74
+ 334 0028 C0B2     		uxtb	r0, r0
+ 335              		.loc 1 73 1 view .LVU75
+ 336 002a 38BD     		pop	{r3, r4, r5, pc}
+ 337              	.L24:
+ 338              		.align	2
+ 339              	.L23:
+ 340 002c 00080240 		.word	1073874944
+ 341              		.cfi_endproc
+ 342              	.LFE239:
+ 344              		.global	voltage_vrefint_proportion
+ 345              		.section	.bss.sConfig.0,"aw",%nobits
+ 346              		.align	2
+ 347              		.set	.LANCHOR0,. + 0
+ 350              	sConfig.0:
+ 351 0000 00000000 		.space	16
+ 351      00000000 
+ 351      00000000 
+ 351      00000000 
+ 352              		.section	.data.voltage_vrefint_proportion,"aw"
+ 353              		.align	2
+ 354              		.set	.LANCHOR1,. + 0
+ 357              	voltage_vrefint_proportion:
+ 358 0000 6740533A 		.word	978534503
+ 359              		.text
+ 360              	.Letext0:
+ 361              		.file 2 "bsp/boards/struct_typedef.h"
+ 362              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 363              		.file 4 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 364              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 365              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 366              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 367              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 368              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h"
+ 369              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
+ 370              		.file 11 "Core/Inc/main.h"
+ARM GAS  /tmp/ccHEgHrZ.s 			page 9
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 bsp_adc.c
+     /tmp/ccHEgHrZ.s:20     .text.adcx_get_chx_value:0000000000000000 $t
+     /tmp/ccHEgHrZ.s:25     .text.adcx_get_chx_value:0000000000000000 adcx_get_chx_value
+     /tmp/ccHEgHrZ.s:89     .text.adcx_get_chx_value:0000000000000038 $d
+     /tmp/ccHEgHrZ.s:94     .text.init_vrefint_reciprocal:0000000000000000 $t
+     /tmp/ccHEgHrZ.s:100    .text.init_vrefint_reciprocal:0000000000000000 init_vrefint_reciprocal
+     /tmp/ccHEgHrZ.s:162    .text.init_vrefint_reciprocal:0000000000000034 $d
+     /tmp/ccHEgHrZ.s:169    .text.get_temprate:0000000000000000 $t
+     /tmp/ccHEgHrZ.s:175    .text.get_temprate:0000000000000000 get_temprate
+     /tmp/ccHEgHrZ.s:226    .text.get_temprate:0000000000000038 $d
+     /tmp/ccHEgHrZ.s:234    .text.get_battery_voltage:0000000000000000 $t
+     /tmp/ccHEgHrZ.s:240    .text.get_battery_voltage:0000000000000000 get_battery_voltage
+     /tmp/ccHEgHrZ.s:281    .text.get_battery_voltage:0000000000000028 $d
+     /tmp/ccHEgHrZ.s:288    .text.get_hardware_version:0000000000000000 $t
+     /tmp/ccHEgHrZ.s:294    .text.get_hardware_version:0000000000000000 get_hardware_version
+     /tmp/ccHEgHrZ.s:340    .text.get_hardware_version:000000000000002c $d
+     /tmp/ccHEgHrZ.s:357    .data.voltage_vrefint_proportion:0000000000000000 voltage_vrefint_proportion
+     /tmp/ccHEgHrZ.s:346    .bss.sConfig.0:0000000000000000 $d
+     /tmp/ccHEgHrZ.s:350    .bss.sConfig.0:0000000000000000 sConfig.0
+     /tmp/ccHEgHrZ.s:353    .data.voltage_vrefint_proportion:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+HAL_ADC_ConfigChannel
+HAL_ADC_Start
+HAL_ADC_PollForConversion
+HAL_ADC_GetValue
+Error_Handler
+hadc1
+hadc3
+HAL_GPIO_ReadPin

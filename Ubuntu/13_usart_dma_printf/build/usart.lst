@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
+ARM GAS  /tmp/ccoyeqUr.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
   28:Core/Src/usart.c **** DMA_HandleTypeDef hdma_usart1_tx;
   29:Core/Src/usart.c **** 
   30:Core/Src/usart.c **** /* USART1 init function */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 2
+ARM GAS  /tmp/ccoyeqUr.s 			page 2
 
 
   31:Core/Src/usart.c **** 
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
   64              		.loc 1 49 3 is_stmt 1 view .LVU15
   65              		.loc 1 49 28 is_stmt 0 view .LVU16
   66 001c C361     		str	r3, [r0, #28]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 3
+ARM GAS  /tmp/ccoyeqUr.s 			page 3
 
 
   50:Core/Src/usart.c ****   if (HAL_UART_Init(&huart1) != HAL_OK)
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  110              		.cfi_offset 6, -16
  111              		.cfi_offset 7, -12
  112              		.cfi_offset 8, -8
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 4
+ARM GAS  /tmp/ccoyeqUr.s 			page 4
 
 
  113              		.cfi_offset 14, -4
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
   94:Core/Src/usart.c ****     hdma_usart1_tx.Instance = DMA2_Stream7;
   95:Core/Src/usart.c ****     hdma_usart1_tx.Init.Channel = DMA_CHANNEL_4;
   96:Core/Src/usart.c ****     hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 5
+ARM GAS  /tmp/ccoyeqUr.s 			page 5
 
 
   97:Core/Src/usart.c ****     hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  162              		.loc 1 70 5 view .LVU36
  163 0040 009A     		ldr	r2, [sp]
  164              	.LBE2:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 6
+ARM GAS  /tmp/ccoyeqUr.s 			page 6
 
 
   70:Core/Src/usart.c **** 
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
   79:Core/Src/usart.c ****     GPIO_InitStruct.Pull = GPIO_NOPULL;
  203              		.loc 1 79 26 is_stmt 0 view .LVU53
  204 006e 4FF00208 		mov	r8, #2
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 7
+ARM GAS  /tmp/ccoyeqUr.s 			page 7
 
 
  205 0072 CDF81080 		str	r8, [sp, #16]
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  241 009a FFF7FEFF 		bl	HAL_GPIO_Init
  242              	.LVL7:
   94:Core/Src/usart.c ****     hdma_usart1_tx.Init.Channel = DMA_CHANNEL_4;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 8
+ARM GAS  /tmp/ccoyeqUr.s 			page 8
 
 
  243              		.loc 1 94 5 view .LVU72
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  278 00c2 4562     		str	r5, [r0, #36]
  104:Core/Src/usart.c ****     {
  279              		.loc 1 104 5 is_stmt 1 view .LVU92
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 9
+ARM GAS  /tmp/ccoyeqUr.s 			page 9
 
 
  104:Core/Src/usart.c ****     {
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  327              	HAL_UART_MspDeInit:
  328              	.LVL12:
  329              	.LFB132:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 10
+ARM GAS  /tmp/ccoyeqUr.s 			page 10
 
 
  119:Core/Src/usart.c **** 
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  364 0024 0748     		ldr	r0, .L22+12
  365 0026 FFF7FEFF 		bl	HAL_GPIO_DeInit
  366              	.LVL15:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 11
+ARM GAS  /tmp/ccoyeqUr.s 			page 11
 
 
  138:Core/Src/usart.c **** 
@@ -655,10 +655,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  404      00000000 
  405              		.text
  406              	.Letext0:
- 407              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
- 408              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 407              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 408              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
  409              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 12
+ARM GAS  /tmp/ccoyeqUr.s 			page 12
 
 
  410              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
@@ -668,24 +668,24 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 1
  414              		.file 9 "Core/Inc/usart.h"
  415              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h"
  416              		.file 11 "Core/Inc/main.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s 			page 13
+ARM GAS  /tmp/ccoyeqUr.s 			page 13
 
 
 DEFINED SYMBOLS
-                            *ABS*:00000000 usart.c
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:20     .text.MX_USART1_UART_Init:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:26     .text.MX_USART1_UART_Init:00000000 MX_USART1_UART_Init
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:85     .text.MX_USART1_UART_Init:0000002c $d
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:91     .text.HAL_UART_MspInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:97     .text.HAL_UART_MspInit:00000000 HAL_UART_MspInit
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:313    .text.HAL_UART_MspInit:000000e8 $d
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:321    .text.HAL_UART_MspDeInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:327    .text.HAL_UART_MspDeInit:00000000 HAL_UART_MspDeInit
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:382    .text.HAL_UART_MspDeInit:00000038 $d
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:396    .bss.hdma_usart1_tx:00000000 hdma_usart1_tx
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:403    .bss.huart1:00000000 huart1
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:392    .bss.hdma_usart1_tx:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccGDOEau.s:399    .bss.huart1:00000000 $d
+                            *ABS*:0000000000000000 usart.c
+     /tmp/ccoyeqUr.s:20     .text.MX_USART1_UART_Init:0000000000000000 $t
+     /tmp/ccoyeqUr.s:26     .text.MX_USART1_UART_Init:0000000000000000 MX_USART1_UART_Init
+     /tmp/ccoyeqUr.s:85     .text.MX_USART1_UART_Init:000000000000002c $d
+     /tmp/ccoyeqUr.s:91     .text.HAL_UART_MspInit:0000000000000000 $t
+     /tmp/ccoyeqUr.s:97     .text.HAL_UART_MspInit:0000000000000000 HAL_UART_MspInit
+     /tmp/ccoyeqUr.s:313    .text.HAL_UART_MspInit:00000000000000e8 $d
+     /tmp/ccoyeqUr.s:321    .text.HAL_UART_MspDeInit:0000000000000000 $t
+     /tmp/ccoyeqUr.s:327    .text.HAL_UART_MspDeInit:0000000000000000 HAL_UART_MspDeInit
+     /tmp/ccoyeqUr.s:382    .text.HAL_UART_MspDeInit:0000000000000038 $d
+     /tmp/ccoyeqUr.s:396    .bss.hdma_usart1_tx:0000000000000000 hdma_usart1_tx
+     /tmp/ccoyeqUr.s:403    .bss.huart1:0000000000000000 huart1
+     /tmp/ccoyeqUr.s:392    .bss.hdma_usart1_tx:0000000000000000 $d
+     /tmp/ccoyeqUr.s:399    .bss.huart1:0000000000000000 $d
 
 UNDEFINED SYMBOLS
 HAL_UART_Init

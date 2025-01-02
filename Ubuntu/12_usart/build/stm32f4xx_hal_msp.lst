@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 1
+ARM GAS  /tmp/cczsZRSB.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 1
   28:Core/Src/stm32f4xx_hal_msp.c **** /* USER CODE BEGIN TD */
   29:Core/Src/stm32f4xx_hal_msp.c **** 
   30:Core/Src/stm32f4xx_hal_msp.c **** /* USER CODE END TD */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 2
+ARM GAS  /tmp/cczsZRSB.s 			page 2
 
 
   31:Core/Src/stm32f4xx_hal_msp.c **** 
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 1
   44 0008 5A6C     		ldr	r2, [r3, #68]
   45 000a 42F48042 		orr	r2, r2, #16384
   46 000e 5A64     		str	r2, [r3, #68]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 3
+ARM GAS  /tmp/cczsZRSB.s 			page 3
 
 
   47              		.loc 1 69 3 view .LVU4
@@ -167,16 +167,16 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 1
   82              	.LFE130:
   84              		.text
   85              	.Letext0:
-  86              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
-  87              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+  86              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+  87              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
   88              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s 			page 4
+ARM GAS  /tmp/cczsZRSB.s 			page 4
 
 
 DEFINED SYMBOLS
-                            *ABS*:00000000 stm32f4xx_hal_msp.c
-C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s:20     .text.HAL_MspInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s:26     .text.HAL_MspInit:00000000 HAL_MspInit
-C:\Users\xixi\AppData\Local\Temp\ccQUzkX0.s:80     .text.HAL_MspInit:00000034 $d
+                            *ABS*:0000000000000000 stm32f4xx_hal_msp.c
+     /tmp/cczsZRSB.s:20     .text.HAL_MspInit:0000000000000000 $t
+     /tmp/cczsZRSB.s:26     .text.HAL_MspInit:0000000000000000 HAL_MspInit
+     /tmp/cczsZRSB.s:80     .text.HAL_MspInit:0000000000000034 $d
 
 NO UNDEFINED SYMBOLS

@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
+ARM GAS  /tmp/ccG5LV3j.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
   27:Core/Src/main.c **** #include <stdio.h>
   28:Core/Src/main.c **** #include <stdarg.h>
   29:Core/Src/main.c **** #include "string.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 2
+ARM GAS  /tmp/ccG5LV3j.s 			page 2
 
 
   30:Core/Src/main.c **** #include "remote_control.h"
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
   65:Core/Src/main.c ****   static uint8_t tx_buf[256] = {0};
   49              		.loc 1 65 3 is_stmt 1 view .LVU2
   66:Core/Src/main.c ****   static va_list ap;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 3
+ARM GAS  /tmp/ccG5LV3j.s 			page 3
 
 
   50              		.loc 1 66 3 view .LVU3
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
   93              	.LFE133:
   95              		.section	.text.Error_Handler,"ax",%progbits
   96              		.align	1
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 4
+ARM GAS  /tmp/ccG5LV3j.s 			page 4
 
 
   97              		.global	Error_Handler
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  126:Core/Src/main.c ****     HAL_Delay(500);
  127:Core/Src/main.c ****     HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
  128:Core/Src/main.c ****     HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 5
+ARM GAS  /tmp/ccG5LV3j.s 			page 5
 
 
  129:Core/Src/main.c ****     HAL_GPIO_WritePin(LED_B_GPIO_Port, LED_B_Pin, GPIO_PIN_RESET);
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  183:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
  184:Core/Src/main.c ****   {
  185:Core/Src/main.c ****     Error_Handler();
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 6
+ARM GAS  /tmp/ccG5LV3j.s 			page 6
 
 
  186:Core/Src/main.c ****   }
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
   15:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
   16:Drivers/CMSIS/Include/cmsis_gcc.h ****  * www.apache.org/licenses/LICENSE-2.0
   17:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 7
+ARM GAS  /tmp/ccG5LV3j.s 			page 7
 
 
   18:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Unless required by applicable law or agreed to in writing, software
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
   72:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
   73:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
   74:Drivers/CMSIS/Include/cmsis_gcc.h ****   struct __attribute__((packed)) T_UINT32 { uint32_t v; };
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 8
+ARM GAS  /tmp/ccG5LV3j.s 			page 8
 
 
   75:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  129:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __enable_irq(void)
  130:Drivers/CMSIS/Include/cmsis_gcc.h **** {
  131:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("cpsie i" : : : "memory");
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 9
+ARM GAS  /tmp/ccG5LV3j.s 			page 9
 
 
  132:Drivers/CMSIS/Include/cmsis_gcc.h **** }
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  153              		.loc 1 163 3 view .LVU20
  163:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
  154              		.loc 1 163 22 is_stmt 0 view .LVU21
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 10
+ARM GAS  /tmp/ccG5LV3j.s 			page 10
 
 
  155 0004 3022     		movs	r2, #48
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  197 0042 0292     		str	r2, [sp, #8]
  169:Core/Src/main.c **** 
  198              		.loc 1 169 3 view .LVU34
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 11
+ARM GAS  /tmp/ccG5LV3j.s 			page 11
 
 
  199 0044 029A     		ldr	r2, [sp, #8]
@@ -658,7 +658,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  234 0062 1393     		str	r3, [sp, #76]
  183:Core/Src/main.c ****   {
  235              		.loc 1 183 3 is_stmt 1 view .LVU54
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 12
+ARM GAS  /tmp/ccG5LV3j.s 			page 12
 
 
  183:Core/Src/main.c ****   {
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  274              		.cfi_def_cfa_offset 4
  275              		@ sp needed
  276 0090 5DF804FB 		ldr	pc, [sp], #4
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 13
+ARM GAS  /tmp/ccG5LV3j.s 			page 13
 
 
  277              	.L11:
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  311              	main:
  312              	.LFB134:
   85:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 14
+ARM GAS  /tmp/ccG5LV3j.s 			page 14
 
 
  313              		.loc 1 85 1 view -0
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  357              		.loc 1 116 3 view .LVU83
  116:Core/Src/main.c ****   /* USER CODE END 2 */
  358              		.loc 1 116 19 is_stmt 0 view .LVU84
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 15
+ARM GAS  /tmp/ccG5LV3j.s 			page 15
 
 
  359 0034 FFF7FEFF 		bl	get_remote_control_point
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  404 0088 2046     		mov	r0, r4
  405 008a FFF7FEFF 		bl	HAL_GPIO_WritePin
  406              	.LVL22:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 16
+ARM GAS  /tmp/ccG5LV3j.s 			page 16
 
 
  130:Core/Src/main.c ****     /* USER CODE END WHILE */
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  444 00ce CDF81C90 		str	r9, [sp, #28]
  445 00d2 CDF81880 		str	r8, [sp, #24]
  446 00d6 CDF814E0 		str	lr, [sp, #20]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 17
+ARM GAS  /tmp/ccG5LV3j.s 			page 17
 
 
  447 00da CDF810C0 		str	ip, [sp, #16]
@@ -1018,14 +1018,14 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  508      00000000 
  508      00000000 
  508      00000000 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 18
+ARM GAS  /tmp/ccG5LV3j.s 			page 18
 
 
  508      00000000 
  509              		.text
  510              	.Letext0:
- 511              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
- 512              		.file 4 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 511              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 512              		.file 4 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
  513              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
  514              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
  515              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h"
@@ -1035,42 +1035,42 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 1
  519              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
  520              		.file 12 "Core/Inc/main.h"
  521              		.file 13 "Core/Inc/usart.h"
- 522              		.file 14 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\lib\\gcc\\arm-none-eabi
- 523              		.file 15 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\
+ 522              		.file 14 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/lib/gcc/arm-none-eabi/10.3.1/include/stdarg
+ 523              		.file 15 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/stdio.h"
  524              		.file 16 "Core/Inc/remote_control.h"
  525              		.file 17 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
  526              		.file 18 "Core/Inc/gpio.h"
  527              		.file 19 "Core/Inc/dma.h"
  528              		.file 20 "<built-in>"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s 			page 19
+ARM GAS  /tmp/ccG5LV3j.s 			page 19
 
 
 DEFINED SYMBOLS
-                            *ABS*:00000000 main.c
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:20     .text.usart_printf:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:26     .text.usart_printf:00000000 usart_printf
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:88     .text.usart_printf:0000002c $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:96     .text.Error_Handler:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:102    .text.Error_Handler:00000000 Error_Handler
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:134    .text.SystemClock_Config:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:140    .text.SystemClock_Config:00000000 SystemClock_Config
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:290    .text.SystemClock_Config:0000009c $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:296    .rodata.main.str1.4:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:305    .text.main:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:311    .text.main:00000000 main
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:460    .text.main:000000f0 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:486    .bss.len:00000000 len
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:474    .bss.RxBuffer:00000000 RxBuffer
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:500    .bss.local_rc_ctrl:00000000 local_rc_ctrl
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:471    .bss.RxBuffer:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:477    .bss.ap.2:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:481    .bss.ap.2:00000000 ap.2
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:487    .bss.len:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:489    .bss.len.0:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:493    .bss.len.0:00000000 len.0
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:496    .bss.local_rc_ctrl:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:503    .bss.tx_buf.1:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc8IMhnr.s:507    .bss.tx_buf.1:00000000 tx_buf.1
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccG5LV3j.s:20     .text.usart_printf:0000000000000000 $t
+     /tmp/ccG5LV3j.s:26     .text.usart_printf:0000000000000000 usart_printf
+     /tmp/ccG5LV3j.s:88     .text.usart_printf:000000000000002c $d
+     /tmp/ccG5LV3j.s:96     .text.Error_Handler:0000000000000000 $t
+     /tmp/ccG5LV3j.s:102    .text.Error_Handler:0000000000000000 Error_Handler
+     /tmp/ccG5LV3j.s:134    .text.SystemClock_Config:0000000000000000 $t
+     /tmp/ccG5LV3j.s:140    .text.SystemClock_Config:0000000000000000 SystemClock_Config
+     /tmp/ccG5LV3j.s:290    .text.SystemClock_Config:000000000000009c $d
+     /tmp/ccG5LV3j.s:296    .rodata.main.str1.4:0000000000000000 $d
+     /tmp/ccG5LV3j.s:305    .text.main:0000000000000000 $t
+     /tmp/ccG5LV3j.s:311    .text.main:0000000000000000 main
+     /tmp/ccG5LV3j.s:460    .text.main:00000000000000f0 $d
+     /tmp/ccG5LV3j.s:486    .bss.len:0000000000000000 len
+     /tmp/ccG5LV3j.s:474    .bss.RxBuffer:0000000000000000 RxBuffer
+     /tmp/ccG5LV3j.s:500    .bss.local_rc_ctrl:0000000000000000 local_rc_ctrl
+     /tmp/ccG5LV3j.s:471    .bss.RxBuffer:0000000000000000 $d
+     /tmp/ccG5LV3j.s:477    .bss.ap.2:0000000000000000 $d
+     /tmp/ccG5LV3j.s:481    .bss.ap.2:0000000000000000 ap.2
+     /tmp/ccG5LV3j.s:487    .bss.len:0000000000000000 $d
+     /tmp/ccG5LV3j.s:489    .bss.len.0:0000000000000000 $d
+     /tmp/ccG5LV3j.s:493    .bss.len.0:0000000000000000 len.0
+     /tmp/ccG5LV3j.s:496    .bss.local_rc_ctrl:0000000000000000 $d
+     /tmp/ccG5LV3j.s:503    .bss.tx_buf.1:0000000000000000 $d
+     /tmp/ccG5LV3j.s:507    .bss.tx_buf.1:0000000000000000 tx_buf.1
 
 UNDEFINED SYMBOLS
 vsprintf

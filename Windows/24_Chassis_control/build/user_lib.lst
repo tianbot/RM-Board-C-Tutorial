@@ -1,0 +1,843 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"user_lib.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.invSqrt,"ax",%progbits
+  20              		.align	1
+  21              		.global	invSqrt
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	invSqrt:
+  27              	.LVL0:
+  28              	.LFB163:
+  29              		.file 1 "algorithm/user_lib.c"
+   1:algorithm/user_lib.c **** #include "user_lib.h"
+   2:algorithm/user_lib.c **** #include "arm_math.h"
+   3:algorithm/user_lib.c **** 
+   4:algorithm/user_lib.c **** //快速开方
+   5:algorithm/user_lib.c **** fp32 invSqrt(fp32 num)
+   6:algorithm/user_lib.c **** {
+  30              		.loc 1 6 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+   7:algorithm/user_lib.c ****     fp32 halfnum = 0.5f * num;
+  35              		.loc 1 7 5 view .LVU1
+  36              		.loc 1 7 10 is_stmt 0 view .LVU2
+  37 0000 F6EE007A 		vmov.f32	s15, #5.0e-1
+  38 0004 60EE277A 		vmul.f32	s15, s0, s15
+  39              	.LVL1:
+   8:algorithm/user_lib.c ****     fp32 y = num;
+  40              		.loc 1 8 5 is_stmt 1 view .LVU3
+   9:algorithm/user_lib.c ****     long i = *(long *)&y;
+  41              		.loc 1 9 5 view .LVU4
+  42              		.loc 1 9 14 is_stmt 0 view .LVU5
+  43 0008 10EE103A 		vmov	r3, s0	@ int
+  44              	.LVL2:
+  10:algorithm/user_lib.c ****     i = 0x5f3759df - (i >> 1);
+  45              		.loc 1 10 5 is_stmt 1 view .LVU6
+  11:algorithm/user_lib.c ****     y = *(fp32 *)&i;
+  46              		.loc 1 11 5 view .LVU7
+  47              		.loc 1 11 9 is_stmt 0 view .LVU8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 2
+
+
+  48 000c 074A     		ldr	r2, .L2
+  49 000e A2EB6303 		sub	r3, r2, r3, asr #1
+  50              	.LVL3:
+  51              		.loc 1 11 9 view .LVU9
+  52 0012 07EE103A 		vmov	s14, r3	@ int
+  53              	.LVL4:
+  12:algorithm/user_lib.c ****     y = y * (1.5f - (halfnum * y * y));
+  54              		.loc 1 12 5 is_stmt 1 view .LVU10
+  55              		.loc 1 12 30 is_stmt 0 view .LVU11
+  56 0016 67EE277A 		vmul.f32	s15, s14, s15
+  57              	.LVL5:
+  58              		.loc 1 12 34 view .LVU12
+  59 001a 67EE277A 		vmul.f32	s15, s14, s15
+  60              		.loc 1 12 19 view .LVU13
+  61 001e B7EE080A 		vmov.f32	s0, #1.5e+0
+  62              	.LVL6:
+  63              		.loc 1 12 19 view .LVU14
+  64 0022 30EE670A 		vsub.f32	s0, s0, s15
+  65              	.LVL7:
+  13:algorithm/user_lib.c ****     return y;
+  66              		.loc 1 13 5 is_stmt 1 view .LVU15
+  14:algorithm/user_lib.c **** }
+  67              		.loc 1 14 1 is_stmt 0 view .LVU16
+  68 0026 27EE000A 		vmul.f32	s0, s14, s0
+  69 002a 7047     		bx	lr
+  70              	.L3:
+  71              		.align	2
+  72              	.L2:
+  73 002c DF59375F 		.word	1597463007
+  74              		.cfi_endproc
+  75              	.LFE163:
+  77              		.section	.text.ramp_init,"ax",%progbits
+  78              		.align	1
+  79              		.global	ramp_init
+  80              		.syntax unified
+  81              		.thumb
+  82              		.thumb_func
+  84              	ramp_init:
+  85              	.LVL8:
+  86              	.LFB164:
+  15:algorithm/user_lib.c **** 
+  16:algorithm/user_lib.c **** /**
+  17:algorithm/user_lib.c ****   * @brief          斜波函数初始化
+  18:algorithm/user_lib.c ****   * @author         RM
+  19:algorithm/user_lib.c ****   * @param[in]      斜波函数结构体
+  20:algorithm/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+  21:algorithm/user_lib.c ****   * @param[in]      最大值
+  22:algorithm/user_lib.c ****   * @param[in]      最小值
+  23:algorithm/user_lib.c ****   * @retval         返回空
+  24:algorithm/user_lib.c ****   */
+  25:algorithm/user_lib.c **** void ramp_init(ramp_function_source_t *ramp_source_type, fp32 frame_period, fp32 max, fp32 min)
+  26:algorithm/user_lib.c **** {
+  87              		.loc 1 26 1 is_stmt 1 view -0
+  88              		.cfi_startproc
+  89              		@ args = 0, pretend = 0, frame = 0
+  90              		@ frame_needed = 0, uses_anonymous_args = 0
+  91              		@ link register save eliminated.
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 3
+
+
+  27:algorithm/user_lib.c ****     ramp_source_type->frame_period = frame_period;
+  92              		.loc 1 27 5 view .LVU18
+  93              		.loc 1 27 36 is_stmt 0 view .LVU19
+  94 0000 80ED040A 		vstr.32	s0, [r0, #16]
+  28:algorithm/user_lib.c ****     ramp_source_type->max_value = max;
+  95              		.loc 1 28 5 is_stmt 1 view .LVU20
+  96              		.loc 1 28 33 is_stmt 0 view .LVU21
+  97 0004 C0ED030A 		vstr.32	s1, [r0, #12]
+  29:algorithm/user_lib.c ****     ramp_source_type->min_value = min;
+  98              		.loc 1 29 5 is_stmt 1 view .LVU22
+  99              		.loc 1 29 33 is_stmt 0 view .LVU23
+ 100 0008 80ED021A 		vstr.32	s2, [r0, #8]
+  30:algorithm/user_lib.c ****     ramp_source_type->input = 0.0f;
+ 101              		.loc 1 30 5 is_stmt 1 view .LVU24
+ 102              		.loc 1 30 29 is_stmt 0 view .LVU25
+ 103 000c 0023     		movs	r3, #0
+ 104 000e 0360     		str	r3, [r0]	@ float
+  31:algorithm/user_lib.c ****     ramp_source_type->out = 0.0f;
+ 105              		.loc 1 31 5 is_stmt 1 view .LVU26
+ 106              		.loc 1 31 27 is_stmt 0 view .LVU27
+ 107 0010 4360     		str	r3, [r0, #4]	@ float
+  32:algorithm/user_lib.c **** }
+ 108              		.loc 1 32 1 view .LVU28
+ 109 0012 7047     		bx	lr
+ 110              		.cfi_endproc
+ 111              	.LFE164:
+ 113              		.section	.text.ramp_calc,"ax",%progbits
+ 114              		.align	1
+ 115              		.global	ramp_calc
+ 116              		.syntax unified
+ 117              		.thumb
+ 118              		.thumb_func
+ 120              	ramp_calc:
+ 121              	.LVL9:
+ 122              	.LFB165:
+  33:algorithm/user_lib.c **** 
+  34:algorithm/user_lib.c **** /**
+  35:algorithm/user_lib.c ****   * @brief          斜波函数计算，根据输入的值进行叠加， 输入单位为 /s 即�
+  36:algorithm/user_lib.c ****   * @author         RM
+  37:algorithm/user_lib.c ****   * @param[in]      斜波函数结构体
+  38:algorithm/user_lib.c ****   * @param[in]      输入值
+  39:algorithm/user_lib.c ****   * @param[in]      滤波参数
+  40:algorithm/user_lib.c ****   * @retval         返回空
+  41:algorithm/user_lib.c ****   */
+  42:algorithm/user_lib.c **** void ramp_calc(ramp_function_source_t *ramp_source_type, fp32 input)
+  43:algorithm/user_lib.c **** {
+ 123              		.loc 1 43 1 is_stmt 1 view -0
+ 124              		.cfi_startproc
+ 125              		@ args = 0, pretend = 0, frame = 0
+ 126              		@ frame_needed = 0, uses_anonymous_args = 0
+ 127              		@ link register save eliminated.
+  44:algorithm/user_lib.c ****     ramp_source_type->input = input;
+ 128              		.loc 1 44 5 view .LVU30
+ 129              		.loc 1 44 29 is_stmt 0 view .LVU31
+ 130 0000 80ED000A 		vstr.32	s0, [r0]
+  45:algorithm/user_lib.c ****     ramp_source_type->out += ramp_source_type->input * ramp_source_type->frame_period;
+ 131              		.loc 1 45 5 is_stmt 1 view .LVU32
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 4
+
+
+ 132              		.loc 1 45 72 is_stmt 0 view .LVU33
+ 133 0004 D0ED047A 		vldr.32	s15, [r0, #16]
+ 134              		.loc 1 45 54 view .LVU34
+ 135 0008 27EE800A 		vmul.f32	s0, s15, s0
+ 136              	.LVL10:
+ 137              		.loc 1 45 27 view .LVU35
+ 138 000c D0ED017A 		vldr.32	s15, [r0, #4]
+ 139 0010 30EE270A 		vadd.f32	s0, s0, s15
+ 140 0014 80ED010A 		vstr.32	s0, [r0, #4]
+  46:algorithm/user_lib.c ****     if (ramp_source_type->out > ramp_source_type->max_value)
+ 141              		.loc 1 46 5 is_stmt 1 view .LVU36
+ 142              		.loc 1 46 49 is_stmt 0 view .LVU37
+ 143 0018 D0ED037A 		vldr.32	s15, [r0, #12]
+ 144              		.loc 1 46 8 view .LVU38
+ 145 001c B4EEE70A 		vcmpe.f32	s0, s15
+ 146 0020 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 147 0024 02DD     		ble	.L12
+  47:algorithm/user_lib.c ****     {
+  48:algorithm/user_lib.c ****         ramp_source_type->out = ramp_source_type->max_value;
+ 148              		.loc 1 48 9 is_stmt 1 view .LVU39
+ 149              		.loc 1 48 31 is_stmt 0 view .LVU40
+ 150 0026 C0ED017A 		vstr.32	s15, [r0, #4]
+ 151 002a 7047     		bx	lr
+ 152              	.L12:
+  49:algorithm/user_lib.c ****     }
+  50:algorithm/user_lib.c ****     else if (ramp_source_type->out < ramp_source_type->min_value)
+ 153              		.loc 1 50 10 is_stmt 1 view .LVU41
+ 154              		.loc 1 50 54 is_stmt 0 view .LVU42
+ 155 002c D0ED027A 		vldr.32	s15, [r0, #8]
+ 156              		.loc 1 50 13 view .LVU43
+ 157 0030 B4EEE70A 		vcmpe.f32	s0, s15
+ 158 0034 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 159 0038 01D5     		bpl	.L5
+  51:algorithm/user_lib.c ****     {
+  52:algorithm/user_lib.c ****         ramp_source_type->out = ramp_source_type->min_value;
+ 160              		.loc 1 52 9 is_stmt 1 view .LVU44
+ 161              		.loc 1 52 31 is_stmt 0 view .LVU45
+ 162 003a C0ED017A 		vstr.32	s15, [r0, #4]
+ 163              	.L5:
+  53:algorithm/user_lib.c ****     }
+  54:algorithm/user_lib.c **** }
+ 164              		.loc 1 54 1 view .LVU46
+ 165 003e 7047     		bx	lr
+ 166              		.cfi_endproc
+ 167              	.LFE165:
+ 169              		.section	.text.first_order_filter_init,"ax",%progbits
+ 170              		.align	1
+ 171              		.global	first_order_filter_init
+ 172              		.syntax unified
+ 173              		.thumb
+ 174              		.thumb_func
+ 176              	first_order_filter_init:
+ 177              	.LVL11:
+ 178              	.LFB166:
+  55:algorithm/user_lib.c **** /**
+  56:algorithm/user_lib.c ****   * @brief          一阶低通滤波初始化
+  57:algorithm/user_lib.c ****   * @author         RM
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 5
+
+
+  58:algorithm/user_lib.c ****   * @param[in]      一阶低通滤波结构体
+  59:algorithm/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+  60:algorithm/user_lib.c ****   * @param[in]      滤波参数
+  61:algorithm/user_lib.c ****   * @retval         返回空
+  62:algorithm/user_lib.c ****   */
+  63:algorithm/user_lib.c **** void first_order_filter_init(first_order_filter_type_t *first_order_filter_type, fp32 frame_period,
+  64:algorithm/user_lib.c **** {
+ 179              		.loc 1 64 1 is_stmt 1 view -0
+ 180              		.cfi_startproc
+ 181              		@ args = 0, pretend = 0, frame = 0
+ 182              		@ frame_needed = 0, uses_anonymous_args = 0
+ 183              		@ link register save eliminated.
+  65:algorithm/user_lib.c ****     first_order_filter_type->frame_period = frame_period;
+ 184              		.loc 1 65 5 view .LVU48
+ 185              		.loc 1 65 43 is_stmt 0 view .LVU49
+ 186 0000 80ED030A 		vstr.32	s0, [r0, #12]
+  66:algorithm/user_lib.c ****     first_order_filter_type->num[0] = num[0];
+ 187              		.loc 1 66 5 is_stmt 1 view .LVU50
+ 188              		.loc 1 66 42 is_stmt 0 view .LVU51
+ 189 0004 0B68     		ldr	r3, [r1]	@ float
+ 190              		.loc 1 66 37 view .LVU52
+ 191 0006 8360     		str	r3, [r0, #8]	@ float
+  67:algorithm/user_lib.c ****     first_order_filter_type->input = 0.0f;
+ 192              		.loc 1 67 5 is_stmt 1 view .LVU53
+ 193              		.loc 1 67 36 is_stmt 0 view .LVU54
+ 194 0008 0023     		movs	r3, #0
+ 195 000a 0360     		str	r3, [r0]	@ float
+  68:algorithm/user_lib.c ****     first_order_filter_type->out = 0.0f;
+ 196              		.loc 1 68 5 is_stmt 1 view .LVU55
+ 197              		.loc 1 68 34 is_stmt 0 view .LVU56
+ 198 000c 4360     		str	r3, [r0, #4]	@ float
+  69:algorithm/user_lib.c **** }
+ 199              		.loc 1 69 1 view .LVU57
+ 200 000e 7047     		bx	lr
+ 201              		.cfi_endproc
+ 202              	.LFE166:
+ 204              		.section	.text.first_order_filter_cali,"ax",%progbits
+ 205              		.align	1
+ 206              		.global	first_order_filter_cali
+ 207              		.syntax unified
+ 208              		.thumb
+ 209              		.thumb_func
+ 211              	first_order_filter_cali:
+ 212              	.LVL12:
+ 213              	.LFB167:
+  70:algorithm/user_lib.c **** 
+  71:algorithm/user_lib.c **** /**
+  72:algorithm/user_lib.c ****   * @brief          一阶低通滤波计算
+  73:algorithm/user_lib.c ****   * @author         RM
+  74:algorithm/user_lib.c ****   * @param[in]      一阶低通滤波结构体
+  75:algorithm/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+  76:algorithm/user_lib.c ****   * @retval         返回空
+  77:algorithm/user_lib.c ****   */
+  78:algorithm/user_lib.c **** void first_order_filter_cali(first_order_filter_type_t *first_order_filter_type, fp32 input)
+  79:algorithm/user_lib.c **** {
+ 214              		.loc 1 79 1 is_stmt 1 view -0
+ 215              		.cfi_startproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 6
+
+
+ 216              		@ args = 0, pretend = 0, frame = 0
+ 217              		@ frame_needed = 0, uses_anonymous_args = 0
+ 218              		@ link register save eliminated.
+  80:algorithm/user_lib.c ****     first_order_filter_type->input = input;
+ 219              		.loc 1 80 5 view .LVU59
+ 220              		.loc 1 80 36 is_stmt 0 view .LVU60
+ 221 0000 80ED000A 		vstr.32	s0, [r0]
+  81:algorithm/user_lib.c ****     first_order_filter_type->out =
+ 222              		.loc 1 81 5 is_stmt 1 view .LVU61
+  82:algorithm/user_lib.c ****         first_order_filter_type->num[0] / (first_order_filter_type->num[0] + first_order_filter_typ
+ 223              		.loc 1 82 37 is_stmt 0 view .LVU62
+ 224 0004 90ED027A 		vldr.32	s14, [r0, #8]
+ 225              		.loc 1 82 101 view .LVU63
+ 226 0008 90ED036A 		vldr.32	s12, [r0, #12]
+ 227              		.loc 1 82 76 view .LVU64
+ 228 000c 77EE066A 		vadd.f32	s13, s14, s12
+ 229              		.loc 1 82 41 view .LVU65
+ 230 0010 C7EE267A 		vdiv.f32	s15, s14, s13
+ 231              		.loc 1 82 142 view .LVU66
+ 232 0014 90ED017A 		vldr.32	s14, [r0, #4]
+ 233              		.loc 1 82 117 view .LVU67
+ 234 0018 67EE877A 		vmul.f32	s15, s15, s14
+ 235              		.loc 1 82 188 view .LVU68
+ 236 001c 86EE267A 		vdiv.f32	s14, s12, s13
+ 237              		.loc 1 82 264 view .LVU69
+ 238 0020 27EE000A 		vmul.f32	s0, s14, s0
+ 239              	.LVL13:
+ 240              		.loc 1 82 148 view .LVU70
+ 241 0024 37EE800A 		vadd.f32	s0, s15, s0
+  81:algorithm/user_lib.c ****     first_order_filter_type->out =
+ 242              		.loc 1 81 34 view .LVU71
+ 243 0028 80ED010A 		vstr.32	s0, [r0, #4]
+  83:algorithm/user_lib.c **** }
+ 244              		.loc 1 83 1 view .LVU72
+ 245 002c 7047     		bx	lr
+ 246              		.cfi_endproc
+ 247              	.LFE167:
+ 249              		.section	.text.abs_limit,"ax",%progbits
+ 250              		.align	1
+ 251              		.global	abs_limit
+ 252              		.syntax unified
+ 253              		.thumb
+ 254              		.thumb_func
+ 256              	abs_limit:
+ 257              	.LVL14:
+ 258              	.LFB168:
+  84:algorithm/user_lib.c **** 
+  85:algorithm/user_lib.c **** //绝对限制
+  86:algorithm/user_lib.c **** void abs_limit(fp32 *num, fp32 Limit)
+  87:algorithm/user_lib.c **** {
+ 259              		.loc 1 87 1 is_stmt 1 view -0
+ 260              		.cfi_startproc
+ 261              		@ args = 0, pretend = 0, frame = 0
+ 262              		@ frame_needed = 0, uses_anonymous_args = 0
+ 263              		@ link register save eliminated.
+  88:algorithm/user_lib.c ****     if (*num > Limit)
+ 264              		.loc 1 88 5 view .LVU74
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 7
+
+
+ 265              		.loc 1 88 9 is_stmt 0 view .LVU75
+ 266 0000 D0ED007A 		vldr.32	s15, [r0]
+ 267              		.loc 1 88 8 view .LVU76
+ 268 0004 F4EEC07A 		vcmpe.f32	s15, s0
+ 269 0008 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 270 000c 02DD     		ble	.L22
+  89:algorithm/user_lib.c ****     {
+  90:algorithm/user_lib.c ****         *num = Limit;
+ 271              		.loc 1 90 9 is_stmt 1 view .LVU77
+ 272              		.loc 1 90 14 is_stmt 0 view .LVU78
+ 273 000e 80ED000A 		vstr.32	s0, [r0]
+ 274 0012 7047     		bx	lr
+ 275              	.L22:
+  91:algorithm/user_lib.c ****     }
+  92:algorithm/user_lib.c ****     else if (*num < -Limit)
+ 276              		.loc 1 92 10 is_stmt 1 view .LVU79
+ 277              		.loc 1 92 21 is_stmt 0 view .LVU80
+ 278 0014 B1EE400A 		vneg.f32	s0, s0
+ 279              	.LVL15:
+ 280              		.loc 1 92 13 view .LVU81
+ 281 0018 F4EEC07A 		vcmpe.f32	s15, s0
+ 282 001c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 283 0020 01D5     		bpl	.L15
+  93:algorithm/user_lib.c ****     {
+  94:algorithm/user_lib.c ****         *num = -Limit;
+ 284              		.loc 1 94 9 is_stmt 1 view .LVU82
+ 285              		.loc 1 94 14 is_stmt 0 view .LVU83
+ 286 0022 80ED000A 		vstr.32	s0, [r0]
+ 287              	.L15:
+  95:algorithm/user_lib.c ****     }
+  96:algorithm/user_lib.c **** }
+ 288              		.loc 1 96 1 view .LVU84
+ 289 0026 7047     		bx	lr
+ 290              		.cfi_endproc
+ 291              	.LFE168:
+ 293              		.section	.text.sign,"ax",%progbits
+ 294              		.align	1
+ 295              		.global	sign
+ 296              		.syntax unified
+ 297              		.thumb
+ 298              		.thumb_func
+ 300              	sign:
+ 301              	.LVL16:
+ 302              	.LFB169:
+  97:algorithm/user_lib.c **** 
+  98:algorithm/user_lib.c **** //判断符号位
+  99:algorithm/user_lib.c **** fp32 sign(fp32 value)
+ 100:algorithm/user_lib.c **** {
+ 303              		.loc 1 100 1 is_stmt 1 view -0
+ 304              		.cfi_startproc
+ 305              		@ args = 0, pretend = 0, frame = 0
+ 306              		@ frame_needed = 0, uses_anonymous_args = 0
+ 307              		@ link register save eliminated.
+ 101:algorithm/user_lib.c ****     if (value >= 0.0f)
+ 308              		.loc 1 101 5 view .LVU86
+ 309              		.loc 1 101 8 is_stmt 0 view .LVU87
+ 310 0000 B5EEC00A 		vcmpe.f32	s0, #0
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 8
+
+
+ 311 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 312 0008 02DB     		blt	.L28
+ 102:algorithm/user_lib.c ****     {
+ 103:algorithm/user_lib.c ****         return 1.0f;
+ 313              		.loc 1 103 16 view .LVU88
+ 314 000a B7EE000A 		vmov.f32	s0, #1.0e+0
+ 315              	.LVL17:
+ 316              		.loc 1 103 16 view .LVU89
+ 317 000e 7047     		bx	lr
+ 318              	.LVL18:
+ 319              	.L28:
+ 104:algorithm/user_lib.c ****     }
+ 105:algorithm/user_lib.c ****     else
+ 106:algorithm/user_lib.c ****     {
+ 107:algorithm/user_lib.c ****         return -1.0f;
+ 320              		.loc 1 107 16 view .LVU90
+ 321 0010 BFEE000A 		vmov.f32	s0, #-1.0e+0
+ 322              	.LVL19:
+ 108:algorithm/user_lib.c ****     }
+ 109:algorithm/user_lib.c **** }
+ 323              		.loc 1 109 1 view .LVU91
+ 324 0014 7047     		bx	lr
+ 325              		.cfi_endproc
+ 326              	.LFE169:
+ 328              		.section	.text.fp32_deadline,"ax",%progbits
+ 329              		.align	1
+ 330              		.global	fp32_deadline
+ 331              		.syntax unified
+ 332              		.thumb
+ 333              		.thumb_func
+ 335              	fp32_deadline:
+ 336              	.LVL20:
+ 337              	.LFB170:
+ 110:algorithm/user_lib.c **** 
+ 111:algorithm/user_lib.c **** //浮点死区
+ 112:algorithm/user_lib.c **** fp32 fp32_deadline(fp32 Value, fp32 minValue, fp32 maxValue)
+ 113:algorithm/user_lib.c **** {
+ 338              		.loc 1 113 1 is_stmt 1 view -0
+ 339              		.cfi_startproc
+ 340              		@ args = 0, pretend = 0, frame = 0
+ 341              		@ frame_needed = 0, uses_anonymous_args = 0
+ 342              		@ link register save eliminated.
+ 114:algorithm/user_lib.c ****     if (Value < maxValue && Value > minValue)
+ 343              		.loc 1 114 5 view .LVU93
+ 344              		.loc 1 114 8 is_stmt 0 view .LVU94
+ 345 0000 B4EEC10A 		vcmpe.f32	s0, s2
+ 346 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 347 0008 06D5     		bpl	.L30
+ 348              		.loc 1 114 26 discriminator 1 view .LVU95
+ 349 000a B4EEE00A 		vcmpe.f32	s0, s1
+ 350 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 351 0012 01DD     		ble	.L30
+ 115:algorithm/user_lib.c ****     {
+ 116:algorithm/user_lib.c ****         Value = 0.0f;
+ 352              		.loc 1 116 15 view .LVU96
+ 353 0014 9FED010A 		vldr.32	s0, .L34
+ 354              	.LVL21:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 9
+
+
+ 355              	.L30:
+ 117:algorithm/user_lib.c ****     }
+ 118:algorithm/user_lib.c ****     return Value;
+ 356              		.loc 1 118 5 is_stmt 1 view .LVU97
+ 119:algorithm/user_lib.c **** }
+ 357              		.loc 1 119 1 is_stmt 0 view .LVU98
+ 358 0018 7047     		bx	lr
+ 359              	.L35:
+ 360 001a 00BF     		.align	2
+ 361              	.L34:
+ 362 001c 00000000 		.word	0
+ 363              		.cfi_endproc
+ 364              	.LFE170:
+ 366              		.section	.text.int16_deadline,"ax",%progbits
+ 367              		.align	1
+ 368              		.global	int16_deadline
+ 369              		.syntax unified
+ 370              		.thumb
+ 371              		.thumb_func
+ 373              	int16_deadline:
+ 374              	.LVL22:
+ 375              	.LFB171:
+ 120:algorithm/user_lib.c **** 
+ 121:algorithm/user_lib.c **** //int26死区
+ 122:algorithm/user_lib.c **** int16_t int16_deadline(int16_t Value, int16_t minValue, int16_t maxValue)
+ 123:algorithm/user_lib.c **** {
+ 376              		.loc 1 123 1 is_stmt 1 view -0
+ 377              		.cfi_startproc
+ 378              		@ args = 0, pretend = 0, frame = 0
+ 379              		@ frame_needed = 0, uses_anonymous_args = 0
+ 380              		@ link register save eliminated.
+ 124:algorithm/user_lib.c ****     if (Value < maxValue && Value > minValue)
+ 381              		.loc 1 124 5 view .LVU100
+ 382              		.loc 1 124 8 is_stmt 0 view .LVU101
+ 383 0000 9042     		cmp	r0, r2
+ 384 0002 02DA     		bge	.L37
+ 385              		.loc 1 124 26 discriminator 1 view .LVU102
+ 386 0004 8842     		cmp	r0, r1
+ 387 0006 00DD     		ble	.L37
+ 125:algorithm/user_lib.c ****     {
+ 126:algorithm/user_lib.c ****         Value = 0;
+ 388              		.loc 1 126 15 view .LVU103
+ 389 0008 0020     		movs	r0, #0
+ 390              	.LVL23:
+ 391              	.L37:
+ 127:algorithm/user_lib.c ****     }
+ 128:algorithm/user_lib.c ****     return Value;
+ 392              		.loc 1 128 5 is_stmt 1 view .LVU104
+ 129:algorithm/user_lib.c **** }
+ 393              		.loc 1 129 1 is_stmt 0 view .LVU105
+ 394 000a 7047     		bx	lr
+ 395              		.cfi_endproc
+ 396              	.LFE171:
+ 398              		.section	.text.fp32_constrain,"ax",%progbits
+ 399              		.align	1
+ 400              		.global	fp32_constrain
+ 401              		.syntax unified
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 10
+
+
+ 402              		.thumb
+ 403              		.thumb_func
+ 405              	fp32_constrain:
+ 406              	.LVL24:
+ 407              	.LFB172:
+ 130:algorithm/user_lib.c **** 
+ 131:algorithm/user_lib.c **** //限幅函数
+ 132:algorithm/user_lib.c **** fp32 fp32_constrain(fp32 Value, fp32 minValue, fp32 maxValue)
+ 133:algorithm/user_lib.c **** {
+ 408              		.loc 1 133 1 is_stmt 1 view -0
+ 409              		.cfi_startproc
+ 410              		@ args = 0, pretend = 0, frame = 0
+ 411              		@ frame_needed = 0, uses_anonymous_args = 0
+ 412              		@ link register save eliminated.
+ 134:algorithm/user_lib.c ****     if (Value < minValue)
+ 413              		.loc 1 134 5 view .LVU107
+ 414              		.loc 1 134 8 is_stmt 0 view .LVU108
+ 415 0000 B4EEE00A 		vcmpe.f32	s0, s1
+ 416 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 417 0008 07D4     		bmi	.L42
+ 135:algorithm/user_lib.c ****         return minValue;
+ 136:algorithm/user_lib.c ****     else if (Value > maxValue)
+ 418              		.loc 1 136 10 is_stmt 1 view .LVU109
+ 419              		.loc 1 136 13 is_stmt 0 view .LVU110
+ 420 000a B4EEC10A 		vcmpe.f32	s0, s2
+ 421 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 422 0012 04DD     		ble	.L39
+ 137:algorithm/user_lib.c ****         return maxValue;
+ 423              		.loc 1 137 16 view .LVU111
+ 424 0014 B0EE410A 		vmov.f32	s0, s2
+ 425              	.LVL25:
+ 426              		.loc 1 137 16 view .LVU112
+ 427 0018 7047     		bx	lr
+ 428              	.LVL26:
+ 429              	.L42:
+ 135:algorithm/user_lib.c ****         return minValue;
+ 430              		.loc 1 135 16 view .LVU113
+ 431 001a B0EE600A 		vmov.f32	s0, s1
+ 432              	.LVL27:
+ 433              	.L39:
+ 138:algorithm/user_lib.c ****     else
+ 139:algorithm/user_lib.c ****         return Value;
+ 140:algorithm/user_lib.c **** }
+ 434              		.loc 1 140 1 view .LVU114
+ 435 001e 7047     		bx	lr
+ 436              		.cfi_endproc
+ 437              	.LFE172:
+ 439              		.section	.text.int16_constrain,"ax",%progbits
+ 440              		.align	1
+ 441              		.global	int16_constrain
+ 442              		.syntax unified
+ 443              		.thumb
+ 444              		.thumb_func
+ 446              	int16_constrain:
+ 447              	.LVL28:
+ 448              	.LFB173:
+ 141:algorithm/user_lib.c **** 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 11
+
+
+ 142:algorithm/user_lib.c **** //限幅函数
+ 143:algorithm/user_lib.c **** int16_t int16_constrain(int16_t Value, int16_t minValue, int16_t maxValue)
+ 144:algorithm/user_lib.c **** {
+ 449              		.loc 1 144 1 is_stmt 1 view -0
+ 450              		.cfi_startproc
+ 451              		@ args = 0, pretend = 0, frame = 0
+ 452              		@ frame_needed = 0, uses_anonymous_args = 0
+ 453              		@ link register save eliminated.
+ 145:algorithm/user_lib.c ****     if (Value < minValue)
+ 454              		.loc 1 145 5 view .LVU116
+ 455              		.loc 1 145 8 is_stmt 0 view .LVU117
+ 456 0000 8842     		cmp	r0, r1
+ 457 0002 03DB     		blt	.L48
+ 146:algorithm/user_lib.c ****         return minValue;
+ 147:algorithm/user_lib.c ****     else if (Value > maxValue)
+ 458              		.loc 1 147 10 is_stmt 1 view .LVU118
+ 459              		.loc 1 147 13 is_stmt 0 view .LVU119
+ 460 0004 9042     		cmp	r0, r2
+ 461 0006 02DD     		ble	.L47
+ 148:algorithm/user_lib.c ****         return maxValue;
+ 462              		.loc 1 148 16 view .LVU120
+ 463 0008 1046     		mov	r0, r2
+ 464              	.LVL29:
+ 465              		.loc 1 148 16 view .LVU121
+ 466 000a 7047     		bx	lr
+ 467              	.LVL30:
+ 468              	.L48:
+ 146:algorithm/user_lib.c ****         return minValue;
+ 469              		.loc 1 146 16 view .LVU122
+ 470 000c 0846     		mov	r0, r1
+ 471              	.LVL31:
+ 472              	.L47:
+ 149:algorithm/user_lib.c ****     else
+ 150:algorithm/user_lib.c ****         return Value;
+ 151:algorithm/user_lib.c **** }
+ 473              		.loc 1 151 1 view .LVU123
+ 474 000e 7047     		bx	lr
+ 475              		.cfi_endproc
+ 476              	.LFE173:
+ 478              		.section	.text.loop_fp32_constrain,"ax",%progbits
+ 479              		.align	1
+ 480              		.global	loop_fp32_constrain
+ 481              		.syntax unified
+ 482              		.thumb
+ 483              		.thumb_func
+ 485              	loop_fp32_constrain:
+ 486              	.LVL32:
+ 487              	.LFB174:
+ 152:algorithm/user_lib.c **** 
+ 153:algorithm/user_lib.c **** //循环限幅函数
+ 154:algorithm/user_lib.c **** fp32 loop_fp32_constrain(fp32 Input, fp32 minValue, fp32 maxValue)
+ 155:algorithm/user_lib.c **** {
+ 488              		.loc 1 155 1 is_stmt 1 view -0
+ 489              		.cfi_startproc
+ 490              		@ args = 0, pretend = 0, frame = 0
+ 491              		@ frame_needed = 0, uses_anonymous_args = 0
+ 492              		@ link register save eliminated.
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 12
+
+
+ 156:algorithm/user_lib.c ****     if (maxValue < minValue)
+ 493              		.loc 1 156 5 view .LVU125
+ 494              		.loc 1 156 8 is_stmt 0 view .LVU126
+ 495 0000 B4EEE01A 		vcmpe.f32	s2, s1
+ 496 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 497 0008 1ED4     		bmi	.L51
+ 157:algorithm/user_lib.c ****     {
+ 158:algorithm/user_lib.c ****         return Input;
+ 159:algorithm/user_lib.c ****     }
+ 160:algorithm/user_lib.c **** 
+ 161:algorithm/user_lib.c ****     if (Input > maxValue)
+ 498              		.loc 1 161 5 is_stmt 1 view .LVU127
+ 499              		.loc 1 161 8 is_stmt 0 view .LVU128
+ 500 000a B4EEC01A 		vcmpe.f32	s2, s0
+ 501 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 502 0012 0AD5     		bpl	.L61
+ 503              	.LBB2:
+ 162:algorithm/user_lib.c ****     {
+ 163:algorithm/user_lib.c ****         fp32 len = maxValue - minValue;
+ 504              		.loc 1 163 9 is_stmt 1 view .LVU129
+ 505              		.loc 1 163 14 is_stmt 0 view .LVU130
+ 506 0014 71EE600A 		vsub.f32	s1, s2, s1
+ 507              	.LVL33:
+ 164:algorithm/user_lib.c ****         while (Input > maxValue)
+ 508              		.loc 1 164 9 is_stmt 1 view .LVU131
+ 509              		.loc 1 164 15 is_stmt 0 view .LVU132
+ 510 0018 01E0     		b	.L54
+ 511              	.L55:
+ 165:algorithm/user_lib.c ****         {
+ 166:algorithm/user_lib.c ****             Input -= len;
+ 512              		.loc 1 166 13 is_stmt 1 view .LVU133
+ 513              		.loc 1 166 19 is_stmt 0 view .LVU134
+ 514 001a 30EE600A 		vsub.f32	s0, s0, s1
+ 515              	.LVL34:
+ 516              	.L54:
+ 164:algorithm/user_lib.c ****         while (Input > maxValue)
+ 517              		.loc 1 164 15 is_stmt 1 view .LVU135
+ 518 001e B4EEC10A 		vcmpe.f32	s0, s2
+ 519 0022 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 520 0026 F8DC     		bgt	.L55
+ 164:algorithm/user_lib.c ****         while (Input > maxValue)
+ 521              		.loc 1 164 15 is_stmt 0 view .LVU136
+ 522 0028 7047     		bx	lr
+ 523              	.LVL35:
+ 524              	.L61:
+ 164:algorithm/user_lib.c ****         while (Input > maxValue)
+ 525              		.loc 1 164 15 view .LVU137
+ 526              	.LBE2:
+ 167:algorithm/user_lib.c ****         }
+ 168:algorithm/user_lib.c ****     }
+ 169:algorithm/user_lib.c ****     else if (Input < minValue)
+ 527              		.loc 1 169 10 is_stmt 1 view .LVU138
+ 528              		.loc 1 169 13 is_stmt 0 view .LVU139
+ 529 002a F4EEC00A 		vcmpe.f32	s1, s0
+ 530 002e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 531 0032 09DD     		ble	.L51
+ 532              	.LBB3:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 13
+
+
+ 170:algorithm/user_lib.c ****     {
+ 171:algorithm/user_lib.c ****         fp32 len = maxValue - minValue;
+ 533              		.loc 1 171 9 is_stmt 1 view .LVU140
+ 534              		.loc 1 171 14 is_stmt 0 view .LVU141
+ 535 0034 31EE601A 		vsub.f32	s2, s2, s1
+ 536              	.LVL36:
+ 172:algorithm/user_lib.c ****         while (Input < minValue)
+ 537              		.loc 1 172 9 is_stmt 1 view .LVU142
+ 538              	.L57:
+ 539              		.loc 1 172 15 view .LVU143
+ 540 0038 B4EEE00A 		vcmpe.f32	s0, s1
+ 541 003c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 542 0040 02D5     		bpl	.L51
+ 173:algorithm/user_lib.c ****         {
+ 174:algorithm/user_lib.c ****             Input += len;
+ 543              		.loc 1 174 13 view .LVU144
+ 544              		.loc 1 174 19 is_stmt 0 view .LVU145
+ 545 0042 30EE010A 		vadd.f32	s0, s0, s2
+ 546              	.LVL37:
+ 547              		.loc 1 174 19 view .LVU146
+ 548 0046 F7E7     		b	.L57
+ 549              	.LVL38:
+ 550              	.L51:
+ 551              		.loc 1 174 19 view .LVU147
+ 552              	.LBE3:
+ 175:algorithm/user_lib.c ****         }
+ 176:algorithm/user_lib.c ****     }
+ 177:algorithm/user_lib.c ****     return Input;
+ 178:algorithm/user_lib.c **** }
+ 553              		.loc 1 178 1 view .LVU148
+ 554 0048 7047     		bx	lr
+ 555              		.cfi_endproc
+ 556              	.LFE174:
+ 558              		.section	.text.theta_format,"ax",%progbits
+ 559              		.align	1
+ 560              		.global	theta_format
+ 561              		.syntax unified
+ 562              		.thumb
+ 563              		.thumb_func
+ 565              	theta_format:
+ 566              	.LVL39:
+ 567              	.LFB175:
+ 179:algorithm/user_lib.c **** 
+ 180:algorithm/user_lib.c **** //弧度格式化为-PI~PI
+ 181:algorithm/user_lib.c **** 
+ 182:algorithm/user_lib.c **** //角度格式化为-180~180
+ 183:algorithm/user_lib.c **** fp32 theta_format(fp32 Ang)
+ 184:algorithm/user_lib.c **** {
+ 568              		.loc 1 184 1 is_stmt 1 view -0
+ 569              		.cfi_startproc
+ 570              		@ args = 0, pretend = 0, frame = 0
+ 571              		@ frame_needed = 0, uses_anonymous_args = 0
+ 572              		.loc 1 184 1 is_stmt 0 view .LVU150
+ 573 0000 08B5     		push	{r3, lr}
+ 574              	.LCFI0:
+ 575              		.cfi_def_cfa_offset 8
+ 576              		.cfi_offset 3, -8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 14
+
+
+ 577              		.cfi_offset 14, -4
+ 185:algorithm/user_lib.c ****     return loop_fp32_constrain(Ang, -180.0f, 180.0f);
+ 578              		.loc 1 185 5 is_stmt 1 view .LVU151
+ 579              		.loc 1 185 12 is_stmt 0 view .LVU152
+ 580 0002 9FED031A 		vldr.32	s2, .L64
+ 581 0006 DFED030A 		vldr.32	s1, .L64+4
+ 582 000a FFF7FEFF 		bl	loop_fp32_constrain
+ 583              	.LVL40:
+ 186:algorithm/user_lib.c **** }
+ 584              		.loc 1 186 1 view .LVU153
+ 585 000e 08BD     		pop	{r3, pc}
+ 586              	.L65:
+ 587              		.align	2
+ 588              	.L64:
+ 589 0010 00003443 		.word	1127481344
+ 590 0014 000034C3 		.word	-1020002304
+ 591              		.cfi_endproc
+ 592              	.LFE175:
+ 594              		.text
+ 595              	.Letext0:
+ 596              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 597              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 598              		.file 4 "algorithm/struct_typedef.h"
+ 599              		.file 5 "algorithm/user_lib.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s 			page 15
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 user_lib.c
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:20     .text.invSqrt:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:26     .text.invSqrt:00000000 invSqrt
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:73     .text.invSqrt:0000002c $d
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:78     .text.ramp_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:84     .text.ramp_init:00000000 ramp_init
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:114    .text.ramp_calc:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:120    .text.ramp_calc:00000000 ramp_calc
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:170    .text.first_order_filter_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:176    .text.first_order_filter_init:00000000 first_order_filter_init
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:205    .text.first_order_filter_cali:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:211    .text.first_order_filter_cali:00000000 first_order_filter_cali
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:250    .text.abs_limit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:256    .text.abs_limit:00000000 abs_limit
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:294    .text.sign:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:300    .text.sign:00000000 sign
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:329    .text.fp32_deadline:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:335    .text.fp32_deadline:00000000 fp32_deadline
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:362    .text.fp32_deadline:0000001c $d
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:367    .text.int16_deadline:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:373    .text.int16_deadline:00000000 int16_deadline
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:399    .text.fp32_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:405    .text.fp32_constrain:00000000 fp32_constrain
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:440    .text.int16_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:446    .text.int16_constrain:00000000 int16_constrain
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:479    .text.loop_fp32_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:485    .text.loop_fp32_constrain:00000000 loop_fp32_constrain
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:559    .text.theta_format:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:565    .text.theta_format:00000000 theta_format
+C:\Users\xixi\AppData\Local\Temp\ccvvy1mK.s:589    .text.theta_format:00000010 $d
+
+NO UNDEFINED SYMBOLS

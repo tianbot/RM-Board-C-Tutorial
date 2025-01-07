@@ -1,0 +1,548 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"led_flow_task.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.aRGB_led_show,"ax",%progbits
+  20              		.align	1
+  21              		.global	aRGB_led_show
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	aRGB_led_show:
+  27              	.LVL0:
+  28              	.LFB135:
+  29              		.file 1 "Src/led_flow_task.c"
+   1:Src/led_flow_task.c **** /**
+   2:Src/led_flow_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Src/led_flow_task.c ****   * @file       led_trigger_task.c/h
+   4:Src/led_flow_task.c ****   * @brief      led RGB show.led RGB灯效。
+   5:Src/led_flow_task.c ****   * @note       
+   6:Src/led_flow_task.c ****   * @history
+   7:Src/led_flow_task.c ****   *  Version    Date            Author          Modification
+   8:Src/led_flow_task.c ****   *  V1.0.0     Nov-11-2019     RM              1. rgb led
+   9:Src/led_flow_task.c ****   *
+  10:Src/led_flow_task.c ****   @verbatim
+  11:Src/led_flow_task.c ****   ==============================================================================
+  12:Src/led_flow_task.c **** 
+  13:Src/led_flow_task.c ****   ==============================================================================
+  14:Src/led_flow_task.c ****   @endverbatim
+  15:Src/led_flow_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  16:Src/led_flow_task.c ****   */
+  17:Src/led_flow_task.c **** #include "led_flow_task.h"
+  18:Src/led_flow_task.c **** #include "cmsis_os.h"
+  19:Src/led_flow_task.c **** #include "main.h"
+  20:Src/led_flow_task.c **** 
+  21:Src/led_flow_task.c **** extern TIM_HandleTypeDef htim5;
+  22:Src/led_flow_task.c **** /**
+  23:Src/led_flow_task.c ****   * @brief          aRGB show
+  24:Src/led_flow_task.c ****   * @param[in]      aRGB: 0xaaRRGGBB, 'aa' is alpha, 'RR' is red, 'GG' is green, 'BB' is blue
+  25:Src/led_flow_task.c ****   * @retval         none
+  26:Src/led_flow_task.c ****   */
+  27:Src/led_flow_task.c **** /**
+  28:Src/led_flow_task.c ****   * @brief          显示RGB
+  29:Src/led_flow_task.c ****   * @param[in]      aRGB:0xaaRRGGBB,'aa' 是透明度,'RR'是红色,'GG'是绿色,'BB'是蓝色
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 2
+
+
+  30:Src/led_flow_task.c ****   * @retval         none
+  31:Src/led_flow_task.c ****   */
+  32:Src/led_flow_task.c **** void aRGB_led_show(uint32_t aRGB)
+  33:Src/led_flow_task.c **** {
+  30              		.loc 1 33 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+  35              		.loc 1 33 1 is_stmt 0 view .LVU1
+  36 0000 10B4     		push	{r4}
+  37              	.LCFI0:
+  38              		.cfi_def_cfa_offset 4
+  39              		.cfi_offset 4, -4
+  34:Src/led_flow_task.c ****     static uint8_t alpha;
+  40              		.loc 1 34 5 is_stmt 1 view .LVU2
+  35:Src/led_flow_task.c ****     static uint16_t red,green,blue;
+  41              		.loc 1 35 5 view .LVU3
+  36:Src/led_flow_task.c **** 
+  37:Src/led_flow_task.c ****     alpha = (aRGB & 0xFF000000) >> 24;
+  42              		.loc 1 37 5 view .LVU4
+  43              		.loc 1 37 11 is_stmt 0 view .LVU5
+  44 0002 030E     		lsrs	r3, r0, #24
+  45 0004 0D4A     		ldr	r2, .L3
+  46 0006 1370     		strb	r3, [r2]
+  38:Src/led_flow_task.c ****     red = ((aRGB & 0x00FF0000) >> 16) * alpha;
+  47              		.loc 1 38 5 is_stmt 1 view .LVU6
+  48              		.loc 1 38 9 is_stmt 0 view .LVU7
+  49 0008 C0F30742 		ubfx	r2, r0, #16, #8
+  50 000c 03FB02F2 		mul	r2, r3, r2
+  51 0010 0B49     		ldr	r1, .L3+4
+  52 0012 0A80     		strh	r2, [r1]	@ movhi
+  39:Src/led_flow_task.c ****     green = ((aRGB & 0x0000FF00) >> 8) * alpha;
+  53              		.loc 1 39 5 is_stmt 1 view .LVU8
+  54              		.loc 1 39 11 is_stmt 0 view .LVU9
+  55 0014 C0F30721 		ubfx	r1, r0, #8, #8
+  56 0018 03FB01F1 		mul	r1, r3, r1
+  57 001c 094C     		ldr	r4, .L3+8
+  58 001e 2180     		strh	r1, [r4]	@ movhi
+  40:Src/led_flow_task.c ****     blue = ((aRGB & 0x000000FF) >> 0) * alpha;
+  59              		.loc 1 40 5 is_stmt 1 view .LVU10
+  60              		.loc 1 40 10 is_stmt 0 view .LVU11
+  61 0020 C0B2     		uxtb	r0, r0
+  62              	.LVL1:
+  63              		.loc 1 40 10 view .LVU12
+  64 0022 03FB00F0 		mul	r0, r3, r0
+  65 0026 084B     		ldr	r3, .L3+12
+  66 0028 1880     		strh	r0, [r3]	@ movhi
+  41:Src/led_flow_task.c **** 
+  42:Src/led_flow_task.c ****     __HAL_TIM_SetCompare(&htim5, TIM_CHANNEL_1, blue);
+  67              		.loc 1 42 5 is_stmt 1 view .LVU13
+  68 002a 084B     		ldr	r3, .L3+16
+  69 002c 1B68     		ldr	r3, [r3]
+  70 002e 5863     		str	r0, [r3, #52]
+  43:Src/led_flow_task.c ****     __HAL_TIM_SetCompare(&htim5, TIM_CHANNEL_2, green);
+  71              		.loc 1 43 5 view .LVU14
+  72 0030 9963     		str	r1, [r3, #56]
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 3
+
+
+  44:Src/led_flow_task.c ****     __HAL_TIM_SetCompare(&htim5, TIM_CHANNEL_3, red);
+  73              		.loc 1 44 5 view .LVU15
+  74 0032 DA63     		str	r2, [r3, #60]
+  45:Src/led_flow_task.c **** }
+  75              		.loc 1 45 1 is_stmt 0 view .LVU16
+  76 0034 5DF8044B 		ldr	r4, [sp], #4
+  77              	.LCFI1:
+  78              		.cfi_restore 4
+  79              		.cfi_def_cfa_offset 0
+  80 0038 7047     		bx	lr
+  81              	.L4:
+  82 003a 00BF     		.align	2
+  83              	.L3:
+  84 003c 00000000 		.word	.LANCHOR0
+  85 0040 00000000 		.word	.LANCHOR1
+  86 0044 00000000 		.word	.LANCHOR2
+  87 0048 00000000 		.word	.LANCHOR3
+  88 004c 00000000 		.word	htim5
+  89              		.cfi_endproc
+  90              	.LFE135:
+  92              		.section	.text.led_RGB_flow_task,"ax",%progbits
+  93              		.align	1
+  94              		.global	led_RGB_flow_task
+  95              		.syntax unified
+  96              		.thumb
+  97              		.thumb_func
+  99              	led_RGB_flow_task:
+ 100              	.LFB136:
+  46:Src/led_flow_task.c **** 
+  47:Src/led_flow_task.c **** #define RGB_FLOW_COLOR_CHANGE_TIME  1000
+  48:Src/led_flow_task.c **** #define RGB_FLOW_COLOR_LENGHT   6
+  49:Src/led_flow_task.c **** //blue-> green(dark)-> red -> blue(dark) -> green(dark) -> red(dark) -> blue
+  50:Src/led_flow_task.c **** //蓝 -> 绿(灭) -> 红 -> 蓝(灭) -> 绿 -> 红(灭) -> 蓝 
+  51:Src/led_flow_task.c **** uint32_t RGB_flow_color[RGB_FLOW_COLOR_LENGHT + 1] = {0xFF0000FF, 0x0000FF00, 0xFFFF0000, 0x000000F
+  52:Src/led_flow_task.c **** 
+  53:Src/led_flow_task.c **** /**
+  54:Src/led_flow_task.c ****   * @brief          led rgb task
+  55:Src/led_flow_task.c ****   * @param[in]      pvParameters: NULL
+  56:Src/led_flow_task.c ****   * @retval         none
+  57:Src/led_flow_task.c ****   */
+  58:Src/led_flow_task.c **** /**
+  59:Src/led_flow_task.c ****   * @brief          led RGB任务
+  60:Src/led_flow_task.c ****   * @param[in]      pvParameters: NULL
+  61:Src/led_flow_task.c ****   * @retval         none
+  62:Src/led_flow_task.c ****   */
+  63:Src/led_flow_task.c **** void led_RGB_flow_task(void const * argument)
+  64:Src/led_flow_task.c **** {
+ 101              		.loc 1 64 1 is_stmt 1 view -0
+ 102              		.cfi_startproc
+ 103              		@ args = 0, pretend = 0, frame = 0
+ 104              		@ frame_needed = 0, uses_anonymous_args = 0
+ 105              	.LVL2:
+ 106              		.loc 1 64 1 is_stmt 0 view .LVU18
+ 107 0000 38B5     		push	{r3, r4, r5, lr}
+ 108              	.LCFI2:
+ 109              		.cfi_def_cfa_offset 16
+ 110              		.cfi_offset 3, -16
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 4
+
+
+ 111              		.cfi_offset 4, -12
+ 112              		.cfi_offset 5, -8
+ 113              		.cfi_offset 14, -4
+ 114 0002 2DED088B 		vpush.64	{d8, d9, d10, d11}
+ 115              	.LCFI3:
+ 116              		.cfi_def_cfa_offset 48
+ 117              		.cfi_offset 80, -48
+ 118              		.cfi_offset 81, -44
+ 119              		.cfi_offset 82, -40
+ 120              		.cfi_offset 83, -36
+ 121              		.cfi_offset 84, -32
+ 122              		.cfi_offset 85, -28
+ 123              		.cfi_offset 86, -24
+ 124              		.cfi_offset 87, -20
+ 125              	.LVL3:
+ 126              	.L10:
+  65:Src/led_flow_task.c ****     uint16_t i, j;
+ 127              		.loc 1 65 5 is_stmt 1 view .LVU19
+  66:Src/led_flow_task.c ****     fp32 delta_alpha, delta_red, delta_green, delta_blue;
+ 128              		.loc 1 66 5 view .LVU20
+  67:Src/led_flow_task.c ****     fp32 alpha,red,green,blue;
+ 129              		.loc 1 67 5 view .LVU21
+  68:Src/led_flow_task.c ****     uint32_t aRGB;
+ 130              		.loc 1 68 5 view .LVU22
+  69:Src/led_flow_task.c **** 
+  70:Src/led_flow_task.c ****     while(1)
+ 131              		.loc 1 70 5 view .LVU23
+  71:Src/led_flow_task.c ****     {
+  72:Src/led_flow_task.c **** 
+  73:Src/led_flow_task.c ****         for(i = 0; i < RGB_FLOW_COLOR_LENGHT; i++)
+ 132              		.loc 1 73 9 view .LVU24
+ 133              		.loc 1 73 15 is_stmt 0 view .LVU25
+ 134 0006 0025     		movs	r5, #0
+ 135              		.loc 1 73 9 view .LVU26
+ 136 0008 29E0     		b	.L6
+ 137              	.LVL4:
+ 138              	.L8:
+  74:Src/led_flow_task.c ****         {
+  75:Src/led_flow_task.c ****             alpha = (RGB_flow_color[i] & 0xFF000000) >> 24;
+  76:Src/led_flow_task.c ****             red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+  77:Src/led_flow_task.c ****             green = ((RGB_flow_color[i] & 0x0000FF00) >> 8);
+  78:Src/led_flow_task.c ****             blue = ((RGB_flow_color[i] & 0x000000FF) >> 0);
+  79:Src/led_flow_task.c **** 
+  80:Src/led_flow_task.c ****             delta_alpha = (fp32)((RGB_flow_color[i + 1] & 0xFF000000) >> 24) - (fp32)((RGB_flow_col
+  81:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+  82:Src/led_flow_task.c ****             delta_green = (fp32)((RGB_flow_color[i + 1] & 0x0000FF00) >> 8) - (fp32)((RGB_flow_colo
+  83:Src/led_flow_task.c ****             delta_blue = (fp32)((RGB_flow_color[i + 1] & 0x000000FF) >> 0) - (fp32)((RGB_flow_color
+  84:Src/led_flow_task.c **** 
+  85:Src/led_flow_task.c ****             delta_alpha /= RGB_FLOW_COLOR_CHANGE_TIME;
+  86:Src/led_flow_task.c ****             delta_red /= RGB_FLOW_COLOR_CHANGE_TIME;
+  87:Src/led_flow_task.c ****             delta_green /= RGB_FLOW_COLOR_CHANGE_TIME;
+  88:Src/led_flow_task.c ****             delta_blue /= RGB_FLOW_COLOR_CHANGE_TIME;
+  89:Src/led_flow_task.c ****             for(j = 0; j < RGB_FLOW_COLOR_CHANGE_TIME; j++)
+  90:Src/led_flow_task.c ****             {
+  91:Src/led_flow_task.c ****                 alpha += delta_alpha;
+ 139              		.loc 1 91 17 is_stmt 1 discriminator 3 view .LVU27
+ 140              		.loc 1 91 23 is_stmt 0 discriminator 3 view .LVU28
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 5
+
+
+ 141 000a 7BEE8ABA 		vadd.f32	s23, s23, s20
+ 142              	.LVL5:
+  92:Src/led_flow_task.c ****                 red += delta_red;
+ 143              		.loc 1 92 17 is_stmt 1 discriminator 3 view .LVU29
+ 144              		.loc 1 92 21 is_stmt 0 discriminator 3 view .LVU30
+ 145 000e 3BEE29BA 		vadd.f32	s22, s22, s19
+ 146              	.LVL6:
+  93:Src/led_flow_task.c ****                 green += delta_green;
+ 147              		.loc 1 93 17 is_stmt 1 discriminator 3 view .LVU31
+ 148              		.loc 1 93 23 is_stmt 0 discriminator 3 view .LVU32
+ 149 0012 7AEE89AA 		vadd.f32	s21, s21, s18
+ 150              	.LVL7:
+  94:Src/led_flow_task.c ****                 blue += delta_blue;
+ 151              		.loc 1 94 17 is_stmt 1 discriminator 3 view .LVU33
+ 152              		.loc 1 94 22 is_stmt 0 discriminator 3 view .LVU34
+ 153 0016 38EE288A 		vadd.f32	s16, s16, s17
+ 154              	.LVL8:
+  95:Src/led_flow_task.c **** 
+  96:Src/led_flow_task.c ****                 aRGB = ((uint32_t)(alpha)) << 24 | ((uint32_t)(red)) << 16 | ((uint32_t)(green)) <<
+ 155              		.loc 1 96 17 is_stmt 1 discriminator 3 view .LVU35
+ 156              		.loc 1 96 25 is_stmt 0 discriminator 3 view .LVU36
+ 157 001a FCEEEB7A 		vcvt.u32.f32	s15, s23
+ 158 001e 17EE903A 		vmov	r3, s15	@ int
+ 159              		.loc 1 96 53 discriminator 3 view .LVU37
+ 160 0022 FCEECB7A 		vcvt.u32.f32	s15, s22
+ 161 0026 17EE900A 		vmov	r0, s15	@ int
+ 162              		.loc 1 96 70 discriminator 3 view .LVU38
+ 163 002a 0204     		lsls	r2, r0, #16
+ 164              		.loc 1 96 50 discriminator 3 view .LVU39
+ 165 002c 42EA0360 		orr	r0, r2, r3, lsl #24
+ 166              		.loc 1 96 79 discriminator 3 view .LVU40
+ 167 0030 FCEEEA7A 		vcvt.u32.f32	s15, s21
+ 168 0034 17EE903A 		vmov	r3, s15	@ int
+ 169              		.loc 1 96 76 discriminator 3 view .LVU41
+ 170 0038 40EA0323 		orr	r3, r0, r3, lsl #8
+ 171              		.loc 1 96 124 discriminator 3 view .LVU42
+ 172 003c FCEEC87A 		vcvt.u32.f32	s15, s16
+ 173 0040 17EE900A 		vmov	r0, s15	@ int
+ 174              	.LVL9:
+  97:Src/led_flow_task.c ****                 aRGB_led_show(aRGB);
+ 175              		.loc 1 97 17 is_stmt 1 discriminator 3 view .LVU43
+ 176 0044 1843     		orrs	r0, r0, r3
+ 177              	.LVL10:
+ 178              		.loc 1 97 17 is_stmt 0 discriminator 3 view .LVU44
+ 179 0046 FFF7FEFF 		bl	aRGB_led_show
+ 180              	.LVL11:
+  98:Src/led_flow_task.c ****                 osDelay(1);
+ 181              		.loc 1 98 17 is_stmt 1 discriminator 3 view .LVU45
+ 182 004a 0120     		movs	r0, #1
+ 183 004c FFF7FEFF 		bl	osDelay
+ 184              	.LVL12:
+  89:Src/led_flow_task.c ****             {
+ 185              		.loc 1 89 56 discriminator 3 view .LVU46
+  89:Src/led_flow_task.c ****             {
+ 186              		.loc 1 89 57 is_stmt 0 discriminator 3 view .LVU47
+ 187 0050 0134     		adds	r4, r4, #1
+ 188              	.LVL13:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 6
+
+
+  89:Src/led_flow_task.c ****             {
+ 189              		.loc 1 89 57 discriminator 3 view .LVU48
+ 190 0052 A4B2     		uxth	r4, r4
+ 191              	.LVL14:
+ 192              	.L7:
+  89:Src/led_flow_task.c ****             {
+ 193              		.loc 1 89 24 is_stmt 1 discriminator 1 view .LVU49
+  89:Src/led_flow_task.c ****             {
+ 194              		.loc 1 89 13 is_stmt 0 discriminator 1 view .LVU50
+ 195 0054 B4F57A7F 		cmp	r4, #1000
+ 196 0058 D7D3     		bcc	.L8
+  73:Src/led_flow_task.c ****         {
+ 197              		.loc 1 73 47 is_stmt 1 discriminator 2 view .LVU51
+  73:Src/led_flow_task.c ****         {
+ 198              		.loc 1 73 48 is_stmt 0 discriminator 2 view .LVU52
+ 199 005a 0135     		adds	r5, r5, #1
+ 200              	.LVL15:
+  73:Src/led_flow_task.c ****         {
+ 201              		.loc 1 73 48 discriminator 2 view .LVU53
+ 202 005c ADB2     		uxth	r5, r5
+ 203              	.LVL16:
+ 204              	.L6:
+  73:Src/led_flow_task.c ****         {
+ 205              		.loc 1 73 20 is_stmt 1 discriminator 1 view .LVU54
+  73:Src/led_flow_task.c ****         {
+ 206              		.loc 1 73 9 is_stmt 0 discriminator 1 view .LVU55
+ 207 005e 052D     		cmp	r5, #5
+ 208 0060 D1D8     		bhi	.L10
+  75:Src/led_flow_task.c ****             red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+ 209              		.loc 1 75 13 is_stmt 1 view .LVU56
+  75:Src/led_flow_task.c ****             red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+ 210              		.loc 1 75 36 is_stmt 0 view .LVU57
+ 211 0062 234A     		ldr	r2, .L12
+ 212 0064 52F82530 		ldr	r3, [r2, r5, lsl #2]
+  75:Src/led_flow_task.c ****             red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+ 213              		.loc 1 75 54 view .LVU58
+ 214 0068 190E     		lsrs	r1, r3, #24
+ 215 006a 0BEE901A 		vmov	s23, r1	@ int
+  75:Src/led_flow_task.c ****             red = ((RGB_flow_color[i] & 0x00FF0000) >> 16);
+ 216              		.loc 1 75 19 view .LVU59
+ 217 006e F8EE6BBA 		vcvt.f32.u32	s23, s23
+ 218              	.LVL17:
+  76:Src/led_flow_task.c ****             green = ((RGB_flow_color[i] & 0x0000FF00) >> 8);
+ 219              		.loc 1 76 13 is_stmt 1 view .LVU60
+  76:Src/led_flow_task.c ****             green = ((RGB_flow_color[i] & 0x0000FF00) >> 8);
+ 220              		.loc 1 76 53 is_stmt 0 view .LVU61
+ 221 0072 C3F30741 		ubfx	r1, r3, #16, #8
+ 222 0076 0BEE101A 		vmov	s22, r1	@ int
+  76:Src/led_flow_task.c ****             green = ((RGB_flow_color[i] & 0x0000FF00) >> 8);
+ 223              		.loc 1 76 17 view .LVU62
+ 224 007a B8EE4BBA 		vcvt.f32.u32	s22, s22
+ 225              	.LVL18:
+  77:Src/led_flow_task.c ****             blue = ((RGB_flow_color[i] & 0x000000FF) >> 0);
+ 226              		.loc 1 77 13 is_stmt 1 view .LVU63
+  77:Src/led_flow_task.c ****             blue = ((RGB_flow_color[i] & 0x000000FF) >> 0);
+ 227              		.loc 1 77 55 is_stmt 0 view .LVU64
+ 228 007e C3F30721 		ubfx	r1, r3, #8, #8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 7
+
+
+ 229 0082 0AEE901A 		vmov	s21, r1	@ int
+  77:Src/led_flow_task.c ****             blue = ((RGB_flow_color[i] & 0x000000FF) >> 0);
+ 230              		.loc 1 77 19 view .LVU65
+ 231 0086 F8EE6AAA 		vcvt.f32.u32	s21, s21
+ 232              	.LVL19:
+  78:Src/led_flow_task.c **** 
+ 233              		.loc 1 78 13 is_stmt 1 view .LVU66
+  78:Src/led_flow_task.c **** 
+ 234              		.loc 1 78 54 is_stmt 0 view .LVU67
+ 235 008a DBB2     		uxtb	r3, r3
+  78:Src/led_flow_task.c **** 
+ 236              		.loc 1 78 18 view .LVU68
+ 237 008c 07EE903A 		vmov	s15, r3	@ int
+ 238 0090 B8EE678A 		vcvt.f32.u32	s16, s15
+ 239              	.LVL20:
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 240              		.loc 1 80 13 is_stmt 1 view .LVU69
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 241              		.loc 1 80 52 is_stmt 0 view .LVU70
+ 242 0094 6B1C     		adds	r3, r5, #1
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 243              		.loc 1 80 49 view .LVU71
+ 244 0096 52F82330 		ldr	r3, [r2, r3, lsl #2]
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 245              		.loc 1 80 71 view .LVU72
+ 246 009a 1A0E     		lsrs	r2, r3, #24
+ 247 009c 06EE102A 		vmov	s12, r2	@ int
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 248              		.loc 1 80 27 view .LVU73
+ 249 00a0 B8EE466A 		vcvt.f32.u32	s12, s12
+  80:Src/led_flow_task.c ****             delta_red = (fp32)((RGB_flow_color[i + 1] & 0x00FF0000) >> 16) - (fp32)((RGB_flow_color
+ 250              		.loc 1 80 25 view .LVU74
+ 251 00a4 36EE6B6A 		vsub.f32	s12, s12, s23
+ 252              	.LVL21:
+  81:Src/led_flow_task.c ****             delta_green = (fp32)((RGB_flow_color[i + 1] & 0x0000FF00) >> 8) - (fp32)((RGB_flow_colo
+ 253              		.loc 1 81 13 is_stmt 1 view .LVU75
+  81:Src/led_flow_task.c ****             delta_green = (fp32)((RGB_flow_color[i + 1] & 0x0000FF00) >> 8) - (fp32)((RGB_flow_colo
+ 254              		.loc 1 81 69 is_stmt 0 view .LVU76
+ 255 00a8 C3F30742 		ubfx	r2, r3, #16, #8
+ 256 00ac 06EE902A 		vmov	s13, r2	@ int
+  81:Src/led_flow_task.c ****             delta_green = (fp32)((RGB_flow_color[i + 1] & 0x0000FF00) >> 8) - (fp32)((RGB_flow_colo
+ 257              		.loc 1 81 25 view .LVU77
+ 258 00b0 F8EE666A 		vcvt.f32.u32	s13, s13
+  81:Src/led_flow_task.c ****             delta_green = (fp32)((RGB_flow_color[i + 1] & 0x0000FF00) >> 8) - (fp32)((RGB_flow_colo
+ 259              		.loc 1 81 23 view .LVU78
+ 260 00b4 76EECB6A 		vsub.f32	s13, s13, s22
+ 261              	.LVL22:
+  82:Src/led_flow_task.c ****             delta_blue = (fp32)((RGB_flow_color[i + 1] & 0x000000FF) >> 0) - (fp32)((RGB_flow_color
+ 262              		.loc 1 82 13 is_stmt 1 view .LVU79
+  82:Src/led_flow_task.c ****             delta_blue = (fp32)((RGB_flow_color[i + 1] & 0x000000FF) >> 0) - (fp32)((RGB_flow_color
+ 263              		.loc 1 82 71 is_stmt 0 view .LVU80
+ 264 00b8 C3F30722 		ubfx	r2, r3, #8, #8
+ 265 00bc 07EE102A 		vmov	s14, r2	@ int
+  82:Src/led_flow_task.c ****             delta_blue = (fp32)((RGB_flow_color[i + 1] & 0x000000FF) >> 0) - (fp32)((RGB_flow_color
+ 266              		.loc 1 82 27 view .LVU81
+ 267 00c0 B8EE477A 		vcvt.f32.u32	s14, s14
+  82:Src/led_flow_task.c ****             delta_blue = (fp32)((RGB_flow_color[i + 1] & 0x000000FF) >> 0) - (fp32)((RGB_flow_color
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 8
+
+
+ 268              		.loc 1 82 25 view .LVU82
+ 269 00c4 37EE6A7A 		vsub.f32	s14, s14, s21
+ 270              	.LVL23:
+  83:Src/led_flow_task.c **** 
+ 271              		.loc 1 83 13 is_stmt 1 view .LVU83
+  83:Src/led_flow_task.c **** 
+ 272              		.loc 1 83 70 is_stmt 0 view .LVU84
+ 273 00c8 DBB2     		uxtb	r3, r3
+ 274 00ca 07EE903A 		vmov	s15, r3	@ int
+  83:Src/led_flow_task.c **** 
+ 275              		.loc 1 83 26 view .LVU85
+ 276 00ce F8EE677A 		vcvt.f32.u32	s15, s15
+  83:Src/led_flow_task.c **** 
+ 277              		.loc 1 83 24 view .LVU86
+ 278 00d2 77EEC87A 		vsub.f32	s15, s15, s16
+ 279              	.LVL24:
+  85:Src/led_flow_task.c ****             delta_red /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 280              		.loc 1 85 13 is_stmt 1 view .LVU87
+  85:Src/led_flow_task.c ****             delta_red /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 281              		.loc 1 85 25 is_stmt 0 view .LVU88
+ 282 00d6 DFED075A 		vldr.32	s11, .L12+4
+ 283 00da 86EE25AA 		vdiv.f32	s20, s12, s11
+ 284              	.LVL25:
+  86:Src/led_flow_task.c ****             delta_green /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 285              		.loc 1 86 13 is_stmt 1 view .LVU89
+  86:Src/led_flow_task.c ****             delta_green /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 286              		.loc 1 86 23 is_stmt 0 view .LVU90
+ 287 00de C6EEA59A 		vdiv.f32	s19, s13, s11
+ 288              	.LVL26:
+  87:Src/led_flow_task.c ****             delta_blue /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 289              		.loc 1 87 13 is_stmt 1 view .LVU91
+  87:Src/led_flow_task.c ****             delta_blue /= RGB_FLOW_COLOR_CHANGE_TIME;
+ 290              		.loc 1 87 25 is_stmt 0 view .LVU92
+ 291 00e2 87EE259A 		vdiv.f32	s18, s14, s11
+ 292              	.LVL27:
+  88:Src/led_flow_task.c ****             for(j = 0; j < RGB_FLOW_COLOR_CHANGE_TIME; j++)
+ 293              		.loc 1 88 13 is_stmt 1 view .LVU93
+  88:Src/led_flow_task.c ****             for(j = 0; j < RGB_FLOW_COLOR_CHANGE_TIME; j++)
+ 294              		.loc 1 88 24 is_stmt 0 view .LVU94
+ 295 00e6 C7EEA58A 		vdiv.f32	s17, s15, s11
+ 296              	.LVL28:
+  89:Src/led_flow_task.c ****             {
+ 297              		.loc 1 89 13 is_stmt 1 view .LVU95
+  89:Src/led_flow_task.c ****             {
+ 298              		.loc 1 89 19 is_stmt 0 view .LVU96
+ 299 00ea 0024     		movs	r4, #0
+  89:Src/led_flow_task.c ****             {
+ 300              		.loc 1 89 13 view .LVU97
+ 301 00ec B2E7     		b	.L7
+ 302              	.L13:
+ 303 00ee 00BF     		.align	2
+ 304              	.L12:
+ 305 00f0 00000000 		.word	.LANCHOR4
+ 306 00f4 00007A44 		.word	1148846080
+ 307              		.cfi_endproc
+ 308              	.LFE136:
+ 310              		.global	RGB_flow_color
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 9
+
+
+ 311              		.section	.bss.alpha.3,"aw",%nobits
+ 312              		.set	.LANCHOR0,. + 0
+ 315              	alpha.3:
+ 316 0000 00       		.space	1
+ 317              		.section	.bss.blue.0,"aw",%nobits
+ 318              		.align	1
+ 319              		.set	.LANCHOR3,. + 0
+ 322              	blue.0:
+ 323 0000 0000     		.space	2
+ 324              		.section	.bss.green.1,"aw",%nobits
+ 325              		.align	1
+ 326              		.set	.LANCHOR2,. + 0
+ 329              	green.1:
+ 330 0000 0000     		.space	2
+ 331              		.section	.bss.red.2,"aw",%nobits
+ 332              		.align	1
+ 333              		.set	.LANCHOR1,. + 0
+ 336              	red.2:
+ 337 0000 0000     		.space	2
+ 338              		.section	.data.RGB_flow_color,"aw"
+ 339              		.align	2
+ 340              		.set	.LANCHOR4,. + 0
+ 343              	RGB_flow_color:
+ 344 0000 FF0000FF 		.word	-16776961
+ 345 0004 00FF0000 		.word	65280
+ 346 0008 0000FFFF 		.word	-65536
+ 347 000c FF000000 		.word	255
+ 348 0010 00FF00FF 		.word	-16711936
+ 349 0014 0000FF00 		.word	16711680
+ 350 0018 FF0000FF 		.word	-16776961
+ 351              		.text
+ 352              	.Letext0:
+ 353              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 354              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 355              		.file 4 "algorithm/struct_typedef.h"
+ 356              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 357              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 358              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 359              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
+ 360              		.file 9 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s 			page 10
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 led_flow_task.c
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:20     .text.aRGB_led_show:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:26     .text.aRGB_led_show:00000000 aRGB_led_show
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:84     .text.aRGB_led_show:0000003c $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:93     .text.led_RGB_flow_task:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:99     .text.led_RGB_flow_task:00000000 led_RGB_flow_task
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:305    .text.led_RGB_flow_task:000000f0 $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:343    .data.RGB_flow_color:00000000 RGB_flow_color
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:315    .bss.alpha.3:00000000 alpha.3
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:316    .bss.alpha.3:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:318    .bss.blue.0:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:322    .bss.blue.0:00000000 blue.0
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:325    .bss.green.1:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:329    .bss.green.1:00000000 green.1
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:332    .bss.red.2:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:336    .bss.red.2:00000000 red.2
+C:\Users\xixi\AppData\Local\Temp\ccUuJz23.s:339    .data.RGB_flow_color:00000000 $d
+
+UNDEFINED SYMBOLS
+htim5
+osDelay

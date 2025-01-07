@@ -1,0 +1,2396 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"chassis_task.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.chassis_feedback_update,"ax",%progbits
+  20              		.align	1
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	chassis_feedback_update:
+  26              	.LVL0:
+  27              	.LFB172:
+  28              		.file 1 "Src/chassis_task.c"
+   1:Src/chassis_task.c **** /**
+   2:Src/chassis_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Src/chassis_task.c ****   * @file       chassis.c/h
+   4:Src/chassis_task.c ****   * @brief      chassis control task,
+   5:Src/chassis_task.c ****   *             底盘控制任务
+   6:Src/chassis_task.c ****   * @note       
+   7:Src/chassis_task.c ****   * @history
+   8:Src/chassis_task.c ****   *  Version    Date            Author          Modification
+   9:Src/chassis_task.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  10:Src/chassis_task.c ****   *  V1.1.0     Nov-11-2019     RM              1. add chassis power control
+  11:Src/chassis_task.c ****   *
+  12:Src/chassis_task.c ****   @verbatim
+  13:Src/chassis_task.c ****   ==============================================================================
+  14:Src/chassis_task.c **** 
+  15:Src/chassis_task.c ****   ==============================================================================
+  16:Src/chassis_task.c ****   @endverbatim
+  17:Src/chassis_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  18:Src/chassis_task.c **** */
+  19:Src/chassis_task.c **** #include "chassis_task.h"
+  20:Src/chassis_task.c **** #include "chassis_behaviour.h"
+  21:Src/chassis_task.c **** 
+  22:Src/chassis_task.c **** #include "cmsis_os.h"
+  23:Src/chassis_task.c **** 
+  24:Src/chassis_task.c **** #include "arm_math.h"
+  25:Src/chassis_task.c **** #include "pid.h"
+  26:Src/chassis_task.c **** #include "remote_control.h"
+  27:Src/chassis_task.c **** #include "can.h"
+  28:Src/chassis_task.c **** #include "detect_task.h"
+  29:Src/chassis_task.c **** //#include "INS_task.h"
+  30:Src/chassis_task.c **** 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 2
+
+
+  31:Src/chassis_task.c **** #define rc_deadband_limit(input, output, dealine)        \
+  32:Src/chassis_task.c ****     {                                                    \
+  33:Src/chassis_task.c ****         if ((input) > (dealine) || (input) < -(dealine)) \
+  34:Src/chassis_task.c ****         {                                                \
+  35:Src/chassis_task.c ****             (output) = (input);                          \
+  36:Src/chassis_task.c ****         }                                                \
+  37:Src/chassis_task.c ****         else                                             \
+  38:Src/chassis_task.c ****         {                                                \
+  39:Src/chassis_task.c ****             (output) = 0;                                \
+  40:Src/chassis_task.c ****         }                                                \
+  41:Src/chassis_task.c ****     }
+  42:Src/chassis_task.c **** 
+  43:Src/chassis_task.c **** 
+  44:Src/chassis_task.c **** /**
+  45:Src/chassis_task.c ****   * @brief          "chassis_move" valiable initialization, include pid initialization, remote cont
+  46:Src/chassis_task.c ****   *                 data point initialization, gimbal motor data point initialization, and gyro sen
+  47:Src/chassis_task.c ****   * @param[out]     chassis_move_init: "chassis_move" valiable point
+  48:Src/chassis_task.c ****   * @retval         none
+  49:Src/chassis_task.c ****   */
+  50:Src/chassis_task.c **** /**
+  51:Src/chassis_task.c ****   * @brief          初始化"chassis_move"变量，包括pid初始化， 遥控器指针初始化�
+  52:Src/chassis_task.c ****   * @param[out]     chassis_move_init:"chassis_move"变量指针.
+  53:Src/chassis_task.c ****   * @retval         none
+  54:Src/chassis_task.c ****   */
+  55:Src/chassis_task.c **** static void chassis_init(chassis_move_t *chassis_move_init);
+  56:Src/chassis_task.c **** 
+  57:Src/chassis_task.c **** /**
+  58:Src/chassis_task.c ****   * @brief          set chassis control mode, mainly call 'chassis_behaviour_mode_set' function
+  59:Src/chassis_task.c ****   * @param[out]     chassis_move_mode: "chassis_move" valiable point
+  60:Src/chassis_task.c ****   * @retval         none
+  61:Src/chassis_task.c ****   */
+  62:Src/chassis_task.c **** /**
+  63:Src/chassis_task.c ****   * @brief          设置底盘控制模式，主要在'chassis_behaviour_mode_set'函数中改变
+  64:Src/chassis_task.c ****   * @param[out]     chassis_move_mode:"chassis_move"变量指针.
+  65:Src/chassis_task.c ****   * @retval         none
+  66:Src/chassis_task.c ****   */
+  67:Src/chassis_task.c **** static void chassis_set_mode(chassis_move_t *chassis_move_mode);
+  68:Src/chassis_task.c **** 
+  69:Src/chassis_task.c **** /**
+  70:Src/chassis_task.c ****   * @brief          when chassis mode change, some param should be changed, suan as chassis yaw_set
+  71:Src/chassis_task.c ****   * @param[out]     chassis_move_transit: "chassis_move" valiable point
+  72:Src/chassis_task.c ****   * @retval         none
+  73:Src/chassis_task.c ****   */
+  74:Src/chassis_task.c **** /**
+  75:Src/chassis_task.c ****   * @brief          底盘模式改变，有些参数需要改变，例如底盘控制yaw角度设�
+  76:Src/chassis_task.c ****   * @param[out]     chassis_move_transit:"chassis_move"变量指针.
+  77:Src/chassis_task.c ****   * @retval         none
+  78:Src/chassis_task.c ****   */
+  79:Src/chassis_task.c **** void chassis_mode_change_control_transit(chassis_move_t *chassis_move_transit);
+  80:Src/chassis_task.c **** /**
+  81:Src/chassis_task.c ****   * @brief          chassis some measure data updata, such as motor speed, euler angle， robot spe
+  82:Src/chassis_task.c ****   * @param[out]     chassis_move_update: "chassis_move" valiable point
+  83:Src/chassis_task.c ****   * @retval         none
+  84:Src/chassis_task.c ****   */
+  85:Src/chassis_task.c **** /**
+  86:Src/chassis_task.c ****   * @brief          底盘测量数据更新，包括电机速度，欧拉角度，机器人速度
+  87:Src/chassis_task.c ****   * @param[out]     chassis_move_update:"chassis_move"变量指针.
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 3
+
+
+  88:Src/chassis_task.c ****   * @retval         none
+  89:Src/chassis_task.c ****   */
+  90:Src/chassis_task.c **** static void chassis_feedback_update(chassis_move_t *chassis_move_update);
+  91:Src/chassis_task.c **** /**
+  92:Src/chassis_task.c ****   * @brief          set chassis control set-point, three movement control value is set by "chassis_
+  93:Src/chassis_task.c ****   *                 
+  94:Src/chassis_task.c ****   * @param[out]     chassis_move_update: "chassis_move" valiable point
+  95:Src/chassis_task.c ****   * @retval         none
+  96:Src/chassis_task.c ****   */
+  97:Src/chassis_task.c **** /**
+  98:Src/chassis_task.c ****   * @brief          
+  99:Src/chassis_task.c ****   * @param[out]     chassis_move_update:"chassis_move"变量指针.
+ 100:Src/chassis_task.c ****   * @retval         none
+ 101:Src/chassis_task.c ****   */
+ 102:Src/chassis_task.c **** static void chassis_set_contorl(chassis_move_t *chassis_move_control);
+ 103:Src/chassis_task.c **** /**
+ 104:Src/chassis_task.c ****   * @brief          control loop, according to control set-point, calculate motor current, 
+ 105:Src/chassis_task.c ****   *                 motor current will be sentto motor
+ 106:Src/chassis_task.c ****   * @param[out]     chassis_move_control_loop: "chassis_move" valiable point
+ 107:Src/chassis_task.c ****   * @retval         none
+ 108:Src/chassis_task.c ****   */
+ 109:Src/chassis_task.c **** /**
+ 110:Src/chassis_task.c ****   * @brief          控制循环，根据控制设定值，计算电机电流值，进行控制
+ 111:Src/chassis_task.c ****   * @param[out]     chassis_move_control_loop:"chassis_move"变量指针.
+ 112:Src/chassis_task.c ****   * @retval         none
+ 113:Src/chassis_task.c ****   */
+ 114:Src/chassis_task.c **** static void chassis_control_loop(chassis_move_t *chassis_move_control_loop);
+ 115:Src/chassis_task.c **** 
+ 116:Src/chassis_task.c **** #if INCLUDE_uxTaskGetStackHighWaterMark
+ 117:Src/chassis_task.c **** uint32_t chassis_high_water;
+ 118:Src/chassis_task.c **** #endif
+ 119:Src/chassis_task.c **** 
+ 120:Src/chassis_task.c **** 
+ 121:Src/chassis_task.c **** 
+ 122:Src/chassis_task.c **** //底盘运动数据
+ 123:Src/chassis_task.c **** chassis_move_t chassis_move;
+ 124:Src/chassis_task.c **** 
+ 125:Src/chassis_task.c **** /**
+ 126:Src/chassis_task.c ****   * @brief          chassis task, osDelay CHASSIS_CONTROL_TIME_MS (2ms) 
+ 127:Src/chassis_task.c ****   * @param[in]      pvParameters: null
+ 128:Src/chassis_task.c ****   * @retval         none
+ 129:Src/chassis_task.c ****   */
+ 130:Src/chassis_task.c **** /**
+ 131:Src/chassis_task.c ****   * @brief          底盘任务，间隔 CHASSIS_CONTROL_TIME_MS 2ms
+ 132:Src/chassis_task.c ****   * @param[in]      pvParameters: 空
+ 133:Src/chassis_task.c ****   * @retval         none
+ 134:Src/chassis_task.c ****   */
+ 135:Src/chassis_task.c **** void chassis_task(void const *pvParameters)
+ 136:Src/chassis_task.c **** {
+ 137:Src/chassis_task.c ****     //wait a time 
+ 138:Src/chassis_task.c ****     //空闲一段时间
+ 139:Src/chassis_task.c ****     vTaskDelay(CHASSIS_TASK_INIT_TIME);
+ 140:Src/chassis_task.c ****     //chassis init
+ 141:Src/chassis_task.c ****     //底盘初始化
+ 142:Src/chassis_task.c ****     chassis_init(&chassis_move);
+ 143:Src/chassis_task.c ****     while (1)
+ 144:Src/chassis_task.c ****     {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 4
+
+
+ 145:Src/chassis_task.c ****         //set chassis control mode
+ 146:Src/chassis_task.c ****         //设置底盘控制模式
+ 147:Src/chassis_task.c ****         chassis_set_mode(&chassis_move);
+ 148:Src/chassis_task.c ****         //when mode changes, some data save
+ 149:Src/chassis_task.c ****         //模式切换数据保存
+ 150:Src/chassis_task.c ****         chassis_mode_change_control_transit(&chassis_move);
+ 151:Src/chassis_task.c ****         //chassis data update
+ 152:Src/chassis_task.c ****         //底盘数据更新
+ 153:Src/chassis_task.c ****         chassis_feedback_update(&chassis_move);
+ 154:Src/chassis_task.c ****         //set chassis control set-point 
+ 155:Src/chassis_task.c ****         //底盘控制量设置
+ 156:Src/chassis_task.c ****         chassis_set_contorl(&chassis_move);
+ 157:Src/chassis_task.c ****         //chassis control pid calculate
+ 158:Src/chassis_task.c ****         //底盘控制PID计算
+ 159:Src/chassis_task.c ****         chassis_control_loop(&chassis_move);
+ 160:Src/chassis_task.c **** 
+ 161:Src/chassis_task.c ****         //make sure  one motor is online at least, so that the control CAN message can be received
+ 162:Src/chassis_task.c ****         //确保至少一个电机在线， 这样CAN控制包可以被接收到
+ 163:Src/chassis_task.c ****         if (!(toe_is_error(CHASSIS_MOTOR1_TOE) && toe_is_error(CHASSIS_MOTOR2_TOE) && toe_is_error(
+ 164:Src/chassis_task.c ****         {
+ 165:Src/chassis_task.c ****             //when remote control is offline, chassis motor should receive zero current. 
+ 166:Src/chassis_task.c ****             //当遥控器掉线的时候，发送给底盘电机零电流.
+ 167:Src/chassis_task.c ****             if (toe_is_error(DBUS_TOE))
+ 168:Src/chassis_task.c ****             {
+ 169:Src/chassis_task.c ****                 CAN_cmd_chassis(0, 0, 0, 0);
+ 170:Src/chassis_task.c ****             }
+ 171:Src/chassis_task.c ****             else
+ 172:Src/chassis_task.c ****             {
+ 173:Src/chassis_task.c ****                 //send control current
+ 174:Src/chassis_task.c ****                 //发送控制电流
+ 175:Src/chassis_task.c ****                 CAN_cmd_chassis(chassis_move.motor_chassis[0].give_current, chassis_move.motor_chas
+ 176:Src/chassis_task.c ****                                 chassis_move.motor_chassis[2].give_current, chassis_move.motor_chas
+ 177:Src/chassis_task.c ****             }
+ 178:Src/chassis_task.c ****         }
+ 179:Src/chassis_task.c ****         //os delay
+ 180:Src/chassis_task.c ****         //系统延时
+ 181:Src/chassis_task.c ****         vTaskDelay(CHASSIS_CONTROL_TIME_MS);
+ 182:Src/chassis_task.c **** 
+ 183:Src/chassis_task.c **** #if INCLUDE_uxTaskGetStackHighWaterMark
+ 184:Src/chassis_task.c ****         chassis_high_water = uxTaskGetStackHighWaterMark(NULL);
+ 185:Src/chassis_task.c **** #endif
+ 186:Src/chassis_task.c ****     }
+ 187:Src/chassis_task.c **** }
+ 188:Src/chassis_task.c **** 
+ 189:Src/chassis_task.c **** /**
+ 190:Src/chassis_task.c ****   * @brief          "chassis_move" valiable initialization, include pid initialization, remote cont
+ 191:Src/chassis_task.c ****   *                 data point initialization, gimbal motor data point initialization, and gyro sen
+ 192:Src/chassis_task.c ****   * @param[out]     chassis_move_init: "chassis_move" valiable point
+ 193:Src/chassis_task.c ****   * @retval         none
+ 194:Src/chassis_task.c ****   */
+ 195:Src/chassis_task.c **** /**
+ 196:Src/chassis_task.c ****   * @brief          初始化"chassis_move"变量，包括pid初始化， 遥控器指针初始化�
+ 197:Src/chassis_task.c ****   * @param[out]     chassis_move_init:"chassis_move"变量指针.
+ 198:Src/chassis_task.c ****   * @retval         none
+ 199:Src/chassis_task.c ****   */
+ 200:Src/chassis_task.c **** static void chassis_init(chassis_move_t *chassis_move_init)
+ 201:Src/chassis_task.c **** {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 5
+
+
+ 202:Src/chassis_task.c ****     if (chassis_move_init == NULL)
+ 203:Src/chassis_task.c ****     {
+ 204:Src/chassis_task.c ****         return;
+ 205:Src/chassis_task.c ****     }
+ 206:Src/chassis_task.c **** 
+ 207:Src/chassis_task.c ****     //chassis motor speed PID
+ 208:Src/chassis_task.c ****     //底盘速度环pid值
+ 209:Src/chassis_task.c ****     const static fp32 motor_speed_pid[3] = {M3505_MOTOR_SPEED_PID_KP, M3505_MOTOR_SPEED_PID_KI, M35
+ 210:Src/chassis_task.c ****     
+ 211:Src/chassis_task.c ****     //chassis angle PID
+ 212:Src/chassis_task.c ****     //底盘角度pid值
+ 213:Src/chassis_task.c ****     const static fp32 chassis_yaw_pid[3] = {CHASSIS_FOLLOW_GIMBAL_PID_KP, CHASSIS_FOLLOW_GIMBAL_PID
+ 214:Src/chassis_task.c ****     
+ 215:Src/chassis_task.c ****     const static fp32 chassis_x_order_filter[1] = {CHASSIS_ACCEL_X_NUM};
+ 216:Src/chassis_task.c ****     const static fp32 chassis_y_order_filter[1] = {CHASSIS_ACCEL_Y_NUM};
+ 217:Src/chassis_task.c ****     uint8_t i;
+ 218:Src/chassis_task.c **** 
+ 219:Src/chassis_task.c ****     //in beginning， chassis mode is raw 
+ 220:Src/chassis_task.c ****     //底盘开机状态为原始
+ 221:Src/chassis_task.c ****     chassis_move_init->chassis_mode = CHASSIS_VECTOR_RAW;
+ 222:Src/chassis_task.c ****     //get remote control point
+ 223:Src/chassis_task.c ****     //获取遥控器指针
+ 224:Src/chassis_task.c ****     chassis_move_init->chassis_RC = get_remote_control_point();
+ 225:Src/chassis_task.c ****     //get gyro sensor euler angle point
+ 226:Src/chassis_task.c ****     //获取陀螺仪姿态角指针
+ 227:Src/chassis_task.c ****     //chassis_move_init->chassis_INS_angle = get_INS_angle_point();
+ 228:Src/chassis_task.c ****     //get gimbal motor data point
+ 229:Src/chassis_task.c ****     //获取云台电机数据指针
+ 230:Src/chassis_task.c ****     // chassis_move_init->chassis_yaw_motor = get_yaw_motor_point();
+ 231:Src/chassis_task.c ****     // chassis_move_init->chassis_pitch_motor = get_pitch_motor_point();
+ 232:Src/chassis_task.c ****     
+ 233:Src/chassis_task.c ****     //get chassis motor data point,  initialize motor speed PID
+ 234:Src/chassis_task.c ****     //获取底盘电机数据指针，初始化PID 
+ 235:Src/chassis_task.c ****     for (i = 0; i < 4; i++)
+ 236:Src/chassis_task.c ****     {
+ 237:Src/chassis_task.c ****         chassis_move_init->motor_chassis[i].chassis_motor_measure = get_chassis_motor_measure_point
+ 238:Src/chassis_task.c ****         PID_init(&chassis_move_init->motor_speed_pid[i], PID_POSITION, motor_speed_pid, M3505_MOTOR
+ 239:Src/chassis_task.c ****     }
+ 240:Src/chassis_task.c ****     //initialize angle PID
+ 241:Src/chassis_task.c ****     //初始化角度PID
+ 242:Src/chassis_task.c ****     PID_init(&chassis_move_init->chassis_angle_pid, PID_POSITION, chassis_yaw_pid, CHASSIS_FOLLOW_G
+ 243:Src/chassis_task.c ****     
+ 244:Src/chassis_task.c ****     //first order low-pass filter  replace ramp function
+ 245:Src/chassis_task.c ****     //用一阶滤波代替斜波函数生成
+ 246:Src/chassis_task.c ****     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vx, CHASSIS_CONTROL_TIME, chas
+ 247:Src/chassis_task.c ****     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vy, CHASSIS_CONTROL_TIME, chas
+ 248:Src/chassis_task.c **** 
+ 249:Src/chassis_task.c ****     //max and min speed
+ 250:Src/chassis_task.c ****     //最大 最小速度
+ 251:Src/chassis_task.c ****     chassis_move_init->vx_max_speed = NORMAL_MAX_CHASSIS_SPEED_X;
+ 252:Src/chassis_task.c ****     chassis_move_init->vx_min_speed = -NORMAL_MAX_CHASSIS_SPEED_X;
+ 253:Src/chassis_task.c **** 
+ 254:Src/chassis_task.c ****     chassis_move_init->vy_max_speed = NORMAL_MAX_CHASSIS_SPEED_Y;
+ 255:Src/chassis_task.c ****     chassis_move_init->vy_min_speed = -NORMAL_MAX_CHASSIS_SPEED_Y;
+ 256:Src/chassis_task.c **** 
+ 257:Src/chassis_task.c ****     //update data
+ 258:Src/chassis_task.c ****     //更新一下数据
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 6
+
+
+ 259:Src/chassis_task.c ****     chassis_feedback_update(chassis_move_init);
+ 260:Src/chassis_task.c **** }
+ 261:Src/chassis_task.c **** 
+ 262:Src/chassis_task.c **** /**
+ 263:Src/chassis_task.c ****   * @brief          set chassis control mode, mainly call 'chassis_behaviour_mode_set' function
+ 264:Src/chassis_task.c ****   * @param[out]     chassis_move_mode: "chassis_move" valiable point
+ 265:Src/chassis_task.c ****   * @retval         none
+ 266:Src/chassis_task.c ****   */
+ 267:Src/chassis_task.c **** /**
+ 268:Src/chassis_task.c ****   * @brief          设置底盘控制模式，主要在'chassis_behaviour_mode_set'函数中改变
+ 269:Src/chassis_task.c ****   * @param[out]     chassis_move_mode:"chassis_move"变量指针.
+ 270:Src/chassis_task.c ****   * @retval         none
+ 271:Src/chassis_task.c ****   */
+ 272:Src/chassis_task.c **** static void chassis_set_mode(chassis_move_t *chassis_move_mode)
+ 273:Src/chassis_task.c **** {
+ 274:Src/chassis_task.c ****     if (chassis_move_mode == NULL)
+ 275:Src/chassis_task.c ****     {
+ 276:Src/chassis_task.c ****         return;
+ 277:Src/chassis_task.c ****     }
+ 278:Src/chassis_task.c ****     //in file "chassis_behaviour.c"
+ 279:Src/chassis_task.c ****     chassis_behaviour_mode_set(chassis_move_mode);
+ 280:Src/chassis_task.c **** }
+ 281:Src/chassis_task.c **** 
+ 282:Src/chassis_task.c **** /**
+ 283:Src/chassis_task.c ****   * @brief          when chassis mode change, some param should be changed, suan as chassis yaw_set
+ 284:Src/chassis_task.c ****   * @param[out]     chassis_move_transit: "chassis_move" valiable point
+ 285:Src/chassis_task.c ****   * @retval         none
+ 286:Src/chassis_task.c ****   */
+ 287:Src/chassis_task.c **** /**
+ 288:Src/chassis_task.c ****   * @brief          底盘模式改变，有些参数需要改变，例如底盘控制yaw角度设�
+ 289:Src/chassis_task.c ****   * @param[out]     chassis_move_transit:"chassis_move"变量指针.
+ 290:Src/chassis_task.c ****   * @retval         none
+ 291:Src/chassis_task.c ****   */
+ 292:Src/chassis_task.c **** void chassis_mode_change_control_transit(chassis_move_t *chassis_move_transit)
+ 293:Src/chassis_task.c **** {
+ 294:Src/chassis_task.c ****     if (chassis_move_transit == NULL)
+ 295:Src/chassis_task.c ****     {
+ 296:Src/chassis_task.c ****         return;
+ 297:Src/chassis_task.c ****     }
+ 298:Src/chassis_task.c **** 
+ 299:Src/chassis_task.c ****     if (chassis_move_transit->last_chassis_mode == chassis_move_transit->chassis_mode)
+ 300:Src/chassis_task.c ****     {
+ 301:Src/chassis_task.c ****         return;
+ 302:Src/chassis_task.c ****     }
+ 303:Src/chassis_task.c **** 
+ 304:Src/chassis_task.c ****     //change to follow gimbal angle mode
+ 305:Src/chassis_task.c ****     //切入跟随云台模式
+ 306:Src/chassis_task.c ****     if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW) && chassis_mo
+ 307:Src/chassis_task.c ****     {
+ 308:Src/chassis_task.c ****         chassis_move_transit->chassis_relative_angle_set = 0.0f;
+ 309:Src/chassis_task.c ****     }
+ 310:Src/chassis_task.c ****     //change to follow chassis yaw angle
+ 311:Src/chassis_task.c ****     //切入跟随底盘角度模式
+ 312:Src/chassis_task.c ****     else if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW) && chas
+ 313:Src/chassis_task.c ****     {
+ 314:Src/chassis_task.c ****         chassis_move_transit->chassis_yaw_set = chassis_move_transit->chassis_yaw;
+ 315:Src/chassis_task.c ****     }
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 7
+
+
+ 316:Src/chassis_task.c ****     //change to no follow angle
+ 317:Src/chassis_task.c ****     //切入不跟随云台模式
+ 318:Src/chassis_task.c ****     else if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_NO_FOLLOW_YAW) && chassis_m
+ 319:Src/chassis_task.c ****     {
+ 320:Src/chassis_task.c ****         chassis_move_transit->chassis_yaw_set = chassis_move_transit->chassis_yaw;
+ 321:Src/chassis_task.c ****     }
+ 322:Src/chassis_task.c **** 
+ 323:Src/chassis_task.c ****     chassis_move_transit->last_chassis_mode = chassis_move_transit->chassis_mode;
+ 324:Src/chassis_task.c **** }
+ 325:Src/chassis_task.c **** 
+ 326:Src/chassis_task.c **** /**
+ 327:Src/chassis_task.c ****   * @brief          chassis some measure data updata, such as motor speed, euler angle， robot spe
+ 328:Src/chassis_task.c ****   * @param[out]     chassis_move_update: "chassis_move" valiable point
+ 329:Src/chassis_task.c ****   * @retval         none
+ 330:Src/chassis_task.c ****   */
+ 331:Src/chassis_task.c **** /**
+ 332:Src/chassis_task.c ****   * @brief          底盘测量数据更新，包括电机速度，欧拉角度，机器人速度
+ 333:Src/chassis_task.c ****   * @param[out]     chassis_move_update:"chassis_move"变量指针.
+ 334:Src/chassis_task.c ****   * @retval         none
+ 335:Src/chassis_task.c ****   */
+ 336:Src/chassis_task.c **** static void chassis_feedback_update(chassis_move_t *chassis_move_update)
+ 337:Src/chassis_task.c **** {
+  29              		.loc 1 337 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+ 338:Src/chassis_task.c ****     if (chassis_move_update == NULL)
+  34              		.loc 1 338 5 view .LVU1
+  35              		.loc 1 338 8 is_stmt 0 view .LVU2
+  36 0000 0246     		mov	r2, r0
+  37 0002 0028     		cmp	r0, #0
+  38 0004 52D0     		beq	.L1
+ 339:Src/chassis_task.c ****     {
+ 340:Src/chassis_task.c ****         return;
+ 341:Src/chassis_task.c ****     }
+ 342:Src/chassis_task.c **** 
+ 343:Src/chassis_task.c ****     uint8_t i = 0;
+ 344:Src/chassis_task.c ****     for (i = 0; i < 4; i++)
+  39              		.loc 1 344 12 view .LVU3
+  40 0006 0023     		movs	r3, #0
+  41 0008 22E0     		b	.L3
+  42              	.LVL1:
+  43              	.L4:
+ 345:Src/chassis_task.c ****     {
+ 346:Src/chassis_task.c ****         //update motor speed, accel is differential of speed PID
+ 347:Src/chassis_task.c ****         //更新电机速度，加速度是速度的PID微分
+ 348:Src/chassis_task.c ****         chassis_move_update->motor_chassis[i].speed = CHASSIS_MOTOR_RPM_TO_VECTOR_SEN * chassis_mov
+  44              		.loc 1 348 9 is_stmt 1 discriminator 3 view .LVU4
+  45              		.loc 1 348 126 is_stmt 0 discriminator 3 view .LVU5
+  46 000a 03EB8301 		add	r1, r3, r3, lsl #2
+  47 000e 02EB8101 		add	r1, r2, r1, lsl #2
+  48 0012 C868     		ldr	r0, [r1, #12]
+  49              		.loc 1 348 148 discriminator 3 view .LVU6
+  50 0014 B0F90200 		ldrsh	r0, [r0, #2]
+  51 0018 07EE900A 		vmov	s15, r0	@ int
+  52              		.loc 1 348 87 discriminator 3 view .LVU7
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 8
+
+
+  53 001c F8EEE77A 		vcvt.f32.s32	s15, s15
+  54 0020 9FED237A 		vldr.32	s14, .L5
+  55 0024 67EE877A 		vmul.f32	s15, s15, s14
+  56              		.loc 1 348 53 discriminator 3 view .LVU8
+  57 0028 C1ED057A 		vstr.32	s15, [r1, #20]
+ 349:Src/chassis_task.c ****         chassis_move_update->motor_chassis[i].accel = chassis_move_update->motor_speed_pid[i].Dbuf[
+  58              		.loc 1 349 9 is_stmt 1 discriminator 3 view .LVU9
+  59              		.loc 1 349 99 is_stmt 0 discriminator 3 view .LVU10
+  60 002c 03EBC301 		add	r1, r3, r3, lsl #3
+  61 0030 02EBC101 		add	r1, r2, r1, lsl #3
+  62 0034 D1ED237A 		vldr.32	s15, [r1, #140]
+  63              		.loc 1 349 103 discriminator 3 view .LVU11
+  64 0038 9FED1E7A 		vldr.32	s14, .L5+4
+  65 003c 67EE877A 		vmul.f32	s15, s15, s14
+  66              		.loc 1 349 53 discriminator 3 view .LVU12
+  67 0040 03EB8301 		add	r1, r3, r3, lsl #2
+  68 0044 02EB8101 		add	r1, r2, r1, lsl #2
+  69 0048 C1ED047A 		vstr.32	s15, [r1, #16]
+ 344:Src/chassis_task.c ****     {
+  70              		.loc 1 344 24 is_stmt 1 discriminator 3 view .LVU13
+ 344:Src/chassis_task.c ****     {
+  71              		.loc 1 344 25 is_stmt 0 discriminator 3 view .LVU14
+  72 004c 0133     		adds	r3, r3, #1
+  73              	.LVL2:
+ 344:Src/chassis_task.c ****     {
+  74              		.loc 1 344 25 discriminator 3 view .LVU15
+  75 004e DBB2     		uxtb	r3, r3
+  76              	.LVL3:
+  77              	.L3:
+ 344:Src/chassis_task.c ****     {
+  78              		.loc 1 344 17 is_stmt 1 discriminator 1 view .LVU16
+ 344:Src/chassis_task.c ****     {
+  79              		.loc 1 344 5 is_stmt 0 discriminator 1 view .LVU17
+  80 0050 032B     		cmp	r3, #3
+  81 0052 DAD9     		bls	.L4
+ 350:Src/chassis_task.c ****     }
+ 351:Src/chassis_task.c **** 
+ 352:Src/chassis_task.c ****     //calculate vertical speed, horizontal speed ,rotation speed, left hand rule 
+ 353:Src/chassis_task.c ****     //更新底盘纵向速度 x， 平移速度y，旋转速度wz，坐标系为右手系
+ 354:Src/chassis_task.c ****     chassis_move_update->vx = (-chassis_move_update->motor_chassis[0].speed + chassis_move_update->
+  82              		.loc 1 354 5 is_stmt 1 view .LVU18
+  83              		.loc 1 354 116 is_stmt 0 view .LVU19
+  84 0054 92ED0A5A 		vldr.32	s10, [r2, #40]
+  85              		.loc 1 354 70 view .LVU20
+  86 0058 D2ED057A 		vldr.32	s15, [r2, #20]
+  87              		.loc 1 354 77 view .LVU21
+  88 005c 35EE677A 		vsub.f32	s14, s10, s15
+  89              		.loc 1 354 162 view .LVU22
+  90 0060 D2ED0F5A 		vldr.32	s11, [r2, #60]
+  91              		.loc 1 354 123 view .LVU23
+  92 0064 37EE257A 		vadd.f32	s14, s14, s11
+  93              		.loc 1 354 208 view .LVU24
+  94 0068 92ED146A 		vldr.32	s12, [r2, #80]
+  95              		.loc 1 354 169 view .LVU25
+  96 006c 37EE467A 		vsub.f32	s14, s14, s12
+  97              		.loc 1 354 216 view .LVU26
+  98 0070 F5EE006A 		vmov.f32	s13, #2.5e-1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 9
+
+
+  99 0074 27EE267A 		vmul.f32	s14, s14, s13
+ 100              		.loc 1 354 29 view .LVU27
+ 101 0078 82ED797A 		vstr.32	s14, [r2, #484]
+ 355:Src/chassis_task.c ****     chassis_move_update->vy = (-chassis_move_update->motor_chassis[0].speed - chassis_move_update->
+ 102              		.loc 1 355 5 is_stmt 1 view .LVU28
+ 103              		.loc 1 355 32 is_stmt 0 view .LVU29
+ 104 007c F1EE677A 		vneg.f32	s15, s15
+ 105              		.loc 1 355 77 view .LVU30
+ 106 0080 77EEC57A 		vsub.f32	s15, s15, s10
+ 107              		.loc 1 355 123 view .LVU31
+ 108 0084 35EEA77A 		vadd.f32	s14, s11, s15
+ 109              		.loc 1 355 169 view .LVU32
+ 110 0088 36EE077A 		vadd.f32	s14, s12, s14
+ 111              		.loc 1 355 216 view .LVU33
+ 112 008c 27EE267A 		vmul.f32	s14, s14, s13
+ 113              		.loc 1 355 29 view .LVU34
+ 114 0090 82ED7A7A 		vstr.32	s14, [r2, #488]
+ 356:Src/chassis_task.c ****     chassis_move_update->wz = (-chassis_move_update->motor_chassis[0].speed - chassis_move_update->
+ 115              		.loc 1 356 5 is_stmt 1 view .LVU35
+ 116              		.loc 1 356 123 is_stmt 0 view .LVU36
+ 117 0094 77EEE57A 		vsub.f32	s15, s15, s11
+ 118              		.loc 1 356 169 view .LVU37
+ 119 0098 77EEC67A 		vsub.f32	s15, s15, s12
+ 120              		.loc 1 356 216 view .LVU38
+ 121 009c 67EEA67A 		vmul.f32	s15, s15, s13
+ 122              		.loc 1 356 250 view .LVU39
+ 123 00a0 DFED056A 		vldr.32	s13, .L5+8
+ 124 00a4 87EEA67A 		vdiv.f32	s14, s15, s13
+ 125              		.loc 1 356 29 view .LVU40
+ 126 00a8 82ED7B7A 		vstr.32	s14, [r2, #492]
+ 127              	.LVL4:
+ 128              	.L1:
+ 357:Src/chassis_task.c **** 
+ 358:Src/chassis_task.c ****     //calculate chassis euler angle, if chassis add a new gyro sensor,please change this code
+ 359:Src/chassis_task.c ****     //计算底盘姿态角度, 如果底盘上有陀螺仪请更改这部分代码
+ 360:Src/chassis_task.c ****     // chassis_move_update->chassis_yaw = rad_format(*(chassis_move_update->chassis_INS_angle + INS
+ 361:Src/chassis_task.c ****     // chassis_move_update->chassis_pitch = rad_format(*(chassis_move_update->chassis_INS_angle + I
+ 362:Src/chassis_task.c ****     // chassis_move_update->chassis_roll = *(chassis_move_update->chassis_INS_angle + INS_ROLL_ADDR
+ 363:Src/chassis_task.c **** }
+ 129              		.loc 1 363 1 view .LVU41
+ 130 00ac 7047     		bx	lr
+ 131              	.L6:
+ 132 00ae 00BF     		.align	2
+ 133              	.L5:
+ 134 00b0 0A01DA39 		.word	970588426
+ 135 00b4 0000FA43 		.word	1140457472
+ 136 00b8 CDCC4C3E 		.word	1045220557
+ 137              		.cfi_endproc
+ 138              	.LFE172:
+ 140              		.section	.text.chassis_vector_to_mecanum_wheel_speed,"ax",%progbits
+ 141              		.align	1
+ 142              		.syntax unified
+ 143              		.thumb
+ 144              		.thumb_func
+ 146              	chassis_vector_to_mecanum_wheel_speed:
+ 147              	.LVL5:
+ 148              	.LFB175:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 10
+
+
+ 364:Src/chassis_task.c **** /**
+ 365:Src/chassis_task.c ****   * @brief          accroding to the channel value of remote control, calculate chassis vertical an
+ 366:Src/chassis_task.c ****   *                 
+ 367:Src/chassis_task.c ****   * @param[out]     vx_set: vertical speed set-point
+ 368:Src/chassis_task.c ****   * @param[out]     vy_set: horizontal speed set-point
+ 369:Src/chassis_task.c ****   * @param[out]     chassis_move_rc_to_vector: "chassis_move" valiable point
+ 370:Src/chassis_task.c ****   * @retval         none
+ 371:Src/chassis_task.c ****   */
+ 372:Src/chassis_task.c **** /**
+ 373:Src/chassis_task.c ****   * @brief          根据遥控器通道值，计算纵向和横移速度
+ 374:Src/chassis_task.c ****   *                 
+ 375:Src/chassis_task.c ****   * @param[out]     vx_set: 纵向速度指针
+ 376:Src/chassis_task.c ****   * @param[out]     vy_set: 横向速度指针
+ 377:Src/chassis_task.c ****   * @param[out]     chassis_move_rc_to_vector: "chassis_move" 变量指针
+ 378:Src/chassis_task.c ****   * @retval         none
+ 379:Src/chassis_task.c ****   */
+ 380:Src/chassis_task.c **** void chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set, chassis_move_t *chassis_move_rc_to_ve
+ 381:Src/chassis_task.c **** {
+ 382:Src/chassis_task.c ****     if (chassis_move_rc_to_vector == NULL || vx_set == NULL || vy_set == NULL)
+ 383:Src/chassis_task.c ****     {
+ 384:Src/chassis_task.c ****         return;
+ 385:Src/chassis_task.c ****     }
+ 386:Src/chassis_task.c ****     
+ 387:Src/chassis_task.c ****     int16_t vx_channel, vy_channel;
+ 388:Src/chassis_task.c ****     fp32 vx_set_channel, vy_set_channel;
+ 389:Src/chassis_task.c ****     //deadline, because some remote control need be calibrated,  the value of rocker is not zero in
+ 390:Src/chassis_task.c ****     //死区限制，因为遥控器可能存在差异 摇杆在中间，其值不为0
+ 391:Src/chassis_task.c ****     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_X_CHANNEL], vx_channel, 
+ 392:Src/chassis_task.c ****     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, 
+ 393:Src/chassis_task.c **** 
+ 394:Src/chassis_task.c ****     vx_set_channel = vx_channel * CHASSIS_VX_RC_SEN;
+ 395:Src/chassis_task.c ****     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
+ 396:Src/chassis_task.c **** 
+ 397:Src/chassis_task.c ****     //keyboard set speed set-point
+ 398:Src/chassis_task.c ****     //键盘控制
+ 399:Src/chassis_task.c ****     if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_FRONT_KEY)
+ 400:Src/chassis_task.c ****     {
+ 401:Src/chassis_task.c ****         vx_set_channel = chassis_move_rc_to_vector->vx_max_speed;
+ 402:Src/chassis_task.c ****     }
+ 403:Src/chassis_task.c ****     else if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_BACK_KEY)
+ 404:Src/chassis_task.c ****     {
+ 405:Src/chassis_task.c ****         vx_set_channel = chassis_move_rc_to_vector->vx_min_speed;
+ 406:Src/chassis_task.c ****     }
+ 407:Src/chassis_task.c **** 
+ 408:Src/chassis_task.c ****     if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY)
+ 409:Src/chassis_task.c ****     {
+ 410:Src/chassis_task.c ****         vy_set_channel = chassis_move_rc_to_vector->vy_max_speed;
+ 411:Src/chassis_task.c ****     }
+ 412:Src/chassis_task.c ****     else if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_RIGHT_KEY)
+ 413:Src/chassis_task.c ****     {
+ 414:Src/chassis_task.c ****         vy_set_channel = chassis_move_rc_to_vector->vy_min_speed;
+ 415:Src/chassis_task.c ****     }
+ 416:Src/chassis_task.c **** 
+ 417:Src/chassis_task.c ****     //first order low-pass replace ramp function, calculate chassis speed set-point to improve cont
+ 418:Src/chassis_task.c ****     //一阶低通滤波代替斜波作为底盘速度输入
+ 419:Src/chassis_task.c ****     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vx, vx_set_channel);
+ 420:Src/chassis_task.c ****     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vy, vy_set_channel);
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 11
+
+
+ 421:Src/chassis_task.c ****     //stop command, need not slow change, set zero derectly
+ 422:Src/chassis_task.c ****     //停止信号，不需要缓慢加速，直接减速到零
+ 423:Src/chassis_task.c ****     if (vx_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN && vx_set_channel > -CHASSIS_RC_DE
+ 424:Src/chassis_task.c ****     {
+ 425:Src/chassis_task.c ****         chassis_move_rc_to_vector->chassis_cmd_slow_set_vx.out = 0.0f;
+ 426:Src/chassis_task.c ****     }
+ 427:Src/chassis_task.c **** 
+ 428:Src/chassis_task.c ****     if (vy_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN && vy_set_channel > -CHASSIS_RC_DE
+ 429:Src/chassis_task.c ****     {
+ 430:Src/chassis_task.c ****         chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out = 0.0f;
+ 431:Src/chassis_task.c ****     }
+ 432:Src/chassis_task.c **** 
+ 433:Src/chassis_task.c ****     *vx_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vx.out;
+ 434:Src/chassis_task.c ****     *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+ 435:Src/chassis_task.c **** }
+ 436:Src/chassis_task.c **** /**
+ 437:Src/chassis_task.c ****   * @brief          set chassis control set-point, three movement control value is set by "chassis_
+ 438:Src/chassis_task.c ****   * @param[out]     chassis_move_update: "chassis_move" valiable point
+ 439:Src/chassis_task.c ****   * @retval         none
+ 440:Src/chassis_task.c ****   */
+ 441:Src/chassis_task.c **** /**
+ 442:Src/chassis_task.c ****   * @brief          设置底盘控制设置值, 三运动控制值是通过chassis_behaviour_contr
+ 443:Src/chassis_task.c ****   * @param[out]     chassis_move_update:"chassis_move"变量指针.
+ 444:Src/chassis_task.c ****   * @retval         none
+ 445:Src/chassis_task.c ****   */
+ 446:Src/chassis_task.c **** static void chassis_set_contorl(chassis_move_t *chassis_move_control)
+ 447:Src/chassis_task.c **** {
+ 448:Src/chassis_task.c **** 
+ 449:Src/chassis_task.c ****     if (chassis_move_control == NULL)
+ 450:Src/chassis_task.c ****     {
+ 451:Src/chassis_task.c ****         return;
+ 452:Src/chassis_task.c ****     }
+ 453:Src/chassis_task.c **** 
+ 454:Src/chassis_task.c **** 
+ 455:Src/chassis_task.c ****     fp32 vx_set = 0.0f, vy_set = 0.0f, angle_set = 0.0f;
+ 456:Src/chassis_task.c ****     //get three control set-point, 获取三个控制设置值
+ 457:Src/chassis_task.c ****     chassis_behaviour_control_set(&vx_set, &vy_set, &angle_set, chassis_move_control);
+ 458:Src/chassis_task.c **** 
+ 459:Src/chassis_task.c ****     //follow gimbal mode
+ 460:Src/chassis_task.c ****     //跟随云台模式
+ 461:Src/chassis_task.c ****     if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW)
+ 462:Src/chassis_task.c ****     {
+ 463:Src/chassis_task.c **** //        fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
+ 464:Src/chassis_task.c ****         //rotate chassis direction, make sure vertial direction follow gimbal 
+ 465:Src/chassis_task.c ****         //旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平�
+ 466:Src/chassis_task.c ****       //  sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+ 467:Src/chassis_task.c ****       //  cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+ 468:Src/chassis_task.c ****       //  chassis_move_control->vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+ 469:Src/chassis_task.c ****       //  chassis_move_control->vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+ 470:Src/chassis_task.c ****         chassis_move_control->vx_set = vx_set;
+ 471:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 472:Src/chassis_task.c ****         //set control relative angle  set-point
+ 473:Src/chassis_task.c ****         //设置控制相对云台角度
+ 474:Src/chassis_task.c ****         chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
+ 475:Src/chassis_task.c ****         //calculate ratation speed
+ 476:Src/chassis_task.c ****         //计算旋转PID角速度
+ 477:Src/chassis_task.c **** //        chassis_move_control->wz_set = -PID_calc(&chassis_move_control->chassis_angle_pid, chassi
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 12
+
+
+ 478:Src/chassis_task.c ****         //speed limit
+ 479:Src/chassis_task.c ****         //速度限幅
+ 480:Src/chassis_task.c ****         chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_co
+ 481:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_co
+ 482:Src/chassis_task.c ****     }
+ 483:Src/chassis_task.c ****     else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW)
+ 484:Src/chassis_task.c ****     {
+ 485:Src/chassis_task.c ****         fp32 delat_angle = 0.0f;
+ 486:Src/chassis_task.c ****         //set chassis yaw angle set-point
+ 487:Src/chassis_task.c ****         //设置底盘控制的角度
+ 488:Src/chassis_task.c ****         chassis_move_control->chassis_yaw_set = rad_format(angle_set);
+ 489:Src/chassis_task.c ****         delat_angle = rad_format(chassis_move_control->chassis_yaw_set - chassis_move_control->chas
+ 490:Src/chassis_task.c ****         //calculate rotation speed
+ 491:Src/chassis_task.c ****         //计算旋转的角速度
+ 492:Src/chassis_task.c ****         chassis_move_control->wz_set = PID_calc(&chassis_move_control->chassis_angle_pid, 0.0f, del
+ 493:Src/chassis_task.c ****         //speed limit
+ 494:Src/chassis_task.c ****         //速度限幅
+ 495:Src/chassis_task.c ****         chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, c
+ 496:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 497:Src/chassis_task.c ****     }
+ 498:Src/chassis_task.c ****     else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_NO_FOLLOW_YAW)
+ 499:Src/chassis_task.c ****     {
+ 500:Src/chassis_task.c ****         //"angle_set" is rotation speed set-point
+ 501:Src/chassis_task.c ****         //“angle_set” 是旋转速度控制
+ 502:Src/chassis_task.c ****         chassis_move_control->wz_set = angle_set;
+ 503:Src/chassis_task.c ****         chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, c
+ 504:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 505:Src/chassis_task.c ****     }
+ 506:Src/chassis_task.c ****     else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_RAW)
+ 507:Src/chassis_task.c ****     {
+ 508:Src/chassis_task.c ****         //in raw mode, set-point is sent to CAN bus
+ 509:Src/chassis_task.c ****         //在原始模式，设置值是发送到CAN总线
+ 510:Src/chassis_task.c ****         chassis_move_control->vx_set = vx_set;
+ 511:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 512:Src/chassis_task.c ****         chassis_move_control->wz_set = angle_set;
+ 513:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vx.out = 0.0f;
+ 514:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vy.out = 0.0f;
+ 515:Src/chassis_task.c ****     }
+ 516:Src/chassis_task.c **** }
+ 517:Src/chassis_task.c **** 
+ 518:Src/chassis_task.c **** /**
+ 519:Src/chassis_task.c ****   * @brief          four mecanum wheels speed is calculated by three param. 
+ 520:Src/chassis_task.c ****   * @param[in]      vx_set: vertial speed
+ 521:Src/chassis_task.c ****   * @param[in]      vy_set: horizontal speed
+ 522:Src/chassis_task.c ****   * @param[in]      wz_set: rotation speed
+ 523:Src/chassis_task.c ****   * @param[out]     wheel_speed: four mecanum wheels speed
+ 524:Src/chassis_task.c ****   * @retval         none
+ 525:Src/chassis_task.c ****   */
+ 526:Src/chassis_task.c **** /**
+ 527:Src/chassis_task.c ****   * @brief          四个麦轮速度是通过三个参数计算出来的
+ 528:Src/chassis_task.c ****   * @param[in]      vx_set: 纵向速度
+ 529:Src/chassis_task.c ****   * @param[in]      vy_set: 横向速度
+ 530:Src/chassis_task.c ****   * @param[in]      wz_set: 旋转速度
+ 531:Src/chassis_task.c ****   * @param[out]     wheel_speed: 四个麦轮速度
+ 532:Src/chassis_task.c ****   * @retval         none
+ 533:Src/chassis_task.c ****   */
+ 534:Src/chassis_task.c **** static void chassis_vector_to_mecanum_wheel_speed(const fp32 vx_set, const fp32 vy_set, const fp32 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 13
+
+
+ 535:Src/chassis_task.c **** {
+ 149              		.loc 1 535 1 is_stmt 1 view -0
+ 150              		.cfi_startproc
+ 151              		@ args = 0, pretend = 0, frame = 0
+ 152              		@ frame_needed = 0, uses_anonymous_args = 0
+ 153              		@ link register save eliminated.
+ 536:Src/chassis_task.c ****     //because the gimbal is in front of chassis, when chassis rotates, wheel 0 and wheel 1 should b
+ 537:Src/chassis_task.c ****     //旋转的时候， 由于云台靠前，所以是前面两轮 0 ，1 旋转的速度变慢，
+ 538:Src/chassis_task.c ****     wheel_speed[0] = -vx_set - vy_set + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * 
+ 154              		.loc 1 538 5 view .LVU43
+ 155              		.loc 1 538 22 is_stmt 0 view .LVU44
+ 156 0000 B1EE407A 		vneg.f32	s14, s0
+ 157              		.loc 1 538 30 view .LVU45
+ 158 0004 37EE607A 		vsub.f32	s14, s14, s1
+ 159              		.loc 1 538 98 view .LVU46
+ 160 0008 DFED0F7A 		vldr.32	s15, .L8
+ 161 000c 61EE277A 		vmul.f32	s15, s2, s15
+ 162              		.loc 1 538 39 view .LVU47
+ 163 0010 37EE277A 		vadd.f32	s14, s14, s15
+ 164              		.loc 1 538 20 view .LVU48
+ 165 0014 80ED007A 		vstr.32	s14, [r0]
+ 539:Src/chassis_task.c ****     wheel_speed[1] = vx_set - vy_set + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * w
+ 166              		.loc 1 539 5 is_stmt 1 view .LVU49
+ 167              		.loc 1 539 29 is_stmt 0 view .LVU50
+ 168 0018 30EE607A 		vsub.f32	s14, s0, s1
+ 169              		.loc 1 539 38 view .LVU51
+ 170 001c 77EE877A 		vadd.f32	s15, s15, s14
+ 171              		.loc 1 539 20 view .LVU52
+ 172 0020 C0ED017A 		vstr.32	s15, [r0, #4]
+ 540:Src/chassis_task.c ****     wheel_speed[2] = vx_set + vy_set + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * 
+ 173              		.loc 1 540 5 is_stmt 1 view .LVU53
+ 174              		.loc 1 540 29 is_stmt 0 view .LVU54
+ 175 0024 70EE207A 		vadd.f32	s15, s0, s1
+ 176              		.loc 1 540 98 view .LVU55
+ 177 0028 9FED087A 		vldr.32	s14, .L8+4
+ 178 002c 21EE071A 		vmul.f32	s2, s2, s14
+ 179              	.LVL6:
+ 180              		.loc 1 540 38 view .LVU56
+ 181 0030 77EE817A 		vadd.f32	s15, s15, s2
+ 182              		.loc 1 540 20 view .LVU57
+ 183 0034 C0ED027A 		vstr.32	s15, [r0, #8]
+ 541:Src/chassis_task.c ****     wheel_speed[3] = -vx_set + vy_set + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER *
+ 184              		.loc 1 541 5 is_stmt 1 view .LVU58
+ 185              		.loc 1 541 30 is_stmt 0 view .LVU59
+ 186 0038 70EEC00A 		vsub.f32	s1, s1, s0
+ 187              	.LVL7:
+ 188              		.loc 1 541 39 view .LVU60
+ 189 003c 31EE201A 		vadd.f32	s2, s2, s1
+ 190              		.loc 1 541 20 view .LVU61
+ 191 0040 80ED031A 		vstr.32	s2, [r0, #12]
+ 542:Src/chassis_task.c **** }
+ 192              		.loc 1 542 1 view .LVU62
+ 193 0044 7047     		bx	lr
+ 194              	.L9:
+ 195 0046 00BF     		.align	2
+ 196              	.L8:
+ 197 0048 EB5138BE 		.word	-1103605269
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 14
+
+
+ 198 004c AF4761BE 		.word	-1100920913
+ 199              		.cfi_endproc
+ 200              	.LFE175:
+ 202              		.section	.text.chassis_init,"ax",%progbits
+ 203              		.align	1
+ 204              		.syntax unified
+ 205              		.thumb
+ 206              		.thumb_func
+ 208              	chassis_init:
+ 209              	.LVL8:
+ 210              	.LFB169:
+ 201:Src/chassis_task.c ****     if (chassis_move_init == NULL)
+ 211              		.loc 1 201 1 is_stmt 1 view -0
+ 212              		.cfi_startproc
+ 213              		@ args = 0, pretend = 0, frame = 0
+ 214              		@ frame_needed = 0, uses_anonymous_args = 0
+ 202:Src/chassis_task.c ****     {
+ 215              		.loc 1 202 5 view .LVU64
+ 202:Src/chassis_task.c ****     {
+ 216              		.loc 1 202 8 is_stmt 0 view .LVU65
+ 217 0000 0028     		cmp	r0, #0
+ 218 0002 53D0     		beq	.L15
+ 201:Src/chassis_task.c ****     if (chassis_move_init == NULL)
+ 219              		.loc 1 201 1 view .LVU66
+ 220 0004 38B5     		push	{r3, r4, r5, lr}
+ 221              	.LCFI0:
+ 222              		.cfi_def_cfa_offset 16
+ 223              		.cfi_offset 3, -16
+ 224              		.cfi_offset 4, -12
+ 225              		.cfi_offset 5, -8
+ 226              		.cfi_offset 14, -4
+ 227 0006 2DED028B 		vpush.64	{d8}
+ 228              	.LCFI1:
+ 229              		.cfi_def_cfa_offset 24
+ 230              		.cfi_offset 80, -24
+ 231              		.cfi_offset 81, -20
+ 232 000a 0546     		mov	r5, r0
+ 209:Src/chassis_task.c ****     
+ 233              		.loc 1 209 5 is_stmt 1 view .LVU67
+ 213:Src/chassis_task.c ****     
+ 234              		.loc 1 213 5 view .LVU68
+ 215:Src/chassis_task.c ****     const static fp32 chassis_y_order_filter[1] = {CHASSIS_ACCEL_Y_NUM};
+ 235              		.loc 1 215 5 view .LVU69
+ 216:Src/chassis_task.c ****     uint8_t i;
+ 236              		.loc 1 216 5 view .LVU70
+ 217:Src/chassis_task.c **** 
+ 237              		.loc 1 217 5 view .LVU71
+ 221:Src/chassis_task.c ****     //get remote control point
+ 238              		.loc 1 221 5 view .LVU72
+ 221:Src/chassis_task.c ****     //get remote control point
+ 239              		.loc 1 221 37 is_stmt 0 view .LVU73
+ 240 000c 0323     		movs	r3, #3
+ 241 000e 0372     		strb	r3, [r0, #8]
+ 224:Src/chassis_task.c ****     //get gyro sensor euler angle point
+ 242              		.loc 1 224 5 is_stmt 1 view .LVU74
+ 224:Src/chassis_task.c ****     //get gyro sensor euler angle point
+ 243              		.loc 1 224 37 is_stmt 0 view .LVU75
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 15
+
+
+ 244 0010 FFF7FEFF 		bl	get_remote_control_point
+ 245              	.LVL9:
+ 224:Src/chassis_task.c ****     //get gyro sensor euler angle point
+ 246              		.loc 1 224 35 view .LVU76
+ 247 0014 2860     		str	r0, [r5]
+ 235:Src/chassis_task.c ****     {
+ 248              		.loc 1 235 5 is_stmt 1 view .LVU77
+ 249              	.LVL10:
+ 235:Src/chassis_task.c ****     {
+ 250              		.loc 1 235 12 is_stmt 0 view .LVU78
+ 251 0016 0024     		movs	r4, #0
+ 235:Src/chassis_task.c ****     {
+ 252              		.loc 1 235 5 view .LVU79
+ 253 0018 17E0     		b	.L12
+ 254              	.LVL11:
+ 255              	.L13:
+ 237:Src/chassis_task.c ****         PID_init(&chassis_move_init->motor_speed_pid[i], PID_POSITION, motor_speed_pid, M3505_MOTOR
+ 256              		.loc 1 237 9 is_stmt 1 discriminator 3 view .LVU80
+ 237:Src/chassis_task.c ****         PID_init(&chassis_move_init->motor_speed_pid[i], PID_POSITION, motor_speed_pid, M3505_MOTOR
+ 257              		.loc 1 237 69 is_stmt 0 discriminator 3 view .LVU81
+ 258 001a 2046     		mov	r0, r4
+ 259 001c FFF7FEFF 		bl	get_chassis_motor_measure_point
+ 260              	.LVL12:
+ 237:Src/chassis_task.c ****         PID_init(&chassis_move_init->motor_speed_pid[i], PID_POSITION, motor_speed_pid, M3505_MOTOR
+ 261              		.loc 1 237 67 discriminator 3 view .LVU82
+ 262 0020 04EB8403 		add	r3, r4, r4, lsl #2
+ 263 0024 05EB8303 		add	r3, r5, r3, lsl #2
+ 264 0028 D860     		str	r0, [r3, #12]
+ 238:Src/chassis_task.c ****     }
+ 265              		.loc 1 238 9 is_stmt 1 discriminator 3 view .LVU83
+ 266 002a 04EBC400 		add	r0, r4, r4, lsl #3
+ 267 002e C000     		lsls	r0, r0, #3
+ 268 0030 5830     		adds	r0, r0, #88
+ 269 0032 2844     		add	r0, r0, r5
+ 270 0034 DFED1E0A 		vldr.32	s1, .L18
+ 271 0038 9FED1E0A 		vldr.32	s0, .L18+4
+ 272 003c 1E4A     		ldr	r2, .L18+8
+ 273 003e 0021     		movs	r1, #0
+ 274 0040 0430     		adds	r0, r0, #4
+ 275 0042 FFF7FEFF 		bl	PID_init
+ 276              	.LVL13:
+ 235:Src/chassis_task.c ****     {
+ 277              		.loc 1 235 24 discriminator 3 view .LVU84
+ 235:Src/chassis_task.c ****     {
+ 278              		.loc 1 235 25 is_stmt 0 discriminator 3 view .LVU85
+ 279 0046 0134     		adds	r4, r4, #1
+ 280              	.LVL14:
+ 235:Src/chassis_task.c ****     {
+ 281              		.loc 1 235 25 discriminator 3 view .LVU86
+ 282 0048 E4B2     		uxtb	r4, r4
+ 283              	.LVL15:
+ 284              	.L12:
+ 235:Src/chassis_task.c ****     {
+ 285              		.loc 1 235 17 is_stmt 1 discriminator 1 view .LVU87
+ 235:Src/chassis_task.c ****     {
+ 286              		.loc 1 235 5 is_stmt 0 discriminator 1 view .LVU88
+ 287 004a 032C     		cmp	r4, #3
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 16
+
+
+ 288 004c E5D9     		bls	.L13
+ 242:Src/chassis_task.c ****     
+ 289              		.loc 1 242 5 is_stmt 1 view .LVU89
+ 290 004e DFED1B0A 		vldr.32	s1, .L18+12
+ 291 0052 B1EE080A 		vmov.f32	s0, #6.0e+0
+ 292 0056 1A4A     		ldr	r2, .L18+16
+ 293 0058 0021     		movs	r1, #0
+ 294 005a 05F5BE70 		add	r0, r5, #380
+ 295 005e FFF7FEFF 		bl	PID_init
+ 296              	.LVL16:
+ 246:Src/chassis_task.c ****     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vy, CHASSIS_CONTROL_TIME, chas
+ 297              		.loc 1 246 5 view .LVU90
+ 298 0062 9FED188A 		vldr.32	s16, .L18+20
+ 299 0066 1849     		ldr	r1, .L18+24
+ 300 0068 B0EE480A 		vmov.f32	s0, s16
+ 301 006c 05F5E270 		add	r0, r5, #452
+ 302 0070 FFF7FEFF 		bl	first_order_filter_init
+ 303              	.LVL17:
+ 247:Src/chassis_task.c **** 
+ 304              		.loc 1 247 5 view .LVU91
+ 305 0074 1549     		ldr	r1, .L18+28
+ 306 0076 B0EE480A 		vmov.f32	s0, s16
+ 307 007a 05F5EA70 		add	r0, r5, #468
+ 308 007e FFF7FEFF 		bl	first_order_filter_init
+ 309              	.LVL18:
+ 251:Src/chassis_task.c ****     chassis_move_init->vx_min_speed = -NORMAL_MAX_CHASSIS_SPEED_X;
+ 310              		.loc 1 251 5 view .LVU92
+ 251:Src/chassis_task.c ****     chassis_move_init->vx_min_speed = -NORMAL_MAX_CHASSIS_SPEED_X;
+ 311              		.loc 1 251 37 is_stmt 0 view .LVU93
+ 312 0082 4FF08043 		mov	r3, #1073741824
+ 313 0086 C5F80832 		str	r3, [r5, #520]	@ float
+ 252:Src/chassis_task.c **** 
+ 314              		.loc 1 252 5 is_stmt 1 view .LVU94
+ 252:Src/chassis_task.c **** 
+ 315              		.loc 1 252 37 is_stmt 0 view .LVU95
+ 316 008a 4FF04043 		mov	r3, #-1073741824
+ 317 008e C5F80C32 		str	r3, [r5, #524]	@ float
+ 254:Src/chassis_task.c ****     chassis_move_init->vy_min_speed = -NORMAL_MAX_CHASSIS_SPEED_Y;
+ 318              		.loc 1 254 5 is_stmt 1 view .LVU96
+ 254:Src/chassis_task.c ****     chassis_move_init->vy_min_speed = -NORMAL_MAX_CHASSIS_SPEED_Y;
+ 319              		.loc 1 254 37 is_stmt 0 view .LVU97
+ 320 0092 4FF07F53 		mov	r3, #1069547520
+ 321 0096 C5F81032 		str	r3, [r5, #528]	@ float
+ 255:Src/chassis_task.c **** 
+ 322              		.loc 1 255 5 is_stmt 1 view .LVU98
+ 255:Src/chassis_task.c **** 
+ 323              		.loc 1 255 37 is_stmt 0 view .LVU99
+ 324 009a 0D4B     		ldr	r3, .L18+32
+ 325 009c C5F81432 		str	r3, [r5, #532]	@ float
+ 259:Src/chassis_task.c **** }
+ 326              		.loc 1 259 5 is_stmt 1 view .LVU100
+ 327 00a0 2846     		mov	r0, r5
+ 328 00a2 FFF7FEFF 		bl	chassis_feedback_update
+ 329              	.LVL19:
+ 260:Src/chassis_task.c **** 
+ 330              		.loc 1 260 1 is_stmt 0 view .LVU101
+ 331 00a6 BDEC028B 		vldm	sp!, {d8}
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 17
+
+
+ 332              	.LCFI2:
+ 333              		.cfi_restore 80
+ 334              		.cfi_restore 81
+ 335              		.cfi_def_cfa_offset 16
+ 336 00aa 38BD     		pop	{r3, r4, r5, pc}
+ 337              	.LVL20:
+ 338              	.L15:
+ 339              	.LCFI3:
+ 340              		.cfi_def_cfa_offset 0
+ 341              		.cfi_restore 3
+ 342              		.cfi_restore 4
+ 343              		.cfi_restore 5
+ 344              		.cfi_restore 14
+ 260:Src/chassis_task.c **** 
+ 345              		.loc 1 260 1 view .LVU102
+ 346 00ac 7047     		bx	lr
+ 347              	.L19:
+ 348 00ae 00BF     		.align	2
+ 349              	.L18:
+ 350 00b0 0000FA44 		.word	1157234688
+ 351 00b4 00007A46 		.word	1182400512
+ 352 00b8 00000000 		.word	.LANCHOR0
+ 353 00bc CDCC4C3E 		.word	1045220557
+ 354 00c0 00000000 		.word	.LANCHOR1
+ 355 00c4 6F12033B 		.word	990057071
+ 356 00c8 00000000 		.word	.LANCHOR2
+ 357 00cc 00000000 		.word	.LANCHOR3
+ 358 00d0 0000C0BF 		.word	-1077936128
+ 359              		.cfi_endproc
+ 360              	.LFE169:
+ 362              		.section	.text.chassis_set_mode,"ax",%progbits
+ 363              		.align	1
+ 364              		.syntax unified
+ 365              		.thumb
+ 366              		.thumb_func
+ 368              	chassis_set_mode:
+ 369              	.LVL21:
+ 370              	.LFB170:
+ 273:Src/chassis_task.c ****     if (chassis_move_mode == NULL)
+ 371              		.loc 1 273 1 is_stmt 1 view -0
+ 372              		.cfi_startproc
+ 373              		@ args = 0, pretend = 0, frame = 0
+ 374              		@ frame_needed = 0, uses_anonymous_args = 0
+ 274:Src/chassis_task.c ****     {
+ 375              		.loc 1 274 5 view .LVU104
+ 274:Src/chassis_task.c ****     {
+ 376              		.loc 1 274 8 is_stmt 0 view .LVU105
+ 377 0000 18B1     		cbz	r0, .L23
+ 273:Src/chassis_task.c ****     if (chassis_move_mode == NULL)
+ 378              		.loc 1 273 1 view .LVU106
+ 379 0002 08B5     		push	{r3, lr}
+ 380              	.LCFI4:
+ 381              		.cfi_def_cfa_offset 8
+ 382              		.cfi_offset 3, -8
+ 383              		.cfi_offset 14, -4
+ 279:Src/chassis_task.c **** }
+ 384              		.loc 1 279 5 is_stmt 1 view .LVU107
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 18
+
+
+ 385 0004 FFF7FEFF 		bl	chassis_behaviour_mode_set
+ 386              	.LVL22:
+ 280:Src/chassis_task.c **** 
+ 387              		.loc 1 280 1 is_stmt 0 view .LVU108
+ 388 0008 08BD     		pop	{r3, pc}
+ 389              	.LVL23:
+ 390              	.L23:
+ 391              	.LCFI5:
+ 392              		.cfi_def_cfa_offset 0
+ 393              		.cfi_restore 3
+ 394              		.cfi_restore 14
+ 280:Src/chassis_task.c **** 
+ 395              		.loc 1 280 1 view .LVU109
+ 396 000a 7047     		bx	lr
+ 397              		.cfi_endproc
+ 398              	.LFE170:
+ 400              		.section	.text.chassis_set_contorl,"ax",%progbits
+ 401              		.align	1
+ 402              		.syntax unified
+ 403              		.thumb
+ 404              		.thumb_func
+ 406              	chassis_set_contorl:
+ 407              	.LVL24:
+ 408              	.LFB174:
+ 447:Src/chassis_task.c **** 
+ 409              		.loc 1 447 1 is_stmt 1 view -0
+ 410              		.cfi_startproc
+ 411              		@ args = 0, pretend = 0, frame = 16
+ 412              		@ frame_needed = 0, uses_anonymous_args = 0
+ 449:Src/chassis_task.c ****     {
+ 413              		.loc 1 449 5 view .LVU111
+ 449:Src/chassis_task.c ****     {
+ 414              		.loc 1 449 8 is_stmt 0 view .LVU112
+ 415 0000 0028     		cmp	r0, #0
+ 416 0002 00F09D80 		beq	.L34
+ 447:Src/chassis_task.c **** 
+ 417              		.loc 1 447 1 view .LVU113
+ 418 0006 10B5     		push	{r4, lr}
+ 419              	.LCFI6:
+ 420              		.cfi_def_cfa_offset 8
+ 421              		.cfi_offset 4, -8
+ 422              		.cfi_offset 14, -4
+ 423 0008 2DED028B 		vpush.64	{d8}
+ 424              	.LCFI7:
+ 425              		.cfi_def_cfa_offset 16
+ 426              		.cfi_offset 80, -16
+ 427              		.cfi_offset 81, -12
+ 428 000c 84B0     		sub	sp, sp, #16
+ 429              	.LCFI8:
+ 430              		.cfi_def_cfa_offset 32
+ 431 000e 0446     		mov	r4, r0
+ 455:Src/chassis_task.c ****     //get three control set-point, 获取三个控制设置值
+ 432              		.loc 1 455 5 is_stmt 1 view .LVU114
+ 455:Src/chassis_task.c ****     //get three control set-point, 获取三个控制设置值
+ 433              		.loc 1 455 10 is_stmt 0 view .LVU115
+ 434 0010 0023     		movs	r3, #0
+ 435 0012 0393     		str	r3, [sp, #12]	@ float
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 19
+
+
+ 455:Src/chassis_task.c ****     //get three control set-point, 获取三个控制设置值
+ 436              		.loc 1 455 25 view .LVU116
+ 437 0014 0293     		str	r3, [sp, #8]	@ float
+ 455:Src/chassis_task.c ****     //get three control set-point, 获取三个控制设置值
+ 438              		.loc 1 455 40 view .LVU117
+ 439 0016 0193     		str	r3, [sp, #4]	@ float
+ 457:Src/chassis_task.c **** 
+ 440              		.loc 1 457 5 is_stmt 1 view .LVU118
+ 441 0018 0346     		mov	r3, r0
+ 442 001a 01AA     		add	r2, sp, #4
+ 443 001c 02A9     		add	r1, sp, #8
+ 444 001e 03A8     		add	r0, sp, #12
+ 445              	.LVL25:
+ 457:Src/chassis_task.c **** 
+ 446              		.loc 1 457 5 is_stmt 0 view .LVU119
+ 447 0020 FFF7FEFF 		bl	chassis_behaviour_control_set
+ 448              	.LVL26:
+ 461:Src/chassis_task.c ****     {
+ 449              		.loc 1 461 5 is_stmt 1 view .LVU120
+ 461:Src/chassis_task.c ****     {
+ 450              		.loc 1 461 29 is_stmt 0 view .LVU121
+ 451 0024 237A     		ldrb	r3, [r4, #8]	@ zero_extendqisi2
+ 461:Src/chassis_task.c ****     {
+ 452              		.loc 1 461 8 view .LVU122
+ 453 0026 A3B1     		cbz	r3, .L37
+ 483:Src/chassis_task.c ****     {
+ 454              		.loc 1 483 10 is_stmt 1 view .LVU123
+ 483:Src/chassis_task.c ****     {
+ 455              		.loc 1 483 13 is_stmt 0 view .LVU124
+ 456 0028 012B     		cmp	r3, #1
+ 457 002a 3AD0     		beq	.L38
+ 498:Src/chassis_task.c ****     {
+ 458              		.loc 1 498 10 is_stmt 1 view .LVU125
+ 498:Src/chassis_task.c ****     {
+ 459              		.loc 1 498 13 is_stmt 0 view .LVU126
+ 460 002c 022B     		cmp	r3, #2
+ 461 002e 6FD0     		beq	.L39
+ 506:Src/chassis_task.c ****     {
+ 462              		.loc 1 506 10 is_stmt 1 view .LVU127
+ 506:Src/chassis_task.c ****     {
+ 463              		.loc 1 506 13 is_stmt 0 view .LVU128
+ 464 0030 032B     		cmp	r3, #3
+ 465 0032 32D1     		bne	.L26
+ 510:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 466              		.loc 1 510 9 is_stmt 1 view .LVU129
+ 510:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 467              		.loc 1 510 38 is_stmt 0 view .LVU130
+ 468 0034 039B     		ldr	r3, [sp, #12]	@ float
+ 469 0036 C4F8F031 		str	r3, [r4, #496]	@ float
+ 511:Src/chassis_task.c ****         chassis_move_control->wz_set = angle_set;
+ 470              		.loc 1 511 9 is_stmt 1 view .LVU131
+ 511:Src/chassis_task.c ****         chassis_move_control->wz_set = angle_set;
+ 471              		.loc 1 511 38 is_stmt 0 view .LVU132
+ 472 003a 029B     		ldr	r3, [sp, #8]	@ float
+ 473 003c C4F8F431 		str	r3, [r4, #500]	@ float
+ 512:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vx.out = 0.0f;
+ 474              		.loc 1 512 9 is_stmt 1 view .LVU133
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 20
+
+
+ 512:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vx.out = 0.0f;
+ 475              		.loc 1 512 38 is_stmt 0 view .LVU134
+ 476 0040 019B     		ldr	r3, [sp, #4]	@ float
+ 477 0042 C4F8F831 		str	r3, [r4, #504]	@ float
+ 513:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vy.out = 0.0f;
+ 478              		.loc 1 513 9 is_stmt 1 view .LVU135
+ 513:Src/chassis_task.c ****         chassis_move_control->chassis_cmd_slow_set_vy.out = 0.0f;
+ 479              		.loc 1 513 59 is_stmt 0 view .LVU136
+ 480 0046 0023     		movs	r3, #0
+ 481 0048 C4F8C831 		str	r3, [r4, #456]	@ float
+ 514:Src/chassis_task.c ****     }
+ 482              		.loc 1 514 9 is_stmt 1 view .LVU137
+ 514:Src/chassis_task.c ****     }
+ 483              		.loc 1 514 59 is_stmt 0 view .LVU138
+ 484 004c C4F8D831 		str	r3, [r4, #472]	@ float
+ 485 0050 23E0     		b	.L26
+ 486              	.L37:
+ 470:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 487              		.loc 1 470 9 is_stmt 1 view .LVU139
+ 470:Src/chassis_task.c ****         chassis_move_control->vy_set = vy_set;
+ 488              		.loc 1 470 38 is_stmt 0 view .LVU140
+ 489 0052 039B     		ldr	r3, [sp, #12]	@ float
+ 490 0054 C4F8F031 		str	r3, [r4, #496]	@ float
+ 471:Src/chassis_task.c ****         //set control relative angle  set-point
+ 491              		.loc 1 471 9 is_stmt 1 view .LVU141
+ 471:Src/chassis_task.c ****         //set control relative angle  set-point
+ 492              		.loc 1 471 38 is_stmt 0 view .LVU142
+ 493 0058 029B     		ldr	r3, [sp, #8]	@ float
+ 494 005a C4F8F431 		str	r3, [r4, #500]	@ float
+ 474:Src/chassis_task.c ****         //calculate ratation speed
+ 495              		.loc 1 474 9 is_stmt 1 view .LVU143
+ 474:Src/chassis_task.c ****         //calculate ratation speed
+ 496              		.loc 1 474 60 is_stmt 0 view .LVU144
+ 497 005e 9FED391A 		vldr.32	s2, .L40
+ 498 0062 DFED390A 		vldr.32	s1, .L40+4
+ 499 0066 9DED010A 		vldr.32	s0, [sp, #4]
+ 500 006a FFF7FEFF 		bl	loop_fp32_constrain
+ 501              	.LVL27:
+ 474:Src/chassis_task.c ****         //calculate ratation speed
+ 502              		.loc 1 474 58 view .LVU145
+ 503 006e 84ED800A 		vstr.32	s0, [r4, #512]
+ 480:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_co
+ 504              		.loc 1 480 9 is_stmt 1 view .LVU146
+ 480:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_co
+ 505              		.loc 1 480 40 is_stmt 0 view .LVU147
+ 506 0072 94ED821A 		vldr.32	s2, [r4, #520]
+ 507 0076 D4ED830A 		vldr.32	s1, [r4, #524]
+ 508 007a 94ED7C0A 		vldr.32	s0, [r4, #496]
+ 509 007e FFF7FEFF 		bl	fp32_constrain
+ 510              	.LVL28:
+ 480:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_co
+ 511              		.loc 1 480 38 view .LVU148
+ 512 0082 84ED7C0A 		vstr.32	s0, [r4, #496]
+ 481:Src/chassis_task.c ****     }
+ 513              		.loc 1 481 9 is_stmt 1 view .LVU149
+ 481:Src/chassis_task.c ****     }
+ 514              		.loc 1 481 40 is_stmt 0 view .LVU150
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 21
+
+
+ 515 0086 94ED841A 		vldr.32	s2, [r4, #528]
+ 516 008a D4ED850A 		vldr.32	s1, [r4, #532]
+ 517 008e 94ED7D0A 		vldr.32	s0, [r4, #500]
+ 518 0092 FFF7FEFF 		bl	fp32_constrain
+ 519              	.LVL29:
+ 481:Src/chassis_task.c ****     }
+ 520              		.loc 1 481 38 view .LVU151
+ 521 0096 84ED7D0A 		vstr.32	s0, [r4, #500]
+ 522              	.L26:
+ 516:Src/chassis_task.c **** 
+ 523              		.loc 1 516 1 view .LVU152
+ 524 009a 04B0     		add	sp, sp, #16
+ 525              	.LCFI9:
+ 526              		.cfi_remember_state
+ 527              		.cfi_def_cfa_offset 16
+ 528              		@ sp needed
+ 529 009c BDEC028B 		vldm	sp!, {d8}
+ 530              	.LCFI10:
+ 531              		.cfi_restore 80
+ 532              		.cfi_restore 81
+ 533              		.cfi_def_cfa_offset 8
+ 534 00a0 10BD     		pop	{r4, pc}
+ 535              	.LVL30:
+ 536              	.L38:
+ 537              	.LCFI11:
+ 538              		.cfi_restore_state
+ 539              	.LBB2:
+ 485:Src/chassis_task.c ****         //set chassis yaw angle set-point
+ 540              		.loc 1 485 9 is_stmt 1 view .LVU153
+ 488:Src/chassis_task.c ****         delat_angle = rad_format(chassis_move_control->chassis_yaw_set - chassis_move_control->chas
+ 541              		.loc 1 488 9 view .LVU154
+ 488:Src/chassis_task.c ****         delat_angle = rad_format(chassis_move_control->chassis_yaw_set - chassis_move_control->chas
+ 542              		.loc 1 488 49 is_stmt 0 view .LVU155
+ 543 00a2 DFED288A 		vldr.32	s17, .L40
+ 544 00a6 9FED288A 		vldr.32	s16, .L40+4
+ 545 00aa B0EE681A 		vmov.f32	s2, s17
+ 546 00ae F0EE480A 		vmov.f32	s1, s16
+ 547 00b2 9DED010A 		vldr.32	s0, [sp, #4]
+ 548 00b6 FFF7FEFF 		bl	loop_fp32_constrain
+ 549              	.LVL31:
+ 488:Src/chassis_task.c ****         delat_angle = rad_format(chassis_move_control->chassis_yaw_set - chassis_move_control->chas
+ 550              		.loc 1 488 47 view .LVU156
+ 551 00ba 84ED810A 		vstr.32	s0, [r4, #516]
+ 489:Src/chassis_task.c ****         //calculate rotation speed
+ 552              		.loc 1 489 9 is_stmt 1 view .LVU157
+ 489:Src/chassis_task.c ****         //calculate rotation speed
+ 553              		.loc 1 489 23 is_stmt 0 view .LVU158
+ 554 00be D4ED867A 		vldr.32	s15, [r4, #536]
+ 555 00c2 B0EE681A 		vmov.f32	s2, s17
+ 556 00c6 F0EE480A 		vmov.f32	s1, s16
+ 557 00ca 30EE670A 		vsub.f32	s0, s0, s15
+ 558 00ce FFF7FEFF 		bl	loop_fp32_constrain
+ 559              	.LVL32:
+ 560 00d2 F0EE400A 		vmov.f32	s1, s0
+ 561              	.LVL33:
+ 492:Src/chassis_task.c ****         //speed limit
+ 562              		.loc 1 492 9 is_stmt 1 view .LVU159
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 22
+
+
+ 492:Src/chassis_task.c ****         //speed limit
+ 563              		.loc 1 492 40 is_stmt 0 view .LVU160
+ 564 00d6 9FED1D0A 		vldr.32	s0, .L40+8
+ 565              	.LVL34:
+ 492:Src/chassis_task.c ****         //speed limit
+ 566              		.loc 1 492 40 view .LVU161
+ 567 00da 04F5BE70 		add	r0, r4, #380
+ 568 00de FFF7FEFF 		bl	PID_calc
+ 569              	.LVL35:
+ 492:Src/chassis_task.c ****         //speed limit
+ 570              		.loc 1 492 38 view .LVU162
+ 571 00e2 84ED7E0A 		vstr.32	s0, [r4, #504]
+ 495:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 572              		.loc 1 495 9 is_stmt 1 view .LVU163
+ 495:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 573              		.loc 1 495 40 is_stmt 0 view .LVU164
+ 574 00e6 94ED821A 		vldr.32	s2, [r4, #520]
+ 575 00ea D4ED830A 		vldr.32	s1, [r4, #524]
+ 576 00ee 9DED030A 		vldr.32	s0, [sp, #12]
+ 577 00f2 FFF7FEFF 		bl	fp32_constrain
+ 578              	.LVL36:
+ 495:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 579              		.loc 1 495 38 view .LVU165
+ 580 00f6 84ED7C0A 		vstr.32	s0, [r4, #496]
+ 496:Src/chassis_task.c ****     }
+ 581              		.loc 1 496 9 is_stmt 1 view .LVU166
+ 496:Src/chassis_task.c ****     }
+ 582              		.loc 1 496 40 is_stmt 0 view .LVU167
+ 583 00fa 94ED841A 		vldr.32	s2, [r4, #528]
+ 584 00fe D4ED850A 		vldr.32	s1, [r4, #532]
+ 585 0102 9DED020A 		vldr.32	s0, [sp, #8]
+ 586 0106 FFF7FEFF 		bl	fp32_constrain
+ 587              	.LVL37:
+ 496:Src/chassis_task.c ****     }
+ 588              		.loc 1 496 38 view .LVU168
+ 589 010a 84ED7D0A 		vstr.32	s0, [r4, #500]
+ 590              	.LBE2:
+ 591 010e C4E7     		b	.L26
+ 592              	.L39:
+ 502:Src/chassis_task.c ****         chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, c
+ 593              		.loc 1 502 9 is_stmt 1 view .LVU169
+ 502:Src/chassis_task.c ****         chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, c
+ 594              		.loc 1 502 38 is_stmt 0 view .LVU170
+ 595 0110 019B     		ldr	r3, [sp, #4]	@ float
+ 596 0112 C4F8F831 		str	r3, [r4, #504]	@ float
+ 503:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 597              		.loc 1 503 9 is_stmt 1 view .LVU171
+ 503:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 598              		.loc 1 503 40 is_stmt 0 view .LVU172
+ 599 0116 94ED821A 		vldr.32	s2, [r4, #520]
+ 600 011a D4ED830A 		vldr.32	s1, [r4, #524]
+ 601 011e 9DED030A 		vldr.32	s0, [sp, #12]
+ 602 0122 FFF7FEFF 		bl	fp32_constrain
+ 603              	.LVL38:
+ 503:Src/chassis_task.c ****         chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, c
+ 604              		.loc 1 503 38 view .LVU173
+ 605 0126 84ED7C0A 		vstr.32	s0, [r4, #496]
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 23
+
+
+ 504:Src/chassis_task.c ****     }
+ 606              		.loc 1 504 9 is_stmt 1 view .LVU174
+ 504:Src/chassis_task.c ****     }
+ 607              		.loc 1 504 40 is_stmt 0 view .LVU175
+ 608 012a 94ED841A 		vldr.32	s2, [r4, #528]
+ 609 012e D4ED850A 		vldr.32	s1, [r4, #532]
+ 610 0132 9DED020A 		vldr.32	s0, [sp, #8]
+ 611 0136 FFF7FEFF 		bl	fp32_constrain
+ 612              	.LVL39:
+ 504:Src/chassis_task.c ****     }
+ 613              		.loc 1 504 38 view .LVU176
+ 614 013a 84ED7D0A 		vstr.32	s0, [r4, #500]
+ 615 013e ACE7     		b	.L26
+ 616              	.LVL40:
+ 617              	.L34:
+ 618              	.LCFI12:
+ 619              		.cfi_def_cfa_offset 0
+ 620              		.cfi_restore 4
+ 621              		.cfi_restore 14
+ 622              		.cfi_restore 80
+ 623              		.cfi_restore 81
+ 504:Src/chassis_task.c ****     }
+ 624              		.loc 1 504 38 view .LVU177
+ 625 0140 7047     		bx	lr
+ 626              	.L41:
+ 627 0142 00BF     		.align	2
+ 628              	.L40:
+ 629 0144 DB0F4940 		.word	1078530011
+ 630 0148 DB0F49C0 		.word	-1068953637
+ 631 014c 00000000 		.word	0
+ 632              		.cfi_endproc
+ 633              	.LFE174:
+ 635              		.section	.text.chassis_control_loop,"ax",%progbits
+ 636              		.align	1
+ 637              		.syntax unified
+ 638              		.thumb
+ 639              		.thumb_func
+ 641              	chassis_control_loop:
+ 642              	.LVL41:
+ 643              	.LFB176:
+ 543:Src/chassis_task.c **** 
+ 544:Src/chassis_task.c **** 
+ 545:Src/chassis_task.c **** /**
+ 546:Src/chassis_task.c ****   * @brief          control loop, according to control set-point, calculate motor current, 
+ 547:Src/chassis_task.c ****   *                 motor current will be sentto motor
+ 548:Src/chassis_task.c ****   * @param[out]     chassis_move_control_loop: "chassis_move" valiable point
+ 549:Src/chassis_task.c ****   * @retval         none
+ 550:Src/chassis_task.c ****   */
+ 551:Src/chassis_task.c **** /**
+ 552:Src/chassis_task.c ****   * @brief          控制循环，根据控制设定值，计算电机电流值，进行控制
+ 553:Src/chassis_task.c ****   * @param[out]     chassis_move_control_loop:"chassis_move"变量指针.
+ 554:Src/chassis_task.c ****   * @retval         none
+ 555:Src/chassis_task.c ****   */
+ 556:Src/chassis_task.c **** static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
+ 557:Src/chassis_task.c **** {
+ 644              		.loc 1 557 1 is_stmt 1 view -0
+ 645              		.cfi_startproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 24
+
+
+ 646              		@ args = 0, pretend = 0, frame = 16
+ 647              		@ frame_needed = 0, uses_anonymous_args = 0
+ 648              		.loc 1 557 1 is_stmt 0 view .LVU179
+ 649 0000 30B5     		push	{r4, r5, lr}
+ 650              	.LCFI13:
+ 651              		.cfi_def_cfa_offset 12
+ 652              		.cfi_offset 4, -12
+ 653              		.cfi_offset 5, -8
+ 654              		.cfi_offset 14, -4
+ 655 0002 85B0     		sub	sp, sp, #20
+ 656              	.LCFI14:
+ 657              		.cfi_def_cfa_offset 32
+ 658 0004 0546     		mov	r5, r0
+ 558:Src/chassis_task.c ****     fp32 max_vector = 0.0f, vector_rate = 0.0f;
+ 659              		.loc 1 558 5 is_stmt 1 view .LVU180
+ 660              	.LVL42:
+ 559:Src/chassis_task.c ****     fp32 temp = 0.0f;
+ 661              		.loc 1 559 5 view .LVU181
+ 560:Src/chassis_task.c ****     fp32 wheel_speed[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+ 662              		.loc 1 560 5 view .LVU182
+ 663              		.loc 1 560 10 is_stmt 0 view .LVU183
+ 664 0006 0023     		movs	r3, #0
+ 665 0008 0093     		str	r3, [sp]
+ 666 000a 0193     		str	r3, [sp, #4]
+ 667 000c 0293     		str	r3, [sp, #8]
+ 668 000e 0393     		str	r3, [sp, #12]
+ 561:Src/chassis_task.c ****     uint8_t i = 0;
+ 669              		.loc 1 561 5 is_stmt 1 view .LVU184
+ 670              	.LVL43:
+ 562:Src/chassis_task.c **** 
+ 563:Src/chassis_task.c ****     //mecanum wheel speed calculation
+ 564:Src/chassis_task.c ****     //麦轮运动分解
+ 565:Src/chassis_task.c ****     chassis_vector_to_mecanum_wheel_speed(chassis_move_control_loop->vx_set,
+ 671              		.loc 1 565 5 view .LVU185
+ 672 0010 6846     		mov	r0, sp
+ 673              	.LVL44:
+ 674              		.loc 1 565 5 is_stmt 0 view .LVU186
+ 675 0012 95ED7E1A 		vldr.32	s2, [r5, #504]
+ 676 0016 D5ED7D0A 		vldr.32	s1, [r5, #500]
+ 677 001a 95ED7C0A 		vldr.32	s0, [r5, #496]
+ 678 001e FFF7FEFF 		bl	chassis_vector_to_mecanum_wheel_speed
+ 679              	.LVL45:
+ 566:Src/chassis_task.c ****                                           chassis_move_control_loop->vy_set, chassis_move_control_l
+ 567:Src/chassis_task.c **** 
+ 568:Src/chassis_task.c ****     if (chassis_move_control_loop->chassis_mode == CHASSIS_VECTOR_RAW)
+ 680              		.loc 1 568 5 is_stmt 1 view .LVU187
+ 681              		.loc 1 568 34 is_stmt 0 view .LVU188
+ 682 0022 2B7A     		ldrb	r3, [r5, #8]	@ zero_extendqisi2
+ 683              		.loc 1 568 8 view .LVU189
+ 684 0024 032B     		cmp	r3, #3
+ 685 0026 16D0     		beq	.L57
+ 569:Src/chassis_task.c ****     {
+ 570:Src/chassis_task.c ****         
+ 571:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 572:Src/chassis_task.c ****         {
+ 573:Src/chassis_task.c ****             chassis_move_control_loop->motor_chassis[i].give_current = (int16_t)(wheel_speed[i]);
+ 574:Src/chassis_task.c ****         }
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 25
+
+
+ 575:Src/chassis_task.c ****         //in raw mode, derectly return
+ 576:Src/chassis_task.c ****         //raw控制直接返回
+ 577:Src/chassis_task.c ****         return;
+ 578:Src/chassis_task.c ****     }
+ 579:Src/chassis_task.c **** 
+ 580:Src/chassis_task.c ****     //calculate the max speed in four wheels, limit the max speed
+ 581:Src/chassis_task.c ****     //计算轮子控制最大速度，并限制其最大速度
+ 582:Src/chassis_task.c ****     for (i = 0; i < 4; i++)
+ 686              		.loc 1 582 12 view .LVU190
+ 687 0028 0023     		movs	r3, #0
+ 558:Src/chassis_task.c ****     fp32 temp = 0.0f;
+ 688              		.loc 1 558 10 view .LVU191
+ 689 002a 9FED3B7A 		vldr.32	s14, .L62
+ 690 002e 16E0     		b	.L44
+ 691              	.LVL46:
+ 692              	.L45:
+ 573:Src/chassis_task.c ****         }
+ 693              		.loc 1 573 13 is_stmt 1 discriminator 3 view .LVU192
+ 573:Src/chassis_task.c ****         }
+ 694              		.loc 1 573 93 is_stmt 0 discriminator 3 view .LVU193
+ 695 0030 04AA     		add	r2, sp, #16
+ 696 0032 02EB8302 		add	r2, r2, r3, lsl #2
+ 697 0036 52ED047A 		vldr.32	s15, [r2, #-16]
+ 573:Src/chassis_task.c ****         }
+ 698              		.loc 1 573 72 discriminator 3 view .LVU194
+ 699 003a FDEEE77A 		vcvt.s32.f32	s15, s15
+ 573:Src/chassis_task.c ****         }
+ 700              		.loc 1 573 70 discriminator 3 view .LVU195
+ 701 003e 03EB8302 		add	r2, r3, r3, lsl #2
+ 702 0042 05EB8202 		add	r2, r5, r2, lsl #2
+ 703 0046 17EE901A 		vmov	r1, s15	@ int
+ 704 004a 9183     		strh	r1, [r2, #28]	@ movhi
+ 571:Src/chassis_task.c ****         {
+ 705              		.loc 1 571 28 is_stmt 1 discriminator 3 view .LVU196
+ 571:Src/chassis_task.c ****         {
+ 706              		.loc 1 571 29 is_stmt 0 discriminator 3 view .LVU197
+ 707 004c 0133     		adds	r3, r3, #1
+ 708              	.LVL47:
+ 571:Src/chassis_task.c ****         {
+ 709              		.loc 1 571 29 discriminator 3 view .LVU198
+ 710 004e DBB2     		uxtb	r3, r3
+ 711              	.LVL48:
+ 712              	.L43:
+ 571:Src/chassis_task.c ****         {
+ 713              		.loc 1 571 21 is_stmt 1 discriminator 1 view .LVU199
+ 571:Src/chassis_task.c ****         {
+ 714              		.loc 1 571 9 is_stmt 0 discriminator 1 view .LVU200
+ 715 0050 032B     		cmp	r3, #3
+ 716 0052 EDD9     		bls	.L45
+ 717 0054 5EE0     		b	.L42
+ 718              	.LVL49:
+ 719              	.L57:
+ 571:Src/chassis_task.c ****         {
+ 720              		.loc 1 571 16 view .LVU201
+ 721 0056 0023     		movs	r3, #0
+ 722 0058 FAE7     		b	.L43
+ 723              	.LVL50:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 26
+
+
+ 724              	.L47:
+ 725              		.loc 1 582 24 is_stmt 1 discriminator 2 view .LVU202
+ 726              		.loc 1 582 25 is_stmt 0 discriminator 2 view .LVU203
+ 727 005a 0133     		adds	r3, r3, #1
+ 728              	.LVL51:
+ 729              		.loc 1 582 25 discriminator 2 view .LVU204
+ 730 005c DBB2     		uxtb	r3, r3
+ 731              	.LVL52:
+ 732              	.L44:
+ 733              		.loc 1 582 17 is_stmt 1 discriminator 1 view .LVU205
+ 734              		.loc 1 582 5 is_stmt 0 discriminator 1 view .LVU206
+ 735 005e 032B     		cmp	r3, #3
+ 736 0060 14D8     		bhi	.L61
+ 583:Src/chassis_task.c ****     {
+ 584:Src/chassis_task.c ****         chassis_move_control_loop->motor_chassis[i].speed_set = wheel_speed[i];
+ 737              		.loc 1 584 9 is_stmt 1 view .LVU207
+ 738              		.loc 1 584 76 is_stmt 0 view .LVU208
+ 739 0062 04AA     		add	r2, sp, #16
+ 740 0064 02EB8302 		add	r2, r2, r3, lsl #2
+ 741 0068 52ED047A 		vldr.32	s15, [r2, #-16]
+ 742              		.loc 1 584 63 view .LVU209
+ 743 006c 03EB8302 		add	r2, r3, r3, lsl #2
+ 744 0070 05EB8202 		add	r2, r5, r2, lsl #2
+ 745 0074 C2ED067A 		vstr.32	s15, [r2, #24]
+ 585:Src/chassis_task.c ****         temp = fabs(chassis_move_control_loop->motor_chassis[i].speed_set);
+ 746              		.loc 1 585 9 is_stmt 1 view .LVU210
+ 747              		.loc 1 585 14 is_stmt 0 view .LVU211
+ 748 0078 F0EEE77A 		vabs.f32	s15, s15
+ 749              	.LVL53:
+ 586:Src/chassis_task.c ****         if (max_vector < temp)
+ 750              		.loc 1 586 9 is_stmt 1 view .LVU212
+ 751              		.loc 1 586 12 is_stmt 0 view .LVU213
+ 752 007c B4EEE77A 		vcmpe.f32	s14, s15
+ 753 0080 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 754 0084 E9D5     		bpl	.L47
+ 587:Src/chassis_task.c ****         {
+ 588:Src/chassis_task.c ****             max_vector = temp;
+ 755              		.loc 1 588 24 view .LVU214
+ 756 0086 B0EE677A 		vmov.f32	s14, s15
+ 757              	.LVL54:
+ 758              		.loc 1 588 24 view .LVU215
+ 759 008a E6E7     		b	.L47
+ 760              	.LVL55:
+ 761              	.L61:
+ 589:Src/chassis_task.c ****         }
+ 590:Src/chassis_task.c ****     }
+ 591:Src/chassis_task.c **** 
+ 592:Src/chassis_task.c ****     if (max_vector > MAX_WHEEL_SPEED)
+ 762              		.loc 1 592 5 is_stmt 1 view .LVU216
+ 763              		.loc 1 592 8 is_stmt 0 view .LVU217
+ 764 008c F1EE007A 		vmov.f32	s15, #4.0e+0
+ 765 0090 B4EEE77A 		vcmpe.f32	s14, s15
+ 766 0094 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 767 0098 11DD     		ble	.L49
+ 593:Src/chassis_task.c ****     {
+ 594:Src/chassis_task.c ****         vector_rate = MAX_WHEEL_SPEED / max_vector;
+ 768              		.loc 1 594 9 is_stmt 1 view .LVU218
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 27
+
+
+ 769              		.loc 1 594 21 is_stmt 0 view .LVU219
+ 770 009a C7EE876A 		vdiv.f32	s13, s15, s14
+ 771              	.LVL56:
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 772              		.loc 1 595 9 is_stmt 1 view .LVU220
+ 773              		.loc 1 595 16 is_stmt 0 view .LVU221
+ 774 009e 0023     		movs	r3, #0
+ 775              		.loc 1 595 9 view .LVU222
+ 776 00a0 0BE0     		b	.L51
+ 777              	.LVL57:
+ 778              	.L52:
+ 596:Src/chassis_task.c ****         {
+ 597:Src/chassis_task.c ****             chassis_move_control_loop->motor_chassis[i].speed_set *= vector_rate;
+ 779              		.loc 1 597 13 is_stmt 1 discriminator 3 view .LVU223
+ 780              		.loc 1 597 67 is_stmt 0 discriminator 3 view .LVU224
+ 781 00a2 03EB8302 		add	r2, r3, r3, lsl #2
+ 782 00a6 05EB8202 		add	r2, r5, r2, lsl #2
+ 783 00aa D2ED067A 		vldr.32	s15, [r2, #24]
+ 784 00ae 67EEA67A 		vmul.f32	s15, s15, s13
+ 785 00b2 C2ED067A 		vstr.32	s15, [r2, #24]
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 786              		.loc 1 595 28 is_stmt 1 discriminator 3 view .LVU225
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 787              		.loc 1 595 29 is_stmt 0 discriminator 3 view .LVU226
+ 788 00b6 0133     		adds	r3, r3, #1
+ 789              	.LVL58:
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 790              		.loc 1 595 29 discriminator 3 view .LVU227
+ 791 00b8 DBB2     		uxtb	r3, r3
+ 792              	.LVL59:
+ 793              	.L51:
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 794              		.loc 1 595 21 is_stmt 1 discriminator 1 view .LVU228
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 795              		.loc 1 595 9 is_stmt 0 discriminator 1 view .LVU229
+ 796 00ba 032B     		cmp	r3, #3
+ 797 00bc F1D9     		bls	.L52
+ 798              	.LVL60:
+ 799              	.L49:
+ 595:Src/chassis_task.c ****         for (i = 0; i < 4; i++)
+ 800              		.loc 1 595 16 discriminator 1 view .LVU230
+ 801 00be 0024     		movs	r4, #0
+ 802 00c0 11E0     		b	.L53
+ 803              	.LVL61:
+ 804              	.L54:
+ 598:Src/chassis_task.c ****         }
+ 599:Src/chassis_task.c ****     }
+ 600:Src/chassis_task.c **** 
+ 601:Src/chassis_task.c ****     //calculate pid
+ 602:Src/chassis_task.c ****     //计算pid
+ 603:Src/chassis_task.c ****     for (i = 0; i < 4; i++)
+ 604:Src/chassis_task.c ****     {
+ 605:Src/chassis_task.c ****         PID_calc(&chassis_move_control_loop->motor_speed_pid[i], chassis_move_control_loop->motor_c
+ 805              		.loc 1 605 9 is_stmt 1 discriminator 3 view .LVU231
+ 806 00c2 04EB8403 		add	r3, r4, r4, lsl #2
+ 807 00c6 05EB8303 		add	r3, r5, r3, lsl #2
+ 808 00ca 04EBC400 		add	r0, r4, r4, lsl #3
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 28
+
+
+ 809 00ce C000     		lsls	r0, r0, #3
+ 810 00d0 5830     		adds	r0, r0, #88
+ 811 00d2 2844     		add	r0, r0, r5
+ 812 00d4 D3ED060A 		vldr.32	s1, [r3, #24]
+ 813 00d8 93ED050A 		vldr.32	s0, [r3, #20]
+ 814 00dc 0430     		adds	r0, r0, #4
+ 815 00de FFF7FEFF 		bl	PID_calc
+ 816              	.LVL62:
+ 603:Src/chassis_task.c ****     {
+ 817              		.loc 1 603 24 discriminator 3 view .LVU232
+ 603:Src/chassis_task.c ****     {
+ 818              		.loc 1 603 25 is_stmt 0 discriminator 3 view .LVU233
+ 819 00e2 0134     		adds	r4, r4, #1
+ 820              	.LVL63:
+ 603:Src/chassis_task.c ****     {
+ 821              		.loc 1 603 25 discriminator 3 view .LVU234
+ 822 00e4 E4B2     		uxtb	r4, r4
+ 823              	.LVL64:
+ 824              	.L53:
+ 603:Src/chassis_task.c ****     {
+ 825              		.loc 1 603 17 is_stmt 1 discriminator 1 view .LVU235
+ 603:Src/chassis_task.c ****     {
+ 826              		.loc 1 603 5 is_stmt 0 discriminator 1 view .LVU236
+ 827 00e6 032C     		cmp	r4, #3
+ 828 00e8 EBD9     		bls	.L54
+ 606:Src/chassis_task.c ****     }
+ 607:Src/chassis_task.c **** 
+ 608:Src/chassis_task.c **** 
+ 609:Src/chassis_task.c **** 
+ 610:Src/chassis_task.c ****     //赋值电流值
+ 611:Src/chassis_task.c ****     for (i = 0; i < 4; i++)
+ 829              		.loc 1 611 12 view .LVU237
+ 830 00ea 0023     		movs	r3, #0
+ 831 00ec 10E0     		b	.L55
+ 832              	.LVL65:
+ 833              	.L56:
+ 612:Src/chassis_task.c ****     {
+ 613:Src/chassis_task.c ****         chassis_move_control_loop->motor_chassis[i].give_current = (int16_t)(chassis_move_control_l
+ 834              		.loc 1 613 9 is_stmt 1 discriminator 3 view .LVU238
+ 835              		.loc 1 613 123 is_stmt 0 discriminator 3 view .LVU239
+ 836 00ee 03EBC302 		add	r2, r3, r3, lsl #3
+ 837 00f2 05EBC202 		add	r2, r5, r2, lsl #3
+ 838 00f6 D2ED1F7A 		vldr.32	s15, [r2, #124]
+ 839              		.loc 1 613 68 discriminator 3 view .LVU240
+ 840 00fa FDEEE77A 		vcvt.s32.f32	s15, s15
+ 841              		.loc 1 613 66 discriminator 3 view .LVU241
+ 842 00fe 03EB8302 		add	r2, r3, r3, lsl #2
+ 843 0102 05EB8202 		add	r2, r5, r2, lsl #2
+ 844 0106 17EE901A 		vmov	r1, s15	@ int
+ 845 010a 9183     		strh	r1, [r2, #28]	@ movhi
+ 611:Src/chassis_task.c ****     {
+ 846              		.loc 1 611 24 is_stmt 1 discriminator 3 view .LVU242
+ 611:Src/chassis_task.c ****     {
+ 847              		.loc 1 611 25 is_stmt 0 discriminator 3 view .LVU243
+ 848 010c 0133     		adds	r3, r3, #1
+ 849              	.LVL66:
+ 611:Src/chassis_task.c ****     {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 29
+
+
+ 850              		.loc 1 611 25 discriminator 3 view .LVU244
+ 851 010e DBB2     		uxtb	r3, r3
+ 852              	.LVL67:
+ 853              	.L55:
+ 611:Src/chassis_task.c ****     {
+ 854              		.loc 1 611 17 is_stmt 1 discriminator 1 view .LVU245
+ 611:Src/chassis_task.c ****     {
+ 855              		.loc 1 611 5 is_stmt 0 discriminator 1 view .LVU246
+ 856 0110 032B     		cmp	r3, #3
+ 857 0112 ECD9     		bls	.L56
+ 858              	.L42:
+ 614:Src/chassis_task.c ****     }
+ 615:Src/chassis_task.c **** }
+ 859              		.loc 1 615 1 view .LVU247
+ 860 0114 05B0     		add	sp, sp, #20
+ 861              	.LCFI15:
+ 862              		.cfi_def_cfa_offset 12
+ 863              		@ sp needed
+ 864 0116 30BD     		pop	{r4, r5, pc}
+ 865              	.LVL68:
+ 866              	.L63:
+ 867              		.loc 1 615 1 view .LVU248
+ 868              		.align	2
+ 869              	.L62:
+ 870 0118 00000000 		.word	0
+ 871              		.cfi_endproc
+ 872              	.LFE176:
+ 874              		.section	.text.chassis_mode_change_control_transit,"ax",%progbits
+ 875              		.align	1
+ 876              		.global	chassis_mode_change_control_transit
+ 877              		.syntax unified
+ 878              		.thumb
+ 879              		.thumb_func
+ 881              	chassis_mode_change_control_transit:
+ 882              	.LVL69:
+ 883              	.LFB171:
+ 293:Src/chassis_task.c ****     if (chassis_move_transit == NULL)
+ 884              		.loc 1 293 1 is_stmt 1 view -0
+ 885              		.cfi_startproc
+ 886              		@ args = 0, pretend = 0, frame = 0
+ 887              		@ frame_needed = 0, uses_anonymous_args = 0
+ 888              		@ link register save eliminated.
+ 294:Src/chassis_task.c ****     {
+ 889              		.loc 1 294 5 view .LVU250
+ 294:Src/chassis_task.c ****     {
+ 890              		.loc 1 294 8 is_stmt 0 view .LVU251
+ 891 0000 0346     		mov	r3, r0
+ 892 0002 90B1     		cbz	r0, .L64
+ 299:Src/chassis_task.c ****     {
+ 893              		.loc 1 299 5 is_stmt 1 view .LVU252
+ 299:Src/chassis_task.c ****     {
+ 894              		.loc 1 299 29 is_stmt 0 view .LVU253
+ 895 0004 417A     		ldrb	r1, [r0, #9]	@ zero_extendqisi2
+ 299:Src/chassis_task.c ****     {
+ 896              		.loc 1 299 72 view .LVU254
+ 897 0006 027A     		ldrb	r2, [r0, #8]	@ zero_extendqisi2
+ 299:Src/chassis_task.c ****     {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 30
+
+
+ 898              		.loc 1 299 8 view .LVU255
+ 899 0008 9142     		cmp	r1, r2
+ 900 000a 0ED0     		beq	.L64
+ 306:Src/chassis_task.c ****     {
+ 901              		.loc 1 306 5 is_stmt 1 view .LVU256
+ 306:Src/chassis_task.c ****     {
+ 902              		.loc 1 306 8 is_stmt 0 view .LVU257
+ 903 000c 21B1     		cbz	r1, .L66
+ 306:Src/chassis_task.c ****     {
+ 904              		.loc 1 306 87 discriminator 1 view .LVU258
+ 905 000e 1AB9     		cbnz	r2, .L66
+ 308:Src/chassis_task.c ****     }
+ 906              		.loc 1 308 9 is_stmt 1 view .LVU259
+ 308:Src/chassis_task.c ****     }
+ 907              		.loc 1 308 58 is_stmt 0 view .LVU260
+ 908 0010 0021     		movs	r1, #0
+ 909 0012 C0F80012 		str	r1, [r0, #512]	@ float
+ 910 0016 07E0     		b	.L67
+ 911              	.L66:
+ 312:Src/chassis_task.c ****     {
+ 912              		.loc 1 312 10 is_stmt 1 view .LVU261
+ 312:Src/chassis_task.c ****     {
+ 913              		.loc 1 312 13 is_stmt 0 view .LVU262
+ 914 0018 0129     		cmp	r1, #1
+ 915 001a 01D0     		beq	.L68
+ 312:Src/chassis_task.c ****     {
+ 916              		.loc 1 312 93 discriminator 1 view .LVU263
+ 917 001c 012A     		cmp	r2, #1
+ 918 001e 05D0     		beq	.L69
+ 919              	.L68:
+ 318:Src/chassis_task.c ****     {
+ 920              		.loc 1 318 10 is_stmt 1 view .LVU264
+ 318:Src/chassis_task.c ****     {
+ 921              		.loc 1 318 13 is_stmt 0 view .LVU265
+ 922 0020 0229     		cmp	r1, #2
+ 923 0022 01D0     		beq	.L67
+ 318:Src/chassis_task.c ****     {
+ 924              		.loc 1 318 88 discriminator 1 view .LVU266
+ 925 0024 022A     		cmp	r2, #2
+ 926 0026 06D0     		beq	.L70
+ 927              	.L67:
+ 323:Src/chassis_task.c **** }
+ 928              		.loc 1 323 5 is_stmt 1 view .LVU267
+ 323:Src/chassis_task.c **** }
+ 929              		.loc 1 323 45 is_stmt 0 view .LVU268
+ 930 0028 5A72     		strb	r2, [r3, #9]
+ 931              	.L64:
+ 324:Src/chassis_task.c **** 
+ 932              		.loc 1 324 1 view .LVU269
+ 933 002a 7047     		bx	lr
+ 934              	.L69:
+ 314:Src/chassis_task.c ****     }
+ 935              		.loc 1 314 9 is_stmt 1 view .LVU270
+ 314:Src/chassis_task.c ****     }
+ 936              		.loc 1 314 69 is_stmt 0 view .LVU271
+ 937 002c D3F81812 		ldr	r1, [r3, #536]	@ float
+ 314:Src/chassis_task.c ****     }
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 31
+
+
+ 938              		.loc 1 314 47 view .LVU272
+ 939 0030 C3F80412 		str	r1, [r3, #516]	@ float
+ 940 0034 F8E7     		b	.L67
+ 941              	.L70:
+ 320:Src/chassis_task.c ****     }
+ 942              		.loc 1 320 9 is_stmt 1 view .LVU273
+ 320:Src/chassis_task.c ****     }
+ 943              		.loc 1 320 69 is_stmt 0 view .LVU274
+ 944 0036 D3F81812 		ldr	r1, [r3, #536]	@ float
+ 320:Src/chassis_task.c ****     }
+ 945              		.loc 1 320 47 view .LVU275
+ 946 003a C3F80412 		str	r1, [r3, #516]	@ float
+ 947 003e F3E7     		b	.L67
+ 948              		.cfi_endproc
+ 949              	.LFE171:
+ 951              		.section	.text.chassis_task,"ax",%progbits
+ 952              		.align	1
+ 953              		.global	chassis_task
+ 954              		.syntax unified
+ 955              		.thumb
+ 956              		.thumb_func
+ 958              	chassis_task:
+ 959              	.LVL70:
+ 960              	.LFB168:
+ 136:Src/chassis_task.c ****     //wait a time 
+ 961              		.loc 1 136 1 is_stmt 1 view -0
+ 962              		.cfi_startproc
+ 963              		@ Volatile: function does not return.
+ 964              		@ args = 0, pretend = 0, frame = 0
+ 965              		@ frame_needed = 0, uses_anonymous_args = 0
+ 136:Src/chassis_task.c ****     //wait a time 
+ 966              		.loc 1 136 1 is_stmt 0 view .LVU277
+ 967 0000 08B5     		push	{r3, lr}
+ 968              	.LCFI16:
+ 969              		.cfi_def_cfa_offset 8
+ 970              		.cfi_offset 3, -8
+ 971              		.cfi_offset 14, -4
+ 139:Src/chassis_task.c ****     //chassis init
+ 972              		.loc 1 139 5 is_stmt 1 view .LVU278
+ 973 0002 40F26510 		movw	r0, #357
+ 974              	.LVL71:
+ 139:Src/chassis_task.c ****     //chassis init
+ 975              		.loc 1 139 5 is_stmt 0 view .LVU279
+ 976 0006 FFF7FEFF 		bl	vTaskDelay
+ 977              	.LVL72:
+ 142:Src/chassis_task.c ****     while (1)
+ 978              		.loc 1 142 5 is_stmt 1 view .LVU280
+ 979 000a 2248     		ldr	r0, .L78
+ 980 000c FFF7FEFF 		bl	chassis_init
+ 981              	.LVL73:
+ 982 0010 1FE0     		b	.L75
+ 983              	.L77:
+ 163:Src/chassis_task.c ****         {
+ 984              		.loc 1 163 51 is_stmt 0 discriminator 1 view .LVU281
+ 985 0012 0220     		movs	r0, #2
+ 986 0014 FFF7FEFF 		bl	toe_is_error
+ 987              	.LVL74:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 32
+
+
+ 163:Src/chassis_task.c ****         {
+ 988              		.loc 1 163 48 discriminator 1 view .LVU282
+ 989 0018 80B3     		cbz	r0, .L72
+ 163:Src/chassis_task.c ****         {
+ 990              		.loc 1 163 87 discriminator 2 view .LVU283
+ 991 001a 0320     		movs	r0, #3
+ 992 001c FFF7FEFF 		bl	toe_is_error
+ 993              	.LVL75:
+ 163:Src/chassis_task.c ****         {
+ 994              		.loc 1 163 84 discriminator 2 view .LVU284
+ 995 0020 60B3     		cbz	r0, .L72
+ 163:Src/chassis_task.c ****         {
+ 996              		.loc 1 163 123 discriminator 3 view .LVU285
+ 997 0022 0420     		movs	r0, #4
+ 998 0024 FFF7FEFF 		bl	toe_is_error
+ 999              	.LVL76:
+ 163:Src/chassis_task.c ****         {
+ 1000              		.loc 1 163 13 discriminator 3 view .LVU286
+ 1001 0028 58B9     		cbnz	r0, .L73
+ 1002 002a 27E0     		b	.L72
+ 1003              	.L74:
+ 175:Src/chassis_task.c ****                                 chassis_move.motor_chassis[2].give_current, chassis_move.motor_chas
+ 1004              		.loc 1 175 17 is_stmt 1 view .LVU287
+ 1005 002c 1948     		ldr	r0, .L78
+ 1006 002e B0F95830 		ldrsh	r3, [r0, #88]
+ 1007 0032 B0F94420 		ldrsh	r2, [r0, #68]
+ 1008 0036 B0F93010 		ldrsh	r1, [r0, #48]
+ 1009 003a B0F91C00 		ldrsh	r0, [r0, #28]
+ 1010 003e FFF7FEFF 		bl	CAN_cmd_chassis
+ 1011              	.LVL77:
+ 1012              	.L73:
+ 181:Src/chassis_task.c **** 
+ 1013              		.loc 1 181 9 view .LVU288
+ 1014 0042 0220     		movs	r0, #2
+ 1015 0044 FFF7FEFF 		bl	vTaskDelay
+ 1016              	.LVL78:
+ 184:Src/chassis_task.c **** #endif
+ 1017              		.loc 1 184 9 view .LVU289
+ 184:Src/chassis_task.c **** #endif
+ 1018              		.loc 1 184 30 is_stmt 0 view .LVU290
+ 1019 0048 0020     		movs	r0, #0
+ 1020 004a FFF7FEFF 		bl	uxTaskGetStackHighWaterMark
+ 1021              	.LVL79:
+ 184:Src/chassis_task.c **** #endif
+ 1022              		.loc 1 184 28 view .LVU291
+ 1023 004e 124B     		ldr	r3, .L78+4
+ 1024 0050 1860     		str	r0, [r3]
+ 143:Src/chassis_task.c ****     {
+ 1025              		.loc 1 143 11 is_stmt 1 view .LVU292
+ 1026              	.L75:
+ 143:Src/chassis_task.c ****     {
+ 1027              		.loc 1 143 5 view .LVU293
+ 147:Src/chassis_task.c ****         //when mode changes, some data save
+ 1028              		.loc 1 147 9 view .LVU294
+ 1029 0052 104C     		ldr	r4, .L78
+ 1030 0054 2046     		mov	r0, r4
+ 1031 0056 FFF7FEFF 		bl	chassis_set_mode
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 33
+
+
+ 1032              	.LVL80:
+ 150:Src/chassis_task.c ****         //chassis data update
+ 1033              		.loc 1 150 9 view .LVU295
+ 1034 005a 2046     		mov	r0, r4
+ 1035 005c FFF7FEFF 		bl	chassis_mode_change_control_transit
+ 1036              	.LVL81:
+ 153:Src/chassis_task.c ****         //set chassis control set-point 
+ 1037              		.loc 1 153 9 view .LVU296
+ 1038 0060 2046     		mov	r0, r4
+ 1039 0062 FFF7FEFF 		bl	chassis_feedback_update
+ 1040              	.LVL82:
+ 156:Src/chassis_task.c ****         //chassis control pid calculate
+ 1041              		.loc 1 156 9 view .LVU297
+ 1042 0066 2046     		mov	r0, r4
+ 1043 0068 FFF7FEFF 		bl	chassis_set_contorl
+ 1044              	.LVL83:
+ 159:Src/chassis_task.c **** 
+ 1045              		.loc 1 159 9 view .LVU298
+ 1046 006c 2046     		mov	r0, r4
+ 1047 006e FFF7FEFF 		bl	chassis_control_loop
+ 1048              	.LVL84:
+ 163:Src/chassis_task.c ****         {
+ 1049              		.loc 1 163 9 view .LVU299
+ 163:Src/chassis_task.c ****         {
+ 1050              		.loc 1 163 15 is_stmt 0 view .LVU300
+ 1051 0072 0120     		movs	r0, #1
+ 1052 0074 FFF7FEFF 		bl	toe_is_error
+ 1053              	.LVL85:
+ 163:Src/chassis_task.c ****         {
+ 1054              		.loc 1 163 12 view .LVU301
+ 1055 0078 0028     		cmp	r0, #0
+ 1056 007a CAD1     		bne	.L77
+ 1057              	.L72:
+ 167:Src/chassis_task.c ****             {
+ 1058              		.loc 1 167 13 is_stmt 1 view .LVU302
+ 167:Src/chassis_task.c ****             {
+ 1059              		.loc 1 167 17 is_stmt 0 view .LVU303
+ 1060 007c 0020     		movs	r0, #0
+ 1061 007e FFF7FEFF 		bl	toe_is_error
+ 1062              	.LVL86:
+ 167:Src/chassis_task.c ****             {
+ 1063              		.loc 1 167 16 view .LVU304
+ 1064 0082 0028     		cmp	r0, #0
+ 1065 0084 D2D0     		beq	.L74
+ 169:Src/chassis_task.c ****             }
+ 1066              		.loc 1 169 17 is_stmt 1 view .LVU305
+ 1067 0086 0023     		movs	r3, #0
+ 1068 0088 1A46     		mov	r2, r3
+ 1069 008a 1946     		mov	r1, r3
+ 1070 008c 1846     		mov	r0, r3
+ 1071 008e FFF7FEFF 		bl	CAN_cmd_chassis
+ 1072              	.LVL87:
+ 1073 0092 D6E7     		b	.L73
+ 1074              	.L79:
+ 1075              		.align	2
+ 1076              	.L78:
+ 1077 0094 00000000 		.word	.LANCHOR4
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 34
+
+
+ 1078 0098 00000000 		.word	.LANCHOR5
+ 1079              		.cfi_endproc
+ 1080              	.LFE168:
+ 1082              		.section	.text.chassis_rc_to_control_vector,"ax",%progbits
+ 1083              		.align	1
+ 1084              		.global	chassis_rc_to_control_vector
+ 1085              		.syntax unified
+ 1086              		.thumb
+ 1087              		.thumb_func
+ 1089              	chassis_rc_to_control_vector:
+ 1090              	.LVL88:
+ 1091              	.LFB173:
+ 381:Src/chassis_task.c ****     if (chassis_move_rc_to_vector == NULL || vx_set == NULL || vy_set == NULL)
+ 1092              		.loc 1 381 1 view -0
+ 1093              		.cfi_startproc
+ 1094              		@ args = 0, pretend = 0, frame = 8
+ 1095              		@ frame_needed = 0, uses_anonymous_args = 0
+ 382:Src/chassis_task.c ****     {
+ 1096              		.loc 1 382 5 view .LVU307
+ 382:Src/chassis_task.c ****     {
+ 1097              		.loc 1 382 8 is_stmt 0 view .LVU308
+ 1098 0000 002A     		cmp	r2, #0
+ 1099 0002 7CD0     		beq	.L99
+ 381:Src/chassis_task.c ****     if (chassis_move_rc_to_vector == NULL || vx_set == NULL || vy_set == NULL)
+ 1100              		.loc 1 381 1 discriminator 1 view .LVU309
+ 1101 0004 70B5     		push	{r4, r5, r6, lr}
+ 1102              	.LCFI17:
+ 1103              		.cfi_def_cfa_offset 16
+ 1104              		.cfi_offset 4, -16
+ 1105              		.cfi_offset 5, -12
+ 1106              		.cfi_offset 6, -8
+ 1107              		.cfi_offset 14, -4
+ 1108 0006 2DED028B 		vpush.64	{d8}
+ 1109              	.LCFI18:
+ 1110              		.cfi_def_cfa_offset 24
+ 1111              		.cfi_offset 80, -24
+ 1112              		.cfi_offset 81, -20
+ 1113 000a 82B0     		sub	sp, sp, #8
+ 1114              	.LCFI19:
+ 1115              		.cfi_def_cfa_offset 32
+ 1116 000c 0546     		mov	r5, r0
+ 1117 000e 0E46     		mov	r6, r1
+ 1118 0010 1446     		mov	r4, r2
+ 382:Src/chassis_task.c ****     {
+ 1119              		.loc 1 382 43 discriminator 1 view .LVU310
+ 1120 0012 0028     		cmp	r0, #0
+ 1121 0014 63D0     		beq	.L80
+ 382:Src/chassis_task.c ****     {
+ 1122              		.loc 1 382 61 discriminator 2 view .LVU311
+ 1123 0016 0029     		cmp	r1, #0
+ 1124 0018 61D0     		beq	.L80
+ 387:Src/chassis_task.c ****     fp32 vx_set_channel, vy_set_channel;
+ 1125              		.loc 1 387 5 is_stmt 1 view .LVU312
+ 388:Src/chassis_task.c ****     //deadline, because some remote control need be calibrated,  the value of rocker is not zero in
+ 1126              		.loc 1 388 5 view .LVU313
+ 391:Src/chassis_task.c ****     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, 
+ 1127              		.loc 1 391 5 view .LVU314
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 35
+
+
+ 1128 001a 1268     		ldr	r2, [r2]
+ 1129              	.LVL89:
+ 391:Src/chassis_task.c ****     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, 
+ 1130              		.loc 1 391 5 is_stmt 0 view .LVU315
+ 1131 001c B2F90230 		ldrsh	r3, [r2, #2]	@ unaligned
+ 1132 0020 0093     		str	r3, [sp]
+ 1133 0022 0A33     		adds	r3, r3, #10
+ 1134 0024 9BB2     		uxth	r3, r3
+ 1135 0026 142B     		cmp	r3, #20
+ 1136 0028 01D8     		bhi	.L82
+ 1137 002a 0023     		movs	r3, #0
+ 1138 002c 0093     		str	r3, [sp]
+ 1139              	.L82:
+ 1140              	.LVL90:
+ 391:Src/chassis_task.c ****     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, 
+ 1141              		.loc 1 391 120 is_stmt 1 discriminator 4 view .LVU316
+ 392:Src/chassis_task.c **** 
+ 1142              		.loc 1 392 5 discriminator 4 view .LVU317
+ 1143 002e B2F90030 		ldrsh	r3, [r2]	@ unaligned
+ 1144 0032 0193     		str	r3, [sp, #4]
+ 1145 0034 0A33     		adds	r3, r3, #10
+ 1146 0036 9BB2     		uxth	r3, r3
+ 1147 0038 142B     		cmp	r3, #20
+ 1148 003a 01D8     		bhi	.L83
+ 392:Src/chassis_task.c **** 
+ 1149              		.loc 1 392 5 is_stmt 0 view .LVU318
+ 1150 003c 0023     		movs	r3, #0
+ 1151 003e 0193     		str	r3, [sp, #4]
+ 1152              	.L83:
+ 1153              	.LVL91:
+ 392:Src/chassis_task.c **** 
+ 1154              		.loc 1 392 120 is_stmt 1 discriminator 4 view .LVU319
+ 394:Src/chassis_task.c ****     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
+ 1155              		.loc 1 394 5 discriminator 4 view .LVU320
+ 394:Src/chassis_task.c ****     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
+ 1156              		.loc 1 394 33 is_stmt 0 discriminator 4 view .LVU321
+ 1157 0040 DDED007A 		vldr.32	s15, [sp]	@ int
+ 1158 0044 F8EEE78A 		vcvt.f32.s32	s17, s15
+ 394:Src/chassis_task.c ****     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
+ 1159              		.loc 1 394 20 discriminator 4 view .LVU322
+ 1160 0048 DFED2D7A 		vldr.32	s15, .L102
+ 1161 004c 68EEA78A 		vmul.f32	s17, s17, s15
+ 1162              	.LVL92:
+ 395:Src/chassis_task.c **** 
+ 1163              		.loc 1 395 5 is_stmt 1 discriminator 4 view .LVU323
+ 395:Src/chassis_task.c **** 
+ 1164              		.loc 1 395 33 is_stmt 0 discriminator 4 view .LVU324
+ 1165 0050 DDED017A 		vldr.32	s15, [sp, #4]	@ int
+ 1166 0054 B8EEE78A 		vcvt.f32.s32	s16, s15
+ 395:Src/chassis_task.c **** 
+ 1167              		.loc 1 395 20 discriminator 4 view .LVU325
+ 1168 0058 DFED2A7A 		vldr.32	s15, .L102+4
+ 1169 005c 28EE278A 		vmul.f32	s16, s16, s15
+ 1170              	.LVL93:
+ 399:Src/chassis_task.c ****     {
+ 1171              		.loc 1 399 5 is_stmt 1 discriminator 4 view .LVU326
+ 399:Src/chassis_task.c ****     {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 36
+
+
+ 1172              		.loc 1 399 51 is_stmt 0 discriminator 4 view .LVU327
+ 1173 0060 938A     		ldrh	r3, [r2, #20]	@ unaligned
+ 399:Src/chassis_task.c ****     {
+ 1174              		.loc 1 399 8 discriminator 4 view .LVU328
+ 1175 0062 13F0010F 		tst	r3, #1
+ 1176 0066 3ED0     		beq	.L84
+ 401:Src/chassis_task.c ****     }
+ 1177              		.loc 1 401 9 is_stmt 1 view .LVU329
+ 401:Src/chassis_task.c ****     }
+ 1178              		.loc 1 401 24 is_stmt 0 view .LVU330
+ 1179 0068 D4ED828A 		vldr.32	s17, [r4, #520]
+ 1180              	.LVL94:
+ 1181              	.L85:
+ 408:Src/chassis_task.c ****     {
+ 1182              		.loc 1 408 5 is_stmt 1 view .LVU331
+ 408:Src/chassis_task.c ****     {
+ 1183              		.loc 1 408 8 is_stmt 0 view .LVU332
+ 1184 006c 13F0040F 		tst	r3, #4
+ 1185 0070 3FD0     		beq	.L86
+ 410:Src/chassis_task.c ****     }
+ 1186              		.loc 1 410 9 is_stmt 1 view .LVU333
+ 410:Src/chassis_task.c ****     }
+ 1187              		.loc 1 410 24 is_stmt 0 view .LVU334
+ 1188 0072 94ED848A 		vldr.32	s16, [r4, #528]
+ 1189              	.LVL95:
+ 1190              	.L87:
+ 419:Src/chassis_task.c ****     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vy, vy_set_channel);
+ 1191              		.loc 1 419 5 is_stmt 1 view .LVU335
+ 1192 0076 B0EE680A 		vmov.f32	s0, s17
+ 1193 007a 04F5E270 		add	r0, r4, #452
+ 1194              	.LVL96:
+ 419:Src/chassis_task.c ****     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vy, vy_set_channel);
+ 1195              		.loc 1 419 5 is_stmt 0 view .LVU336
+ 1196 007e FFF7FEFF 		bl	first_order_filter_cali
+ 1197              	.LVL97:
+ 420:Src/chassis_task.c ****     //stop command, need not slow change, set zero derectly
+ 1198              		.loc 1 420 5 is_stmt 1 view .LVU337
+ 1199 0082 B0EE480A 		vmov.f32	s0, s16
+ 1200 0086 04F5EA70 		add	r0, r4, #468
+ 1201 008a FFF7FEFF 		bl	first_order_filter_cali
+ 1202              	.LVL98:
+ 423:Src/chassis_task.c ****     {
+ 1203              		.loc 1 423 5 view .LVU338
+ 423:Src/chassis_task.c ****     {
+ 1204              		.loc 1 423 8 is_stmt 0 view .LVU339
+ 1205 008e DFED1E7A 		vldr.32	s15, .L102+8
+ 1206 0092 F4EEE78A 		vcmpe.f32	s17, s15
+ 1207 0096 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1208 009a 09D5     		bpl	.L88
+ 423:Src/chassis_task.c ****     {
+ 1209              		.loc 1 423 66 discriminator 1 view .LVU340
+ 1210 009c DFED1B7A 		vldr.32	s15, .L102+12
+ 1211 00a0 F4EEE78A 		vcmpe.f32	s17, s15
+ 1212 00a4 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1213 00a8 02DD     		ble	.L88
+ 425:Src/chassis_task.c ****     }
+ 1214              		.loc 1 425 9 is_stmt 1 view .LVU341
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 37
+
+
+ 425:Src/chassis_task.c ****     }
+ 1215              		.loc 1 425 64 is_stmt 0 view .LVU342
+ 1216 00aa 0023     		movs	r3, #0
+ 1217 00ac C4F8C831 		str	r3, [r4, #456]	@ float
+ 1218              	.L88:
+ 428:Src/chassis_task.c ****     {
+ 1219              		.loc 1 428 5 is_stmt 1 view .LVU343
+ 428:Src/chassis_task.c ****     {
+ 1220              		.loc 1 428 8 is_stmt 0 view .LVU344
+ 1221 00b0 DFED177A 		vldr.32	s15, .L102+16
+ 1222 00b4 B4EEE78A 		vcmpe.f32	s16, s15
+ 1223 00b8 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1224 00bc 09D5     		bpl	.L91
+ 428:Src/chassis_task.c ****     {
+ 1225              		.loc 1 428 66 discriminator 1 view .LVU345
+ 1226 00be DFED157A 		vldr.32	s15, .L102+20
+ 1227 00c2 B4EEE78A 		vcmpe.f32	s16, s15
+ 1228 00c6 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1229 00ca 02DD     		ble	.L91
+ 430:Src/chassis_task.c ****     }
+ 1230              		.loc 1 430 9 is_stmt 1 view .LVU346
+ 430:Src/chassis_task.c ****     }
+ 1231              		.loc 1 430 64 is_stmt 0 view .LVU347
+ 1232 00cc 0023     		movs	r3, #0
+ 1233 00ce C4F8D831 		str	r3, [r4, #472]	@ float
+ 1234              	.L91:
+ 433:Src/chassis_task.c ****     *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+ 1235              		.loc 1 433 5 is_stmt 1 view .LVU348
+ 433:Src/chassis_task.c ****     *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+ 1236              		.loc 1 433 65 is_stmt 0 view .LVU349
+ 1237 00d2 D4F8C831 		ldr	r3, [r4, #456]	@ float
+ 433:Src/chassis_task.c ****     *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+ 1238              		.loc 1 433 13 view .LVU350
+ 1239 00d6 2B60     		str	r3, [r5]	@ float
+ 434:Src/chassis_task.c **** }
+ 1240              		.loc 1 434 5 is_stmt 1 view .LVU351
+ 434:Src/chassis_task.c **** }
+ 1241              		.loc 1 434 65 is_stmt 0 view .LVU352
+ 1242 00d8 D4F8D831 		ldr	r3, [r4, #472]	@ float
+ 434:Src/chassis_task.c **** }
+ 1243              		.loc 1 434 13 view .LVU353
+ 1244 00dc 3360     		str	r3, [r6]	@ float
+ 1245              	.LVL99:
+ 1246              	.L80:
+ 435:Src/chassis_task.c **** /**
+ 1247              		.loc 1 435 1 view .LVU354
+ 1248 00de 02B0     		add	sp, sp, #8
+ 1249              	.LCFI20:
+ 1250              		.cfi_remember_state
+ 1251              		.cfi_def_cfa_offset 24
+ 1252              		@ sp needed
+ 1253 00e0 BDEC028B 		vldm	sp!, {d8}
+ 1254              	.LCFI21:
+ 1255              		.cfi_restore 80
+ 1256              		.cfi_restore 81
+ 1257              		.cfi_def_cfa_offset 16
+ 1258 00e4 70BD     		pop	{r4, r5, r6, pc}
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 38
+
+
+ 1259              	.LVL100:
+ 1260              	.L84:
+ 1261              	.LCFI22:
+ 1262              		.cfi_restore_state
+ 403:Src/chassis_task.c ****     {
+ 1263              		.loc 1 403 10 is_stmt 1 view .LVU355
+ 403:Src/chassis_task.c ****     {
+ 1264              		.loc 1 403 13 is_stmt 0 view .LVU356
+ 1265 00e6 13F0020F 		tst	r3, #2
+ 1266 00ea BFD0     		beq	.L85
+ 405:Src/chassis_task.c ****     }
+ 1267              		.loc 1 405 9 is_stmt 1 view .LVU357
+ 405:Src/chassis_task.c ****     }
+ 1268              		.loc 1 405 24 is_stmt 0 view .LVU358
+ 1269 00ec D4ED838A 		vldr.32	s17, [r4, #524]
+ 1270              	.LVL101:
+ 405:Src/chassis_task.c ****     }
+ 1271              		.loc 1 405 24 view .LVU359
+ 1272 00f0 BCE7     		b	.L85
+ 1273              	.L86:
+ 412:Src/chassis_task.c ****     {
+ 1274              		.loc 1 412 10 is_stmt 1 view .LVU360
+ 412:Src/chassis_task.c ****     {
+ 1275              		.loc 1 412 13 is_stmt 0 view .LVU361
+ 1276 00f2 13F0080F 		tst	r3, #8
+ 1277 00f6 BED0     		beq	.L87
+ 414:Src/chassis_task.c ****     }
+ 1278              		.loc 1 414 9 is_stmt 1 view .LVU362
+ 414:Src/chassis_task.c ****     }
+ 1279              		.loc 1 414 24 is_stmt 0 view .LVU363
+ 1280 00f8 94ED858A 		vldr.32	s16, [r4, #532]
+ 1281              	.LVL102:
+ 414:Src/chassis_task.c ****     }
+ 1282              		.loc 1 414 24 view .LVU364
+ 1283 00fc BBE7     		b	.L87
+ 1284              	.LVL103:
+ 1285              	.L99:
+ 1286              	.LCFI23:
+ 1287              		.cfi_def_cfa_offset 0
+ 1288              		.cfi_restore 4
+ 1289              		.cfi_restore 5
+ 1290              		.cfi_restore 6
+ 1291              		.cfi_restore 14
+ 1292              		.cfi_restore 80
+ 1293              		.cfi_restore 81
+ 414:Src/chassis_task.c ****     }
+ 1294              		.loc 1 414 24 view .LVU365
+ 1295 00fe 7047     		bx	lr
+ 1296              	.L103:
+ 1297              		.align	2
+ 1298              	.L102:
+ 1299 0100 A69BC43B 		.word	1002740646
+ 1300 0104 0AD7A3BB 		.word	-1146890486
+ 1301 0108 90C2753D 		.word	1031127696
+ 1302 010c 90C275BD 		.word	-1116355952
+ 1303 0110 CCCC4C3D 		.word	1028443340
+ 1304 0114 CCCC4CBD 		.word	-1119040308
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 39
+
+
+ 1305              		.cfi_endproc
+ 1306              	.LFE173:
+ 1308              		.global	chassis_move
+ 1309              		.global	chassis_high_water
+ 1310              		.section	.bss.chassis_high_water,"aw",%nobits
+ 1311              		.align	2
+ 1312              		.set	.LANCHOR5,. + 0
+ 1315              	chassis_high_water:
+ 1316 0000 00000000 		.space	4
+ 1317              		.section	.bss.chassis_move,"aw",%nobits
+ 1318              		.align	2
+ 1319              		.set	.LANCHOR4,. + 0
+ 1322              	chassis_move:
+ 1323 0000 00000000 		.space	548
+ 1323      00000000 
+ 1323      00000000 
+ 1323      00000000 
+ 1323      00000000 
+ 1324              		.section	.rodata.chassis_x_order_filter.1,"a"
+ 1325              		.align	2
+ 1326              		.set	.LANCHOR2,. + 0
+ 1329              	chassis_x_order_filter.1:
+ 1330 0000 ABAA2A3E 		.word	1042983595
+ 1331              		.section	.rodata.chassis_y_order_filter.0,"a"
+ 1332              		.align	2
+ 1333              		.set	.LANCHOR3,. + 0
+ 1336              	chassis_y_order_filter.0:
+ 1337 0000 ABAAAA3E 		.word	1051372203
+ 1338              		.section	.rodata.chassis_yaw_pid.2,"a"
+ 1339              		.align	2
+ 1340              		.set	.LANCHOR1,. + 0
+ 1343              	chassis_yaw_pid.2:
+ 1344 0000 00002042 		.word	1109393408
+ 1345 0004 00000000 		.word	0
+ 1346 0008 00000000 		.word	0
+ 1347              		.section	.rodata.motor_speed_pid.3,"a"
+ 1348              		.align	2
+ 1349              		.set	.LANCHOR0,. + 0
+ 1352              	motor_speed_pid.3:
+ 1353 0000 00606A46 		.word	1181376512
+ 1354 0004 00002041 		.word	1092616192
+ 1355 0008 00000000 		.word	0
+ 1356              		.text
+ 1357              	.Letext0:
+ 1358              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 1359              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 1360              		.file 4 "algorithm/struct_typedef.h"
+ 1361              		.file 5 "Chassis/can.h"
+ 1362              		.file 6 "Inc/detect_task.h"
+ 1363              		.file 7 "algorithm/pid.h"
+ 1364              		.file 8 "Chassis/remote_control.h"
+ 1365              		.file 9 "algorithm/user_lib.h"
+ 1366              		.file 10 "Inc/chassis_task.h"
+ 1367              		.file 11 "Chassis/chassis_behaviour.h"
+ 1368              		.file 12 "Middlewares/Third_Party/FreeRTOS/Source/include/task.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s 			page 40
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 chassis_task.c
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:20     .text.chassis_feedback_update:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:25     .text.chassis_feedback_update:00000000 chassis_feedback_update
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:134    .text.chassis_feedback_update:000000b0 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:141    .text.chassis_vector_to_mecanum_wheel_speed:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:146    .text.chassis_vector_to_mecanum_wheel_speed:00000000 chassis_vector_to_mecanum_wheel_speed
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:197    .text.chassis_vector_to_mecanum_wheel_speed:00000048 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:203    .text.chassis_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:208    .text.chassis_init:00000000 chassis_init
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:350    .text.chassis_init:000000b0 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:363    .text.chassis_set_mode:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:368    .text.chassis_set_mode:00000000 chassis_set_mode
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:401    .text.chassis_set_contorl:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:406    .text.chassis_set_contorl:00000000 chassis_set_contorl
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:629    .text.chassis_set_contorl:00000144 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:636    .text.chassis_control_loop:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:641    .text.chassis_control_loop:00000000 chassis_control_loop
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:870    .text.chassis_control_loop:00000118 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:875    .text.chassis_mode_change_control_transit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:881    .text.chassis_mode_change_control_transit:00000000 chassis_mode_change_control_transit
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:952    .text.chassis_task:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:958    .text.chassis_task:00000000 chassis_task
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1077   .text.chassis_task:00000094 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1083   .text.chassis_rc_to_control_vector:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1089   .text.chassis_rc_to_control_vector:00000000 chassis_rc_to_control_vector
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1299   .text.chassis_rc_to_control_vector:00000100 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1322   .bss.chassis_move:00000000 chassis_move
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1315   .bss.chassis_high_water:00000000 chassis_high_water
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1311   .bss.chassis_high_water:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1318   .bss.chassis_move:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1325   .rodata.chassis_x_order_filter.1:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1329   .rodata.chassis_x_order_filter.1:00000000 chassis_x_order_filter.1
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1332   .rodata.chassis_y_order_filter.0:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1336   .rodata.chassis_y_order_filter.0:00000000 chassis_y_order_filter.0
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1339   .rodata.chassis_yaw_pid.2:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1343   .rodata.chassis_yaw_pid.2:00000000 chassis_yaw_pid.2
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1348   .rodata.motor_speed_pid.3:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccKq91hn.s:1352   .rodata.motor_speed_pid.3:00000000 motor_speed_pid.3
+
+UNDEFINED SYMBOLS
+get_remote_control_point
+get_chassis_motor_measure_point
+PID_init
+first_order_filter_init
+chassis_behaviour_mode_set
+chassis_behaviour_control_set
+loop_fp32_constrain
+fp32_constrain
+PID_calc
+vTaskDelay
+toe_is_error
+CAN_cmd_chassis
+uxTaskGetStackHighWaterMark
+first_order_filter_cali

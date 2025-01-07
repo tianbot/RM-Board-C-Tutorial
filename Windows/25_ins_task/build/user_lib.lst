@@ -1,0 +1,770 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"user_lib.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.ramp_init,"ax",%progbits
+  20              		.align	1
+  21              		.global	ramp_init
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	ramp_init:
+  27              	.LVL0:
+  28              	.LFB130:
+  29              		.file 1 "IMU/user_lib.c"
+   1:IMU/user_lib.c **** #include "user_lib.h"
+   2:IMU/user_lib.c **** 
+   3:IMU/user_lib.c **** 
+   4:IMU/user_lib.c **** /**
+   5:IMU/user_lib.c ****   * @brief          斜波函数初始化
+   6:IMU/user_lib.c ****   * @author         RM
+   7:IMU/user_lib.c ****   * @param[in]      斜波函数结构体
+   8:IMU/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+   9:IMU/user_lib.c ****   * @param[in]      最大值
+  10:IMU/user_lib.c ****   * @param[in]      最小值
+  11:IMU/user_lib.c ****   * @retval         返回空
+  12:IMU/user_lib.c ****   */
+  13:IMU/user_lib.c **** void ramp_init(ramp_function_source_t *ramp_source_type, fp32 frame_period, fp32 max, fp32 min)
+  14:IMU/user_lib.c **** {
+  30              		.loc 1 14 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+  15:IMU/user_lib.c ****     ramp_source_type->frame_period = frame_period;
+  35              		.loc 1 15 5 view .LVU1
+  36              		.loc 1 15 36 is_stmt 0 view .LVU2
+  37 0000 80ED040A 		vstr.32	s0, [r0, #16]
+  16:IMU/user_lib.c ****     ramp_source_type->max_value = max;
+  38              		.loc 1 16 5 is_stmt 1 view .LVU3
+  39              		.loc 1 16 33 is_stmt 0 view .LVU4
+  40 0004 C0ED030A 		vstr.32	s1, [r0, #12]
+  17:IMU/user_lib.c ****     ramp_source_type->min_value = min;
+  41              		.loc 1 17 5 is_stmt 1 view .LVU5
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 2
+
+
+  42              		.loc 1 17 33 is_stmt 0 view .LVU6
+  43 0008 80ED021A 		vstr.32	s2, [r0, #8]
+  18:IMU/user_lib.c ****     ramp_source_type->input = 0.0f;
+  44              		.loc 1 18 5 is_stmt 1 view .LVU7
+  45              		.loc 1 18 29 is_stmt 0 view .LVU8
+  46 000c 0023     		movs	r3, #0
+  47 000e 0360     		str	r3, [r0]	@ float
+  19:IMU/user_lib.c ****     ramp_source_type->out = 0.0f;
+  48              		.loc 1 19 5 is_stmt 1 view .LVU9
+  49              		.loc 1 19 27 is_stmt 0 view .LVU10
+  50 0010 4360     		str	r3, [r0, #4]	@ float
+  20:IMU/user_lib.c **** }
+  51              		.loc 1 20 1 view .LVU11
+  52 0012 7047     		bx	lr
+  53              		.cfi_endproc
+  54              	.LFE130:
+  56              		.section	.text.ramp_calc,"ax",%progbits
+  57              		.align	1
+  58              		.global	ramp_calc
+  59              		.syntax unified
+  60              		.thumb
+  61              		.thumb_func
+  63              	ramp_calc:
+  64              	.LVL1:
+  65              	.LFB131:
+  21:IMU/user_lib.c **** 
+  22:IMU/user_lib.c **** /**
+  23:IMU/user_lib.c ****   * @brief          斜波函数计算，根据输入的值进行叠加， 输入单位为 /s 即�
+  24:IMU/user_lib.c ****   * @author         RM
+  25:IMU/user_lib.c ****   * @param[in]      斜波函数结构体
+  26:IMU/user_lib.c ****   * @param[in]      输入值
+  27:IMU/user_lib.c ****   * @param[in]      滤波参数
+  28:IMU/user_lib.c ****   * @retval         返回空
+  29:IMU/user_lib.c ****   */
+  30:IMU/user_lib.c **** void ramp_calc(ramp_function_source_t *ramp_source_type, fp32 input)
+  31:IMU/user_lib.c **** {
+  66              		.loc 1 31 1 is_stmt 1 view -0
+  67              		.cfi_startproc
+  68              		@ args = 0, pretend = 0, frame = 0
+  69              		@ frame_needed = 0, uses_anonymous_args = 0
+  70              		@ link register save eliminated.
+  32:IMU/user_lib.c ****     ramp_source_type->input = input;
+  71              		.loc 1 32 5 view .LVU13
+  72              		.loc 1 32 29 is_stmt 0 view .LVU14
+  73 0000 80ED000A 		vstr.32	s0, [r0]
+  33:IMU/user_lib.c ****     ramp_source_type->out += ramp_source_type->input * ramp_source_type->frame_period;
+  74              		.loc 1 33 5 is_stmt 1 view .LVU15
+  75              		.loc 1 33 72 is_stmt 0 view .LVU16
+  76 0004 D0ED047A 		vldr.32	s15, [r0, #16]
+  77              		.loc 1 33 54 view .LVU17
+  78 0008 27EE800A 		vmul.f32	s0, s15, s0
+  79              	.LVL2:
+  80              		.loc 1 33 27 view .LVU18
+  81 000c D0ED017A 		vldr.32	s15, [r0, #4]
+  82 0010 30EE270A 		vadd.f32	s0, s0, s15
+  83 0014 80ED010A 		vstr.32	s0, [r0, #4]
+  34:IMU/user_lib.c ****     if (ramp_source_type->out > ramp_source_type->max_value)
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 3
+
+
+  84              		.loc 1 34 5 is_stmt 1 view .LVU19
+  85              		.loc 1 34 49 is_stmt 0 view .LVU20
+  86 0018 D0ED037A 		vldr.32	s15, [r0, #12]
+  87              		.loc 1 34 8 view .LVU21
+  88 001c B4EEE70A 		vcmpe.f32	s0, s15
+  89 0020 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+  90 0024 02DD     		ble	.L9
+  35:IMU/user_lib.c ****     {
+  36:IMU/user_lib.c ****         ramp_source_type->out = ramp_source_type->max_value;
+  91              		.loc 1 36 9 is_stmt 1 view .LVU22
+  92              		.loc 1 36 31 is_stmt 0 view .LVU23
+  93 0026 C0ED017A 		vstr.32	s15, [r0, #4]
+  94 002a 7047     		bx	lr
+  95              	.L9:
+  37:IMU/user_lib.c ****     }
+  38:IMU/user_lib.c ****     else if (ramp_source_type->out < ramp_source_type->min_value)
+  96              		.loc 1 38 10 is_stmt 1 view .LVU24
+  97              		.loc 1 38 54 is_stmt 0 view .LVU25
+  98 002c D0ED027A 		vldr.32	s15, [r0, #8]
+  99              		.loc 1 38 13 view .LVU26
+ 100 0030 B4EEE70A 		vcmpe.f32	s0, s15
+ 101 0034 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 102 0038 01D5     		bpl	.L2
+  39:IMU/user_lib.c ****     {
+  40:IMU/user_lib.c ****         ramp_source_type->out = ramp_source_type->min_value;
+ 103              		.loc 1 40 9 is_stmt 1 view .LVU27
+ 104              		.loc 1 40 31 is_stmt 0 view .LVU28
+ 105 003a C0ED017A 		vstr.32	s15, [r0, #4]
+ 106              	.L2:
+  41:IMU/user_lib.c ****     }
+  42:IMU/user_lib.c **** }
+ 107              		.loc 1 42 1 view .LVU29
+ 108 003e 7047     		bx	lr
+ 109              		.cfi_endproc
+ 110              	.LFE131:
+ 112              		.section	.text.first_order_filter_init,"ax",%progbits
+ 113              		.align	1
+ 114              		.global	first_order_filter_init
+ 115              		.syntax unified
+ 116              		.thumb
+ 117              		.thumb_func
+ 119              	first_order_filter_init:
+ 120              	.LVL3:
+ 121              	.LFB132:
+  43:IMU/user_lib.c **** /**
+  44:IMU/user_lib.c ****   * @brief          一阶低通滤波初始化
+  45:IMU/user_lib.c ****   * @author         RM
+  46:IMU/user_lib.c ****   * @param[in]      一阶低通滤波结构体
+  47:IMU/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+  48:IMU/user_lib.c ****   * @param[in]      滤波参数
+  49:IMU/user_lib.c ****   * @retval         返回空
+  50:IMU/user_lib.c ****   */
+  51:IMU/user_lib.c **** void first_order_filter_init(first_order_filter_type_t *first_order_filter_type, fp32 frame_period,
+  52:IMU/user_lib.c **** {
+ 122              		.loc 1 52 1 is_stmt 1 view -0
+ 123              		.cfi_startproc
+ 124              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 4
+
+
+ 125              		@ frame_needed = 0, uses_anonymous_args = 0
+ 126              		@ link register save eliminated.
+  53:IMU/user_lib.c ****     first_order_filter_type->frame_period = frame_period;
+ 127              		.loc 1 53 5 view .LVU31
+ 128              		.loc 1 53 43 is_stmt 0 view .LVU32
+ 129 0000 80ED030A 		vstr.32	s0, [r0, #12]
+  54:IMU/user_lib.c ****     first_order_filter_type->num[0] = num[0];
+ 130              		.loc 1 54 5 is_stmt 1 view .LVU33
+ 131              		.loc 1 54 42 is_stmt 0 view .LVU34
+ 132 0004 0B68     		ldr	r3, [r1]	@ float
+ 133              		.loc 1 54 37 view .LVU35
+ 134 0006 8360     		str	r3, [r0, #8]	@ float
+  55:IMU/user_lib.c ****     first_order_filter_type->input = 0.0f;
+ 135              		.loc 1 55 5 is_stmt 1 view .LVU36
+ 136              		.loc 1 55 36 is_stmt 0 view .LVU37
+ 137 0008 0023     		movs	r3, #0
+ 138 000a 0360     		str	r3, [r0]	@ float
+  56:IMU/user_lib.c ****     first_order_filter_type->out = 0.0f;
+ 139              		.loc 1 56 5 is_stmt 1 view .LVU38
+ 140              		.loc 1 56 34 is_stmt 0 view .LVU39
+ 141 000c 4360     		str	r3, [r0, #4]	@ float
+  57:IMU/user_lib.c **** }
+ 142              		.loc 1 57 1 view .LVU40
+ 143 000e 7047     		bx	lr
+ 144              		.cfi_endproc
+ 145              	.LFE132:
+ 147              		.section	.text.first_order_filter_cali,"ax",%progbits
+ 148              		.align	1
+ 149              		.global	first_order_filter_cali
+ 150              		.syntax unified
+ 151              		.thumb
+ 152              		.thumb_func
+ 154              	first_order_filter_cali:
+ 155              	.LVL4:
+ 156              	.LFB133:
+  58:IMU/user_lib.c **** 
+  59:IMU/user_lib.c **** /**
+  60:IMU/user_lib.c ****   * @brief          一阶低通滤波计算
+  61:IMU/user_lib.c ****   * @author         RM
+  62:IMU/user_lib.c ****   * @param[in]      一阶低通滤波结构体
+  63:IMU/user_lib.c ****   * @param[in]      间隔的时间，单位 s
+  64:IMU/user_lib.c ****   * @retval         返回空
+  65:IMU/user_lib.c ****   */
+  66:IMU/user_lib.c **** void first_order_filter_cali(first_order_filter_type_t *first_order_filter_type, fp32 input)
+  67:IMU/user_lib.c **** {
+ 157              		.loc 1 67 1 is_stmt 1 view -0
+ 158              		.cfi_startproc
+ 159              		@ args = 0, pretend = 0, frame = 0
+ 160              		@ frame_needed = 0, uses_anonymous_args = 0
+ 161              		@ link register save eliminated.
+  68:IMU/user_lib.c ****     first_order_filter_type->input = input;
+ 162              		.loc 1 68 5 view .LVU42
+ 163              		.loc 1 68 36 is_stmt 0 view .LVU43
+ 164 0000 80ED000A 		vstr.32	s0, [r0]
+  69:IMU/user_lib.c ****     first_order_filter_type->out =
+ 165              		.loc 1 69 5 is_stmt 1 view .LVU44
+  70:IMU/user_lib.c ****         first_order_filter_type->num[0] / (first_order_filter_type->num[0] + first_order_filter_typ
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 5
+
+
+ 166              		.loc 1 70 37 is_stmt 0 view .LVU45
+ 167 0004 90ED027A 		vldr.32	s14, [r0, #8]
+ 168              		.loc 1 70 101 view .LVU46
+ 169 0008 90ED036A 		vldr.32	s12, [r0, #12]
+ 170              		.loc 1 70 76 view .LVU47
+ 171 000c 77EE066A 		vadd.f32	s13, s14, s12
+ 172              		.loc 1 70 41 view .LVU48
+ 173 0010 C7EE267A 		vdiv.f32	s15, s14, s13
+ 174              		.loc 1 70 142 view .LVU49
+ 175 0014 90ED017A 		vldr.32	s14, [r0, #4]
+ 176              		.loc 1 70 117 view .LVU50
+ 177 0018 67EE877A 		vmul.f32	s15, s15, s14
+ 178              		.loc 1 70 188 view .LVU51
+ 179 001c 86EE267A 		vdiv.f32	s14, s12, s13
+ 180              		.loc 1 70 264 view .LVU52
+ 181 0020 27EE000A 		vmul.f32	s0, s14, s0
+ 182              	.LVL5:
+ 183              		.loc 1 70 148 view .LVU53
+ 184 0024 37EE800A 		vadd.f32	s0, s15, s0
+  69:IMU/user_lib.c ****     first_order_filter_type->out =
+ 185              		.loc 1 69 34 view .LVU54
+ 186 0028 80ED010A 		vstr.32	s0, [r0, #4]
+  71:IMU/user_lib.c **** }
+ 187              		.loc 1 71 1 view .LVU55
+ 188 002c 7047     		bx	lr
+ 189              		.cfi_endproc
+ 190              	.LFE133:
+ 192              		.section	.text.abs_limit,"ax",%progbits
+ 193              		.align	1
+ 194              		.global	abs_limit
+ 195              		.syntax unified
+ 196              		.thumb
+ 197              		.thumb_func
+ 199              	abs_limit:
+ 200              	.LVL6:
+ 201              	.LFB134:
+  72:IMU/user_lib.c **** 
+  73:IMU/user_lib.c **** //绝对限制
+  74:IMU/user_lib.c **** void abs_limit(fp32 *num, fp32 Limit)
+  75:IMU/user_lib.c **** {
+ 202              		.loc 1 75 1 is_stmt 1 view -0
+ 203              		.cfi_startproc
+ 204              		@ args = 0, pretend = 0, frame = 0
+ 205              		@ frame_needed = 0, uses_anonymous_args = 0
+ 206              		@ link register save eliminated.
+  76:IMU/user_lib.c ****     if (*num > Limit)
+ 207              		.loc 1 76 5 view .LVU57
+ 208              		.loc 1 76 9 is_stmt 0 view .LVU58
+ 209 0000 D0ED007A 		vldr.32	s15, [r0]
+ 210              		.loc 1 76 8 view .LVU59
+ 211 0004 F4EEC07A 		vcmpe.f32	s15, s0
+ 212 0008 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 213 000c 02DD     		ble	.L19
+  77:IMU/user_lib.c ****     {
+  78:IMU/user_lib.c ****         *num = Limit;
+ 214              		.loc 1 78 9 is_stmt 1 view .LVU60
+ 215              		.loc 1 78 14 is_stmt 0 view .LVU61
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 6
+
+
+ 216 000e 80ED000A 		vstr.32	s0, [r0]
+ 217 0012 7047     		bx	lr
+ 218              	.L19:
+  79:IMU/user_lib.c ****     }
+  80:IMU/user_lib.c ****     else if (*num < -Limit)
+ 219              		.loc 1 80 10 is_stmt 1 view .LVU62
+ 220              		.loc 1 80 21 is_stmt 0 view .LVU63
+ 221 0014 B1EE400A 		vneg.f32	s0, s0
+ 222              	.LVL7:
+ 223              		.loc 1 80 13 view .LVU64
+ 224 0018 F4EEC07A 		vcmpe.f32	s15, s0
+ 225 001c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 226 0020 01D5     		bpl	.L12
+  81:IMU/user_lib.c ****     {
+  82:IMU/user_lib.c ****         *num = -Limit;
+ 227              		.loc 1 82 9 is_stmt 1 view .LVU65
+ 228              		.loc 1 82 14 is_stmt 0 view .LVU66
+ 229 0022 80ED000A 		vstr.32	s0, [r0]
+ 230              	.L12:
+  83:IMU/user_lib.c ****     }
+  84:IMU/user_lib.c **** }
+ 231              		.loc 1 84 1 view .LVU67
+ 232 0026 7047     		bx	lr
+ 233              		.cfi_endproc
+ 234              	.LFE134:
+ 236              		.section	.text.sign,"ax",%progbits
+ 237              		.align	1
+ 238              		.global	sign
+ 239              		.syntax unified
+ 240              		.thumb
+ 241              		.thumb_func
+ 243              	sign:
+ 244              	.LVL8:
+ 245              	.LFB135:
+  85:IMU/user_lib.c **** 
+  86:IMU/user_lib.c **** //判断符号位
+  87:IMU/user_lib.c **** fp32 sign(fp32 value)
+  88:IMU/user_lib.c **** {
+ 246              		.loc 1 88 1 is_stmt 1 view -0
+ 247              		.cfi_startproc
+ 248              		@ args = 0, pretend = 0, frame = 0
+ 249              		@ frame_needed = 0, uses_anonymous_args = 0
+ 250              		@ link register save eliminated.
+  89:IMU/user_lib.c ****     if (value >= 0.0f)
+ 251              		.loc 1 89 5 view .LVU69
+ 252              		.loc 1 89 8 is_stmt 0 view .LVU70
+ 253 0000 B5EEC00A 		vcmpe.f32	s0, #0
+ 254 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 255 0008 02DB     		blt	.L25
+  90:IMU/user_lib.c ****     {
+  91:IMU/user_lib.c ****         return 1.0f;
+ 256              		.loc 1 91 16 view .LVU71
+ 257 000a B7EE000A 		vmov.f32	s0, #1.0e+0
+ 258              	.LVL9:
+ 259              		.loc 1 91 16 view .LVU72
+ 260 000e 7047     		bx	lr
+ 261              	.LVL10:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 7
+
+
+ 262              	.L25:
+  92:IMU/user_lib.c ****     }
+  93:IMU/user_lib.c ****     else
+  94:IMU/user_lib.c ****     {
+  95:IMU/user_lib.c ****         return -1.0f;
+ 263              		.loc 1 95 16 view .LVU73
+ 264 0010 BFEE000A 		vmov.f32	s0, #-1.0e+0
+ 265              	.LVL11:
+  96:IMU/user_lib.c ****     }
+  97:IMU/user_lib.c **** }
+ 266              		.loc 1 97 1 view .LVU74
+ 267 0014 7047     		bx	lr
+ 268              		.cfi_endproc
+ 269              	.LFE135:
+ 271              		.section	.text.fp32_deadline,"ax",%progbits
+ 272              		.align	1
+ 273              		.global	fp32_deadline
+ 274              		.syntax unified
+ 275              		.thumb
+ 276              		.thumb_func
+ 278              	fp32_deadline:
+ 279              	.LVL12:
+ 280              	.LFB136:
+  98:IMU/user_lib.c **** 
+  99:IMU/user_lib.c **** //浮点死区
+ 100:IMU/user_lib.c **** fp32 fp32_deadline(fp32 Value, fp32 minValue, fp32 maxValue)
+ 101:IMU/user_lib.c **** {
+ 281              		.loc 1 101 1 is_stmt 1 view -0
+ 282              		.cfi_startproc
+ 283              		@ args = 0, pretend = 0, frame = 0
+ 284              		@ frame_needed = 0, uses_anonymous_args = 0
+ 285              		@ link register save eliminated.
+ 102:IMU/user_lib.c ****     if (Value < maxValue && Value > minValue)
+ 286              		.loc 1 102 5 view .LVU76
+ 287              		.loc 1 102 8 is_stmt 0 view .LVU77
+ 288 0000 B4EEC10A 		vcmpe.f32	s0, s2
+ 289 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 290 0008 06D5     		bpl	.L27
+ 291              		.loc 1 102 26 discriminator 1 view .LVU78
+ 292 000a B4EEE00A 		vcmpe.f32	s0, s1
+ 293 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 294 0012 01DD     		ble	.L27
+ 103:IMU/user_lib.c ****     {
+ 104:IMU/user_lib.c ****         Value = 0.0f;
+ 295              		.loc 1 104 15 view .LVU79
+ 296 0014 9FED010A 		vldr.32	s0, .L31
+ 297              	.LVL13:
+ 298              	.L27:
+ 105:IMU/user_lib.c ****     }
+ 106:IMU/user_lib.c ****     return Value;
+ 299              		.loc 1 106 5 is_stmt 1 view .LVU80
+ 107:IMU/user_lib.c **** }
+ 300              		.loc 1 107 1 is_stmt 0 view .LVU81
+ 301 0018 7047     		bx	lr
+ 302              	.L32:
+ 303 001a 00BF     		.align	2
+ 304              	.L31:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 8
+
+
+ 305 001c 00000000 		.word	0
+ 306              		.cfi_endproc
+ 307              	.LFE136:
+ 309              		.section	.text.int16_deadline,"ax",%progbits
+ 310              		.align	1
+ 311              		.global	int16_deadline
+ 312              		.syntax unified
+ 313              		.thumb
+ 314              		.thumb_func
+ 316              	int16_deadline:
+ 317              	.LVL14:
+ 318              	.LFB137:
+ 108:IMU/user_lib.c **** 
+ 109:IMU/user_lib.c **** //int26死区
+ 110:IMU/user_lib.c **** int16_t int16_deadline(int16_t Value, int16_t minValue, int16_t maxValue)
+ 111:IMU/user_lib.c **** {
+ 319              		.loc 1 111 1 is_stmt 1 view -0
+ 320              		.cfi_startproc
+ 321              		@ args = 0, pretend = 0, frame = 0
+ 322              		@ frame_needed = 0, uses_anonymous_args = 0
+ 323              		@ link register save eliminated.
+ 112:IMU/user_lib.c ****     if (Value < maxValue && Value > minValue)
+ 324              		.loc 1 112 5 view .LVU83
+ 325              		.loc 1 112 8 is_stmt 0 view .LVU84
+ 326 0000 9042     		cmp	r0, r2
+ 327 0002 02DA     		bge	.L34
+ 328              		.loc 1 112 26 discriminator 1 view .LVU85
+ 329 0004 8842     		cmp	r0, r1
+ 330 0006 00DD     		ble	.L34
+ 113:IMU/user_lib.c ****     {
+ 114:IMU/user_lib.c ****         Value = 0;
+ 331              		.loc 1 114 15 view .LVU86
+ 332 0008 0020     		movs	r0, #0
+ 333              	.LVL15:
+ 334              	.L34:
+ 115:IMU/user_lib.c ****     }
+ 116:IMU/user_lib.c ****     return Value;
+ 335              		.loc 1 116 5 is_stmt 1 view .LVU87
+ 117:IMU/user_lib.c **** }
+ 336              		.loc 1 117 1 is_stmt 0 view .LVU88
+ 337 000a 7047     		bx	lr
+ 338              		.cfi_endproc
+ 339              	.LFE137:
+ 341              		.section	.text.fp32_constrain,"ax",%progbits
+ 342              		.align	1
+ 343              		.global	fp32_constrain
+ 344              		.syntax unified
+ 345              		.thumb
+ 346              		.thumb_func
+ 348              	fp32_constrain:
+ 349              	.LVL16:
+ 350              	.LFB138:
+ 118:IMU/user_lib.c **** 
+ 119:IMU/user_lib.c **** //限幅函数
+ 120:IMU/user_lib.c **** fp32 fp32_constrain(fp32 Value, fp32 minValue, fp32 maxValue)
+ 121:IMU/user_lib.c **** {
+ 351              		.loc 1 121 1 is_stmt 1 view -0
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 9
+
+
+ 352              		.cfi_startproc
+ 353              		@ args = 0, pretend = 0, frame = 0
+ 354              		@ frame_needed = 0, uses_anonymous_args = 0
+ 355              		@ link register save eliminated.
+ 122:IMU/user_lib.c ****     if (Value < minValue)
+ 356              		.loc 1 122 5 view .LVU90
+ 357              		.loc 1 122 8 is_stmt 0 view .LVU91
+ 358 0000 B4EEE00A 		vcmpe.f32	s0, s1
+ 359 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 360 0008 07D4     		bmi	.L39
+ 123:IMU/user_lib.c ****         return minValue;
+ 124:IMU/user_lib.c ****     else if (Value > maxValue)
+ 361              		.loc 1 124 10 is_stmt 1 view .LVU92
+ 362              		.loc 1 124 13 is_stmt 0 view .LVU93
+ 363 000a B4EEC10A 		vcmpe.f32	s0, s2
+ 364 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 365 0012 04DD     		ble	.L36
+ 125:IMU/user_lib.c ****         return maxValue;
+ 366              		.loc 1 125 16 view .LVU94
+ 367 0014 B0EE410A 		vmov.f32	s0, s2
+ 368              	.LVL17:
+ 369              		.loc 1 125 16 view .LVU95
+ 370 0018 7047     		bx	lr
+ 371              	.LVL18:
+ 372              	.L39:
+ 123:IMU/user_lib.c ****         return minValue;
+ 373              		.loc 1 123 16 view .LVU96
+ 374 001a B0EE600A 		vmov.f32	s0, s1
+ 375              	.LVL19:
+ 376              	.L36:
+ 126:IMU/user_lib.c ****     else
+ 127:IMU/user_lib.c ****         return Value;
+ 128:IMU/user_lib.c **** }
+ 377              		.loc 1 128 1 view .LVU97
+ 378 001e 7047     		bx	lr
+ 379              		.cfi_endproc
+ 380              	.LFE138:
+ 382              		.section	.text.int16_constrain,"ax",%progbits
+ 383              		.align	1
+ 384              		.global	int16_constrain
+ 385              		.syntax unified
+ 386              		.thumb
+ 387              		.thumb_func
+ 389              	int16_constrain:
+ 390              	.LVL20:
+ 391              	.LFB139:
+ 129:IMU/user_lib.c **** 
+ 130:IMU/user_lib.c **** //限幅函数
+ 131:IMU/user_lib.c **** int16_t int16_constrain(int16_t Value, int16_t minValue, int16_t maxValue)
+ 132:IMU/user_lib.c **** {
+ 392              		.loc 1 132 1 is_stmt 1 view -0
+ 393              		.cfi_startproc
+ 394              		@ args = 0, pretend = 0, frame = 0
+ 395              		@ frame_needed = 0, uses_anonymous_args = 0
+ 396              		@ link register save eliminated.
+ 133:IMU/user_lib.c ****     if (Value < minValue)
+ 397              		.loc 1 133 5 view .LVU99
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 10
+
+
+ 398              		.loc 1 133 8 is_stmt 0 view .LVU100
+ 399 0000 8842     		cmp	r0, r1
+ 400 0002 03DB     		blt	.L45
+ 134:IMU/user_lib.c ****         return minValue;
+ 135:IMU/user_lib.c ****     else if (Value > maxValue)
+ 401              		.loc 1 135 10 is_stmt 1 view .LVU101
+ 402              		.loc 1 135 13 is_stmt 0 view .LVU102
+ 403 0004 9042     		cmp	r0, r2
+ 404 0006 02DD     		ble	.L44
+ 136:IMU/user_lib.c ****         return maxValue;
+ 405              		.loc 1 136 16 view .LVU103
+ 406 0008 1046     		mov	r0, r2
+ 407              	.LVL21:
+ 408              		.loc 1 136 16 view .LVU104
+ 409 000a 7047     		bx	lr
+ 410              	.LVL22:
+ 411              	.L45:
+ 134:IMU/user_lib.c ****         return minValue;
+ 412              		.loc 1 134 16 view .LVU105
+ 413 000c 0846     		mov	r0, r1
+ 414              	.LVL23:
+ 415              	.L44:
+ 137:IMU/user_lib.c ****     else
+ 138:IMU/user_lib.c ****         return Value;
+ 139:IMU/user_lib.c **** }
+ 416              		.loc 1 139 1 view .LVU106
+ 417 000e 7047     		bx	lr
+ 418              		.cfi_endproc
+ 419              	.LFE139:
+ 421              		.section	.text.loop_fp32_constrain,"ax",%progbits
+ 422              		.align	1
+ 423              		.global	loop_fp32_constrain
+ 424              		.syntax unified
+ 425              		.thumb
+ 426              		.thumb_func
+ 428              	loop_fp32_constrain:
+ 429              	.LVL24:
+ 430              	.LFB140:
+ 140:IMU/user_lib.c **** 
+ 141:IMU/user_lib.c **** //循环限幅函数
+ 142:IMU/user_lib.c **** fp32 loop_fp32_constrain(fp32 Input, fp32 minValue, fp32 maxValue)
+ 143:IMU/user_lib.c **** {
+ 431              		.loc 1 143 1 is_stmt 1 view -0
+ 432              		.cfi_startproc
+ 433              		@ args = 0, pretend = 0, frame = 0
+ 434              		@ frame_needed = 0, uses_anonymous_args = 0
+ 435              		@ link register save eliminated.
+ 144:IMU/user_lib.c ****     if (maxValue < minValue)
+ 436              		.loc 1 144 5 view .LVU108
+ 437              		.loc 1 144 8 is_stmt 0 view .LVU109
+ 438 0000 B4EEE01A 		vcmpe.f32	s2, s1
+ 439 0004 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 440 0008 1ED4     		bmi	.L48
+ 145:IMU/user_lib.c ****     {
+ 146:IMU/user_lib.c ****         return Input;
+ 147:IMU/user_lib.c ****     }
+ 148:IMU/user_lib.c **** 
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 11
+
+
+ 149:IMU/user_lib.c ****     if (Input > maxValue)
+ 441              		.loc 1 149 5 is_stmt 1 view .LVU110
+ 442              		.loc 1 149 8 is_stmt 0 view .LVU111
+ 443 000a B4EEC01A 		vcmpe.f32	s2, s0
+ 444 000e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 445 0012 0AD5     		bpl	.L58
+ 446              	.LBB2:
+ 150:IMU/user_lib.c ****     {
+ 151:IMU/user_lib.c ****         fp32 len = maxValue - minValue;
+ 447              		.loc 1 151 9 is_stmt 1 view .LVU112
+ 448              		.loc 1 151 14 is_stmt 0 view .LVU113
+ 449 0014 71EE600A 		vsub.f32	s1, s2, s1
+ 450              	.LVL25:
+ 152:IMU/user_lib.c ****         while (Input > maxValue)
+ 451              		.loc 1 152 9 is_stmt 1 view .LVU114
+ 452              		.loc 1 152 15 is_stmt 0 view .LVU115
+ 453 0018 01E0     		b	.L51
+ 454              	.L52:
+ 153:IMU/user_lib.c ****         {
+ 154:IMU/user_lib.c ****             Input -= len;
+ 455              		.loc 1 154 13 is_stmt 1 view .LVU116
+ 456              		.loc 1 154 19 is_stmt 0 view .LVU117
+ 457 001a 30EE600A 		vsub.f32	s0, s0, s1
+ 458              	.LVL26:
+ 459              	.L51:
+ 152:IMU/user_lib.c ****         while (Input > maxValue)
+ 460              		.loc 1 152 15 is_stmt 1 view .LVU118
+ 461 001e B4EEC10A 		vcmpe.f32	s0, s2
+ 462 0022 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 463 0026 F8DC     		bgt	.L52
+ 152:IMU/user_lib.c ****         while (Input > maxValue)
+ 464              		.loc 1 152 15 is_stmt 0 view .LVU119
+ 465 0028 7047     		bx	lr
+ 466              	.LVL27:
+ 467              	.L58:
+ 152:IMU/user_lib.c ****         while (Input > maxValue)
+ 468              		.loc 1 152 15 view .LVU120
+ 469              	.LBE2:
+ 155:IMU/user_lib.c ****         }
+ 156:IMU/user_lib.c ****     }
+ 157:IMU/user_lib.c ****     else if (Input < minValue)
+ 470              		.loc 1 157 10 is_stmt 1 view .LVU121
+ 471              		.loc 1 157 13 is_stmt 0 view .LVU122
+ 472 002a F4EEC00A 		vcmpe.f32	s1, s0
+ 473 002e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 474 0032 09DD     		ble	.L48
+ 475              	.LBB3:
+ 158:IMU/user_lib.c ****     {
+ 159:IMU/user_lib.c ****         fp32 len = maxValue - minValue;
+ 476              		.loc 1 159 9 is_stmt 1 view .LVU123
+ 477              		.loc 1 159 14 is_stmt 0 view .LVU124
+ 478 0034 31EE601A 		vsub.f32	s2, s2, s1
+ 479              	.LVL28:
+ 160:IMU/user_lib.c ****         while (Input < minValue)
+ 480              		.loc 1 160 9 is_stmt 1 view .LVU125
+ 481              	.L54:
+ 482              		.loc 1 160 15 view .LVU126
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 12
+
+
+ 483 0038 B4EEE00A 		vcmpe.f32	s0, s1
+ 484 003c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 485 0040 02D5     		bpl	.L48
+ 161:IMU/user_lib.c ****         {
+ 162:IMU/user_lib.c ****             Input += len;
+ 486              		.loc 1 162 13 view .LVU127
+ 487              		.loc 1 162 19 is_stmt 0 view .LVU128
+ 488 0042 30EE010A 		vadd.f32	s0, s0, s2
+ 489              	.LVL29:
+ 490              		.loc 1 162 19 view .LVU129
+ 491 0046 F7E7     		b	.L54
+ 492              	.LVL30:
+ 493              	.L48:
+ 494              		.loc 1 162 19 view .LVU130
+ 495              	.LBE3:
+ 163:IMU/user_lib.c ****         }
+ 164:IMU/user_lib.c ****     }
+ 165:IMU/user_lib.c ****     return Input;
+ 166:IMU/user_lib.c **** }
+ 496              		.loc 1 166 1 view .LVU131
+ 497 0048 7047     		bx	lr
+ 498              		.cfi_endproc
+ 499              	.LFE140:
+ 501              		.section	.text.theta_format,"ax",%progbits
+ 502              		.align	1
+ 503              		.global	theta_format
+ 504              		.syntax unified
+ 505              		.thumb
+ 506              		.thumb_func
+ 508              	theta_format:
+ 509              	.LVL31:
+ 510              	.LFB141:
+ 167:IMU/user_lib.c **** 
+ 168:IMU/user_lib.c **** //弧度格式化为-PI~PI
+ 169:IMU/user_lib.c **** 
+ 170:IMU/user_lib.c **** //角度格式化为-180~180
+ 171:IMU/user_lib.c **** fp32 theta_format(fp32 Ang)
+ 172:IMU/user_lib.c **** {
+ 511              		.loc 1 172 1 is_stmt 1 view -0
+ 512              		.cfi_startproc
+ 513              		@ args = 0, pretend = 0, frame = 0
+ 514              		@ frame_needed = 0, uses_anonymous_args = 0
+ 515              		.loc 1 172 1 is_stmt 0 view .LVU133
+ 516 0000 08B5     		push	{r3, lr}
+ 517              	.LCFI0:
+ 518              		.cfi_def_cfa_offset 8
+ 519              		.cfi_offset 3, -8
+ 520              		.cfi_offset 14, -4
+ 173:IMU/user_lib.c ****     return loop_fp32_constrain(Ang, -180.0f, 180.0f);
+ 521              		.loc 1 173 5 is_stmt 1 view .LVU134
+ 522              		.loc 1 173 12 is_stmt 0 view .LVU135
+ 523 0002 9FED031A 		vldr.32	s2, .L61
+ 524 0006 DFED030A 		vldr.32	s1, .L61+4
+ 525 000a FFF7FEFF 		bl	loop_fp32_constrain
+ 526              	.LVL32:
+ 174:IMU/user_lib.c **** }
+ 527              		.loc 1 174 1 view .LVU136
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 13
+
+
+ 528 000e 08BD     		pop	{r3, pc}
+ 529              	.L62:
+ 530              		.align	2
+ 531              	.L61:
+ 532 0010 00003443 		.word	1127481344
+ 533 0014 000034C3 		.word	-1020002304
+ 534              		.cfi_endproc
+ 535              	.LFE141:
+ 537              		.text
+ 538              	.Letext0:
+ 539              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 540              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 541              		.file 4 "Inc/struct_typedef.h"
+ 542              		.file 5 "IMU/user_lib.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s 			page 14
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 user_lib.c
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:20     .text.ramp_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:26     .text.ramp_init:00000000 ramp_init
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:57     .text.ramp_calc:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:63     .text.ramp_calc:00000000 ramp_calc
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:113    .text.first_order_filter_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:119    .text.first_order_filter_init:00000000 first_order_filter_init
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:148    .text.first_order_filter_cali:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:154    .text.first_order_filter_cali:00000000 first_order_filter_cali
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:193    .text.abs_limit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:199    .text.abs_limit:00000000 abs_limit
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:237    .text.sign:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:243    .text.sign:00000000 sign
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:272    .text.fp32_deadline:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:278    .text.fp32_deadline:00000000 fp32_deadline
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:305    .text.fp32_deadline:0000001c $d
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:310    .text.int16_deadline:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:316    .text.int16_deadline:00000000 int16_deadline
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:342    .text.fp32_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:348    .text.fp32_constrain:00000000 fp32_constrain
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:383    .text.int16_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:389    .text.int16_constrain:00000000 int16_constrain
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:422    .text.loop_fp32_constrain:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:428    .text.loop_fp32_constrain:00000000 loop_fp32_constrain
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:502    .text.theta_format:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:508    .text.theta_format:00000000 theta_format
+C:\Users\xixi\AppData\Local\Temp\cc8ITKKh.s:532    .text.theta_format:00000010 $d
+
+NO UNDEFINED SYMBOLS

@@ -1,0 +1,514 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"ist8310driver_middleware.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.ist8310_GPIO_init,"ax",%progbits
+  20              		.align	1
+  21              		.global	ist8310_GPIO_init
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	ist8310_GPIO_init:
+  27              	.LFB135:
+  28              		.file 1 "IMU/ist8310driver_middleware.c"
+   1:IMU/ist8310driver_middleware.c **** /**
+   2:IMU/ist8310driver_middleware.c ****   ****************************(C) COPYRIGHT 2016 DJI****************************
+   3:IMU/ist8310driver_middleware.c ****   * @file       IST8310middleware.c/h
+   4:IMU/ist8310driver_middleware.c ****   * @brief      IST8310磁力计中间层，完成IST8310的IIC通信,因为设置MPU6500的SPI通�
+   5:IMU/ist8310driver_middleware.c ****   *             所以设置的是通过mpu6500的IIC_SLV0完成读取，IIC_SLV4完成写入。
+   6:IMU/ist8310driver_middleware.c ****   * @note       IST8310只支持IIC读取
+   7:IMU/ist8310driver_middleware.c ****   * @history
+   8:IMU/ist8310driver_middleware.c ****   *  Version    Date            Author          Modification
+   9:IMU/ist8310driver_middleware.c ****   *  V1.0.0     Dec-26-2018     RM              1. 完成
+  10:IMU/ist8310driver_middleware.c ****   *
+  11:IMU/ist8310driver_middleware.c ****   @verbatim
+  12:IMU/ist8310driver_middleware.c ****   ==============================================================================
+  13:IMU/ist8310driver_middleware.c **** 
+  14:IMU/ist8310driver_middleware.c ****   ==============================================================================
+  15:IMU/ist8310driver_middleware.c ****   @endverbatim
+  16:IMU/ist8310driver_middleware.c ****   ****************************(C) COPYRIGHT 2016 DJI****************************
+  17:IMU/ist8310driver_middleware.c ****   */
+  18:IMU/ist8310driver_middleware.c **** 
+  19:IMU/ist8310driver_middleware.c **** #include "ist8310driver_middleware.h"
+  20:IMU/ist8310driver_middleware.c **** #include "main.h"
+  21:IMU/ist8310driver_middleware.c **** #include "cmsis_os.h"
+  22:IMU/ist8310driver_middleware.c **** #include "bsp_delay.h"
+  23:IMU/ist8310driver_middleware.c **** 
+  24:IMU/ist8310driver_middleware.c **** extern I2C_HandleTypeDef hi2c3;
+  25:IMU/ist8310driver_middleware.c **** 
+  26:IMU/ist8310driver_middleware.c **** 
+  27:IMU/ist8310driver_middleware.c **** void ist8310_GPIO_init(void)
+  28:IMU/ist8310driver_middleware.c **** {
+  29              		.loc 1 28 1 view -0
+  30              		.cfi_startproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 2
+
+
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+  29:IMU/ist8310driver_middleware.c **** }
+  34              		.loc 1 29 1 view .LVU1
+  35 0000 7047     		bx	lr
+  36              		.cfi_endproc
+  37              	.LFE135:
+  39              		.section	.text.ist8310_com_init,"ax",%progbits
+  40              		.align	1
+  41              		.global	ist8310_com_init
+  42              		.syntax unified
+  43              		.thumb
+  44              		.thumb_func
+  46              	ist8310_com_init:
+  47              	.LFB136:
+  30:IMU/ist8310driver_middleware.c **** 
+  31:IMU/ist8310driver_middleware.c **** void ist8310_com_init(void)
+  32:IMU/ist8310driver_middleware.c **** {
+  48              		.loc 1 32 1 view -0
+  49              		.cfi_startproc
+  50              		@ args = 0, pretend = 0, frame = 0
+  51              		@ frame_needed = 0, uses_anonymous_args = 0
+  52              		@ link register save eliminated.
+  33:IMU/ist8310driver_middleware.c **** }
+  53              		.loc 1 33 1 view .LVU3
+  54 0000 7047     		bx	lr
+  55              		.cfi_endproc
+  56              	.LFE136:
+  58              		.section	.text.ist8310_IIC_read_single_reg,"ax",%progbits
+  59              		.align	1
+  60              		.global	ist8310_IIC_read_single_reg
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	ist8310_IIC_read_single_reg:
+  66              	.LVL0:
+  67              	.LFB137:
+  34:IMU/ist8310driver_middleware.c **** 
+  35:IMU/ist8310driver_middleware.c **** 
+  36:IMU/ist8310driver_middleware.c **** uint8_t ist8310_IIC_read_single_reg(uint8_t reg)
+  37:IMU/ist8310driver_middleware.c **** {
+  68              		.loc 1 37 1 view -0
+  69              		.cfi_startproc
+  70              		@ args = 0, pretend = 0, frame = 8
+  71              		@ frame_needed = 0, uses_anonymous_args = 0
+  72              		.loc 1 37 1 is_stmt 0 view .LVU5
+  73 0000 00B5     		push	{lr}
+  74              	.LCFI0:
+  75              		.cfi_def_cfa_offset 4
+  76              		.cfi_offset 14, -4
+  77 0002 87B0     		sub	sp, sp, #28
+  78              	.LCFI1:
+  79              		.cfi_def_cfa_offset 32
+  80 0004 0246     		mov	r2, r0
+  38:IMU/ist8310driver_middleware.c ****     uint8_t res;
+  81              		.loc 1 38 5 is_stmt 1 view .LVU6
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 3
+
+
+  39:IMU/ist8310driver_middleware.c ****     HAL_I2C_Mem_Read(&hi2c3, IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &res, 1, 100);
+  82              		.loc 1 39 5 view .LVU7
+  83 0006 6423     		movs	r3, #100
+  84 0008 0293     		str	r3, [sp, #8]
+  85 000a 0123     		movs	r3, #1
+  86 000c 0193     		str	r3, [sp, #4]
+  87 000e 0DF11701 		add	r1, sp, #23
+  88 0012 0091     		str	r1, [sp]
+  89 0014 1C21     		movs	r1, #28
+  90 0016 0448     		ldr	r0, .L5
+  91              	.LVL1:
+  92              		.loc 1 39 5 is_stmt 0 view .LVU8
+  93 0018 FFF7FEFF 		bl	HAL_I2C_Mem_Read
+  94              	.LVL2:
+  40:IMU/ist8310driver_middleware.c ****     return res;
+  95              		.loc 1 40 5 is_stmt 1 view .LVU9
+  41:IMU/ist8310driver_middleware.c **** }
+  96              		.loc 1 41 1 is_stmt 0 view .LVU10
+  97 001c 9DF81700 		ldrb	r0, [sp, #23]	@ zero_extendqisi2
+  98 0020 07B0     		add	sp, sp, #28
+  99              	.LCFI2:
+ 100              		.cfi_def_cfa_offset 4
+ 101              		@ sp needed
+ 102 0022 5DF804FB 		ldr	pc, [sp], #4
+ 103              	.L6:
+ 104 0026 00BF     		.align	2
+ 105              	.L5:
+ 106 0028 00000000 		.word	hi2c3
+ 107              		.cfi_endproc
+ 108              	.LFE137:
+ 110              		.section	.text.ist8310_IIC_write_single_reg,"ax",%progbits
+ 111              		.align	1
+ 112              		.global	ist8310_IIC_write_single_reg
+ 113              		.syntax unified
+ 114              		.thumb
+ 115              		.thumb_func
+ 117              	ist8310_IIC_write_single_reg:
+ 118              	.LVL3:
+ 119              	.LFB138:
+  42:IMU/ist8310driver_middleware.c **** void ist8310_IIC_write_single_reg(uint8_t reg, uint8_t data)
+  43:IMU/ist8310driver_middleware.c **** {
+ 120              		.loc 1 43 1 is_stmt 1 view -0
+ 121              		.cfi_startproc
+ 122              		@ args = 0, pretend = 0, frame = 8
+ 123              		@ frame_needed = 0, uses_anonymous_args = 0
+ 124              		.loc 1 43 1 is_stmt 0 view .LVU12
+ 125 0000 00B5     		push	{lr}
+ 126              	.LCFI3:
+ 127              		.cfi_def_cfa_offset 4
+ 128              		.cfi_offset 14, -4
+ 129 0002 87B0     		sub	sp, sp, #28
+ 130              	.LCFI4:
+ 131              		.cfi_def_cfa_offset 32
+ 132 0004 0246     		mov	r2, r0
+ 133 0006 8DF81710 		strb	r1, [sp, #23]
+  44:IMU/ist8310driver_middleware.c ****     HAL_I2C_Mem_Write(&hi2c3, IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+ 134              		.loc 1 44 5 is_stmt 1 view .LVU13
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 4
+
+
+ 135 000a 6423     		movs	r3, #100
+ 136 000c 0293     		str	r3, [sp, #8]
+ 137 000e 0123     		movs	r3, #1
+ 138 0010 0193     		str	r3, [sp, #4]
+ 139 0012 0DF11701 		add	r1, sp, #23
+ 140              	.LVL4:
+ 141              		.loc 1 44 5 is_stmt 0 view .LVU14
+ 142 0016 0091     		str	r1, [sp]
+ 143 0018 1C21     		movs	r1, #28
+ 144              	.LVL5:
+ 145              		.loc 1 44 5 view .LVU15
+ 146 001a 0348     		ldr	r0, .L9
+ 147              	.LVL6:
+ 148              		.loc 1 44 5 view .LVU16
+ 149 001c FFF7FEFF 		bl	HAL_I2C_Mem_Write
+ 150              	.LVL7:
+  45:IMU/ist8310driver_middleware.c **** 
+  46:IMU/ist8310driver_middleware.c **** }
+ 151              		.loc 1 46 1 view .LVU17
+ 152 0020 07B0     		add	sp, sp, #28
+ 153              	.LCFI5:
+ 154              		.cfi_def_cfa_offset 4
+ 155              		@ sp needed
+ 156 0022 5DF804FB 		ldr	pc, [sp], #4
+ 157              	.L10:
+ 158 0026 00BF     		.align	2
+ 159              	.L9:
+ 160 0028 00000000 		.word	hi2c3
+ 161              		.cfi_endproc
+ 162              	.LFE138:
+ 164              		.section	.text.ist8310_IIC_read_muli_reg,"ax",%progbits
+ 165              		.align	1
+ 166              		.global	ist8310_IIC_read_muli_reg
+ 167              		.syntax unified
+ 168              		.thumb
+ 169              		.thumb_func
+ 171              	ist8310_IIC_read_muli_reg:
+ 172              	.LVL8:
+ 173              	.LFB139:
+  47:IMU/ist8310driver_middleware.c **** void ist8310_IIC_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len)
+  48:IMU/ist8310driver_middleware.c **** {
+ 174              		.loc 1 48 1 is_stmt 1 view -0
+ 175              		.cfi_startproc
+ 176              		@ args = 0, pretend = 0, frame = 0
+ 177              		@ frame_needed = 0, uses_anonymous_args = 0
+ 178              		.loc 1 48 1 is_stmt 0 view .LVU19
+ 179 0000 00B5     		push	{lr}
+ 180              	.LCFI6:
+ 181              		.cfi_def_cfa_offset 4
+ 182              		.cfi_offset 14, -4
+ 183 0002 85B0     		sub	sp, sp, #20
+ 184              	.LCFI7:
+ 185              		.cfi_def_cfa_offset 24
+  49:IMU/ist8310driver_middleware.c ****     HAL_I2C_Mem_Read(&hi2c3, IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, buf, len, 100);
+ 186              		.loc 1 49 5 is_stmt 1 view .LVU20
+ 187 0004 6423     		movs	r3, #100
+ 188 0006 0293     		str	r3, [sp, #8]
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 5
+
+
+ 189 0008 0192     		str	r2, [sp, #4]
+ 190 000a 0091     		str	r1, [sp]
+ 191 000c 0123     		movs	r3, #1
+ 192 000e 0246     		mov	r2, r0
+ 193              	.LVL9:
+ 194              		.loc 1 49 5 is_stmt 0 view .LVU21
+ 195 0010 1C21     		movs	r1, #28
+ 196              	.LVL10:
+ 197              		.loc 1 49 5 view .LVU22
+ 198 0012 0348     		ldr	r0, .L13
+ 199              	.LVL11:
+ 200              		.loc 1 49 5 view .LVU23
+ 201 0014 FFF7FEFF 		bl	HAL_I2C_Mem_Read
+ 202              	.LVL12:
+  50:IMU/ist8310driver_middleware.c **** }
+ 203              		.loc 1 50 1 view .LVU24
+ 204 0018 05B0     		add	sp, sp, #20
+ 205              	.LCFI8:
+ 206              		.cfi_def_cfa_offset 4
+ 207              		@ sp needed
+ 208 001a 5DF804FB 		ldr	pc, [sp], #4
+ 209              	.L14:
+ 210 001e 00BF     		.align	2
+ 211              	.L13:
+ 212 0020 00000000 		.word	hi2c3
+ 213              		.cfi_endproc
+ 214              	.LFE139:
+ 216              		.section	.text.ist8310_IIC_write_muli_reg,"ax",%progbits
+ 217              		.align	1
+ 218              		.global	ist8310_IIC_write_muli_reg
+ 219              		.syntax unified
+ 220              		.thumb
+ 221              		.thumb_func
+ 223              	ist8310_IIC_write_muli_reg:
+ 224              	.LVL13:
+ 225              	.LFB140:
+  51:IMU/ist8310driver_middleware.c **** void ist8310_IIC_write_muli_reg(uint8_t reg, uint8_t *data, uint8_t len)
+  52:IMU/ist8310driver_middleware.c **** {
+ 226              		.loc 1 52 1 is_stmt 1 view -0
+ 227              		.cfi_startproc
+ 228              		@ args = 0, pretend = 0, frame = 0
+ 229              		@ frame_needed = 0, uses_anonymous_args = 0
+ 230              		.loc 1 52 1 is_stmt 0 view .LVU26
+ 231 0000 00B5     		push	{lr}
+ 232              	.LCFI9:
+ 233              		.cfi_def_cfa_offset 4
+ 234              		.cfi_offset 14, -4
+ 235 0002 85B0     		sub	sp, sp, #20
+ 236              	.LCFI10:
+ 237              		.cfi_def_cfa_offset 24
+  53:IMU/ist8310driver_middleware.c ****     HAL_I2C_Mem_Write(&hi2c3, IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, data, len, 100);
+ 238              		.loc 1 53 5 is_stmt 1 view .LVU27
+ 239 0004 6423     		movs	r3, #100
+ 240 0006 0293     		str	r3, [sp, #8]
+ 241 0008 0192     		str	r2, [sp, #4]
+ 242 000a 0091     		str	r1, [sp]
+ 243 000c 0123     		movs	r3, #1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 6
+
+
+ 244 000e 0246     		mov	r2, r0
+ 245              	.LVL14:
+ 246              		.loc 1 53 5 is_stmt 0 view .LVU28
+ 247 0010 1C21     		movs	r1, #28
+ 248              	.LVL15:
+ 249              		.loc 1 53 5 view .LVU29
+ 250 0012 0348     		ldr	r0, .L17
+ 251              	.LVL16:
+ 252              		.loc 1 53 5 view .LVU30
+ 253 0014 FFF7FEFF 		bl	HAL_I2C_Mem_Write
+ 254              	.LVL17:
+  54:IMU/ist8310driver_middleware.c **** }
+ 255              		.loc 1 54 1 view .LVU31
+ 256 0018 05B0     		add	sp, sp, #20
+ 257              	.LCFI11:
+ 258              		.cfi_def_cfa_offset 4
+ 259              		@ sp needed
+ 260 001a 5DF804FB 		ldr	pc, [sp], #4
+ 261              	.L18:
+ 262 001e 00BF     		.align	2
+ 263              	.L17:
+ 264 0020 00000000 		.word	hi2c3
+ 265              		.cfi_endproc
+ 266              	.LFE140:
+ 268              		.section	.text.ist8310_delay_ms,"ax",%progbits
+ 269              		.align	1
+ 270              		.global	ist8310_delay_ms
+ 271              		.syntax unified
+ 272              		.thumb
+ 273              		.thumb_func
+ 275              	ist8310_delay_ms:
+ 276              	.LVL18:
+ 277              	.LFB141:
+  55:IMU/ist8310driver_middleware.c **** void ist8310_delay_ms(uint16_t ms)
+  56:IMU/ist8310driver_middleware.c **** {
+ 278              		.loc 1 56 1 is_stmt 1 view -0
+ 279              		.cfi_startproc
+ 280              		@ args = 0, pretend = 0, frame = 0
+ 281              		@ frame_needed = 0, uses_anonymous_args = 0
+ 282              		.loc 1 56 1 is_stmt 0 view .LVU33
+ 283 0000 08B5     		push	{r3, lr}
+ 284              	.LCFI12:
+ 285              		.cfi_def_cfa_offset 8
+ 286              		.cfi_offset 3, -8
+ 287              		.cfi_offset 14, -4
+  57:IMU/ist8310driver_middleware.c ****     osDelay(ms);
+ 288              		.loc 1 57 5 is_stmt 1 view .LVU34
+ 289 0002 FFF7FEFF 		bl	osDelay
+ 290              	.LVL19:
+  58:IMU/ist8310driver_middleware.c **** }
+ 291              		.loc 1 58 1 is_stmt 0 view .LVU35
+ 292 0006 08BD     		pop	{r3, pc}
+ 293              		.cfi_endproc
+ 294              	.LFE141:
+ 296              		.section	.text.ist8310_delay_us,"ax",%progbits
+ 297              		.align	1
+ 298              		.global	ist8310_delay_us
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 7
+
+
+ 299              		.syntax unified
+ 300              		.thumb
+ 301              		.thumb_func
+ 303              	ist8310_delay_us:
+ 304              	.LVL20:
+ 305              	.LFB142:
+  59:IMU/ist8310driver_middleware.c **** void ist8310_delay_us(uint16_t us)
+  60:IMU/ist8310driver_middleware.c **** {
+ 306              		.loc 1 60 1 is_stmt 1 view -0
+ 307              		.cfi_startproc
+ 308              		@ args = 0, pretend = 0, frame = 0
+ 309              		@ frame_needed = 0, uses_anonymous_args = 0
+ 310              		.loc 1 60 1 is_stmt 0 view .LVU37
+ 311 0000 08B5     		push	{r3, lr}
+ 312              	.LCFI13:
+ 313              		.cfi_def_cfa_offset 8
+ 314              		.cfi_offset 3, -8
+ 315              		.cfi_offset 14, -4
+  61:IMU/ist8310driver_middleware.c ****     delay_us(us);
+ 316              		.loc 1 61 5 is_stmt 1 view .LVU38
+ 317 0002 FFF7FEFF 		bl	delay_us
+ 318              	.LVL21:
+  62:IMU/ist8310driver_middleware.c **** }
+ 319              		.loc 1 62 1 is_stmt 0 view .LVU39
+ 320 0006 08BD     		pop	{r3, pc}
+ 321              		.cfi_endproc
+ 322              	.LFE142:
+ 324              		.section	.text.ist8310_RST_H,"ax",%progbits
+ 325              		.align	1
+ 326              		.global	ist8310_RST_H
+ 327              		.syntax unified
+ 328              		.thumb
+ 329              		.thumb_func
+ 331              	ist8310_RST_H:
+ 332              	.LFB143:
+  63:IMU/ist8310driver_middleware.c **** 
+  64:IMU/ist8310driver_middleware.c **** void ist8310_RST_H(void)
+  65:IMU/ist8310driver_middleware.c **** {
+ 333              		.loc 1 65 1 is_stmt 1 view -0
+ 334              		.cfi_startproc
+ 335              		@ args = 0, pretend = 0, frame = 0
+ 336              		@ frame_needed = 0, uses_anonymous_args = 0
+ 337 0000 08B5     		push	{r3, lr}
+ 338              	.LCFI14:
+ 339              		.cfi_def_cfa_offset 8
+ 340              		.cfi_offset 3, -8
+ 341              		.cfi_offset 14, -4
+  66:IMU/ist8310driver_middleware.c ****     HAL_GPIO_WritePin(RSTN_IST8310_GPIO_Port, RSTN_IST8310_Pin, GPIO_PIN_SET);
+ 342              		.loc 1 66 5 view .LVU41
+ 343 0002 0122     		movs	r2, #1
+ 344 0004 4021     		movs	r1, #64
+ 345 0006 0248     		ldr	r0, .L25
+ 346 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 347              	.LVL22:
+  67:IMU/ist8310driver_middleware.c **** }
+ 348              		.loc 1 67 1 is_stmt 0 view .LVU42
+ 349 000c 08BD     		pop	{r3, pc}
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 8
+
+
+ 350              	.L26:
+ 351 000e 00BF     		.align	2
+ 352              	.L25:
+ 353 0010 00180240 		.word	1073879040
+ 354              		.cfi_endproc
+ 355              	.LFE143:
+ 357              		.section	.text.ist8310_RST_L,"ax",%progbits
+ 358              		.align	1
+ 359              		.global	ist8310_RST_L
+ 360              		.syntax unified
+ 361              		.thumb
+ 362              		.thumb_func
+ 364              	ist8310_RST_L:
+ 365              	.LFB144:
+  68:IMU/ist8310driver_middleware.c **** extern void ist8310_RST_L(void)
+  69:IMU/ist8310driver_middleware.c **** {
+ 366              		.loc 1 69 1 is_stmt 1 view -0
+ 367              		.cfi_startproc
+ 368              		@ args = 0, pretend = 0, frame = 0
+ 369              		@ frame_needed = 0, uses_anonymous_args = 0
+ 370 0000 08B5     		push	{r3, lr}
+ 371              	.LCFI15:
+ 372              		.cfi_def_cfa_offset 8
+ 373              		.cfi_offset 3, -8
+ 374              		.cfi_offset 14, -4
+  70:IMU/ist8310driver_middleware.c ****     HAL_GPIO_WritePin(RSTN_IST8310_GPIO_Port, RSTN_IST8310_Pin, GPIO_PIN_RESET);
+ 375              		.loc 1 70 5 view .LVU44
+ 376 0002 0022     		movs	r2, #0
+ 377 0004 4021     		movs	r1, #64
+ 378 0006 0248     		ldr	r0, .L29
+ 379 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 380              	.LVL23:
+  71:IMU/ist8310driver_middleware.c **** }
+ 381              		.loc 1 71 1 is_stmt 0 view .LVU45
+ 382 000c 08BD     		pop	{r3, pc}
+ 383              	.L30:
+ 384 000e 00BF     		.align	2
+ 385              	.L29:
+ 386 0010 00180240 		.word	1073879040
+ 387              		.cfi_endproc
+ 388              	.LFE144:
+ 390              		.text
+ 391              	.Letext0:
+ 392              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 393              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 394              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 395              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 396              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
+ 397              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 398              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c.h"
+ 399              		.file 9 "IMU/bsp_delay.h"
+ 400              		.file 10 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s 			page 9
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 ist8310driver_middleware.c
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:20     .text.ist8310_GPIO_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:26     .text.ist8310_GPIO_init:00000000 ist8310_GPIO_init
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:40     .text.ist8310_com_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:46     .text.ist8310_com_init:00000000 ist8310_com_init
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:59     .text.ist8310_IIC_read_single_reg:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:65     .text.ist8310_IIC_read_single_reg:00000000 ist8310_IIC_read_single_reg
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:106    .text.ist8310_IIC_read_single_reg:00000028 $d
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:111    .text.ist8310_IIC_write_single_reg:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:117    .text.ist8310_IIC_write_single_reg:00000000 ist8310_IIC_write_single_reg
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:160    .text.ist8310_IIC_write_single_reg:00000028 $d
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:165    .text.ist8310_IIC_read_muli_reg:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:171    .text.ist8310_IIC_read_muli_reg:00000000 ist8310_IIC_read_muli_reg
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:212    .text.ist8310_IIC_read_muli_reg:00000020 $d
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:217    .text.ist8310_IIC_write_muli_reg:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:223    .text.ist8310_IIC_write_muli_reg:00000000 ist8310_IIC_write_muli_reg
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:264    .text.ist8310_IIC_write_muli_reg:00000020 $d
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:269    .text.ist8310_delay_ms:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:275    .text.ist8310_delay_ms:00000000 ist8310_delay_ms
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:297    .text.ist8310_delay_us:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:303    .text.ist8310_delay_us:00000000 ist8310_delay_us
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:325    .text.ist8310_RST_H:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:331    .text.ist8310_RST_H:00000000 ist8310_RST_H
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:353    .text.ist8310_RST_H:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:358    .text.ist8310_RST_L:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:364    .text.ist8310_RST_L:00000000 ist8310_RST_L
+C:\Users\xixi\AppData\Local\Temp\ccBBREdt.s:386    .text.ist8310_RST_L:00000010 $d
+
+UNDEFINED SYMBOLS
+HAL_I2C_Mem_Read
+hi2c3
+HAL_I2C_Mem_Write
+osDelay
+delay_us
+HAL_GPIO_WritePin

@@ -1,0 +1,398 @@
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"BMI088Middleware.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.BMI088_GPIO_init,"ax",%progbits
+  20              		.align	1
+  21              		.global	BMI088_GPIO_init
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	BMI088_GPIO_init:
+  27              	.LFB135:
+  28              		.file 1 "IMU/BMI088Middleware.c"
+   1:IMU/BMI088Middleware.c **** #include "BMI088Middleware.h"
+   2:IMU/BMI088Middleware.c **** #include "main.h"
+   3:IMU/BMI088Middleware.c **** #include "cmsis_os.h"
+   4:IMU/BMI088Middleware.c **** #include "bsp_delay.h"
+   5:IMU/BMI088Middleware.c **** extern SPI_HandleTypeDef hspi1;
+   6:IMU/BMI088Middleware.c **** 
+   7:IMU/BMI088Middleware.c **** void BMI088_GPIO_init(void)
+   8:IMU/BMI088Middleware.c **** {
+  29              		.loc 1 8 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+   9:IMU/BMI088Middleware.c **** 
+  10:IMU/BMI088Middleware.c **** }
+  34              		.loc 1 10 1 view .LVU1
+  35 0000 7047     		bx	lr
+  36              		.cfi_endproc
+  37              	.LFE135:
+  39              		.section	.text.BMI088_com_init,"ax",%progbits
+  40              		.align	1
+  41              		.global	BMI088_com_init
+  42              		.syntax unified
+  43              		.thumb
+  44              		.thumb_func
+  46              	BMI088_com_init:
+  47              	.LFB136:
+  11:IMU/BMI088Middleware.c **** 
+  12:IMU/BMI088Middleware.c **** void BMI088_com_init(void)
+  13:IMU/BMI088Middleware.c **** {
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 2
+
+
+  48              		.loc 1 13 1 view -0
+  49              		.cfi_startproc
+  50              		@ args = 0, pretend = 0, frame = 0
+  51              		@ frame_needed = 0, uses_anonymous_args = 0
+  52              		@ link register save eliminated.
+  14:IMU/BMI088Middleware.c **** 
+  15:IMU/BMI088Middleware.c **** 
+  16:IMU/BMI088Middleware.c **** }
+  53              		.loc 1 16 1 view .LVU3
+  54 0000 7047     		bx	lr
+  55              		.cfi_endproc
+  56              	.LFE136:
+  58              		.section	.text.BMI088_delay_ms,"ax",%progbits
+  59              		.align	1
+  60              		.global	BMI088_delay_ms
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	BMI088_delay_ms:
+  66              	.LVL0:
+  67              	.LFB137:
+  17:IMU/BMI088Middleware.c **** 
+  18:IMU/BMI088Middleware.c **** void BMI088_delay_ms(uint16_t ms)
+  19:IMU/BMI088Middleware.c **** {
+  68              		.loc 1 19 1 view -0
+  69              		.cfi_startproc
+  70              		@ args = 0, pretend = 0, frame = 0
+  71              		@ frame_needed = 0, uses_anonymous_args = 0
+  72              		.loc 1 19 1 is_stmt 0 view .LVU5
+  73 0000 08B5     		push	{r3, lr}
+  74              	.LCFI0:
+  75              		.cfi_def_cfa_offset 8
+  76              		.cfi_offset 3, -8
+  77              		.cfi_offset 14, -4
+  20:IMU/BMI088Middleware.c ****     osDelay(ms);
+  78              		.loc 1 20 5 is_stmt 1 view .LVU6
+  79 0002 FFF7FEFF 		bl	osDelay
+  80              	.LVL1:
+  21:IMU/BMI088Middleware.c **** }
+  81              		.loc 1 21 1 is_stmt 0 view .LVU7
+  82 0006 08BD     		pop	{r3, pc}
+  83              		.cfi_endproc
+  84              	.LFE137:
+  86              		.section	.text.BMI088_delay_us,"ax",%progbits
+  87              		.align	1
+  88              		.global	BMI088_delay_us
+  89              		.syntax unified
+  90              		.thumb
+  91              		.thumb_func
+  93              	BMI088_delay_us:
+  94              	.LVL2:
+  95              	.LFB138:
+  22:IMU/BMI088Middleware.c **** 
+  23:IMU/BMI088Middleware.c **** void BMI088_delay_us(uint16_t us)
+  24:IMU/BMI088Middleware.c **** {
+  96              		.loc 1 24 1 is_stmt 1 view -0
+  97              		.cfi_startproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 3
+
+
+  98              		@ args = 0, pretend = 0, frame = 0
+  99              		@ frame_needed = 0, uses_anonymous_args = 0
+ 100              		.loc 1 24 1 is_stmt 0 view .LVU9
+ 101 0000 08B5     		push	{r3, lr}
+ 102              	.LCFI1:
+ 103              		.cfi_def_cfa_offset 8
+ 104              		.cfi_offset 3, -8
+ 105              		.cfi_offset 14, -4
+  25:IMU/BMI088Middleware.c ****     delay_us(us);
+ 106              		.loc 1 25 5 is_stmt 1 view .LVU10
+ 107 0002 FFF7FEFF 		bl	delay_us
+ 108              	.LVL3:
+  26:IMU/BMI088Middleware.c **** }
+ 109              		.loc 1 26 1 is_stmt 0 view .LVU11
+ 110 0006 08BD     		pop	{r3, pc}
+ 111              		.cfi_endproc
+ 112              	.LFE138:
+ 114              		.section	.text.BMI088_ACCEL_NS_L,"ax",%progbits
+ 115              		.align	1
+ 116              		.global	BMI088_ACCEL_NS_L
+ 117              		.syntax unified
+ 118              		.thumb
+ 119              		.thumb_func
+ 121              	BMI088_ACCEL_NS_L:
+ 122              	.LFB139:
+  27:IMU/BMI088Middleware.c **** 
+  28:IMU/BMI088Middleware.c **** 
+  29:IMU/BMI088Middleware.c **** 
+  30:IMU/BMI088Middleware.c **** 
+  31:IMU/BMI088Middleware.c **** void BMI088_ACCEL_NS_L(void)
+  32:IMU/BMI088Middleware.c **** {
+ 123              		.loc 1 32 1 is_stmt 1 view -0
+ 124              		.cfi_startproc
+ 125              		@ args = 0, pretend = 0, frame = 0
+ 126              		@ frame_needed = 0, uses_anonymous_args = 0
+ 127 0000 08B5     		push	{r3, lr}
+ 128              	.LCFI2:
+ 129              		.cfi_def_cfa_offset 8
+ 130              		.cfi_offset 3, -8
+ 131              		.cfi_offset 14, -4
+  33:IMU/BMI088Middleware.c ****     HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
+ 132              		.loc 1 33 5 view .LVU13
+ 133 0002 0022     		movs	r2, #0
+ 134 0004 1021     		movs	r1, #16
+ 135 0006 0248     		ldr	r0, .L9
+ 136 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 137              	.LVL4:
+  34:IMU/BMI088Middleware.c **** }
+ 138              		.loc 1 34 1 is_stmt 0 view .LVU14
+ 139 000c 08BD     		pop	{r3, pc}
+ 140              	.L10:
+ 141 000e 00BF     		.align	2
+ 142              	.L9:
+ 143 0010 00000240 		.word	1073872896
+ 144              		.cfi_endproc
+ 145              	.LFE139:
+ 147              		.section	.text.BMI088_ACCEL_NS_H,"ax",%progbits
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 4
+
+
+ 148              		.align	1
+ 149              		.global	BMI088_ACCEL_NS_H
+ 150              		.syntax unified
+ 151              		.thumb
+ 152              		.thumb_func
+ 154              	BMI088_ACCEL_NS_H:
+ 155              	.LFB140:
+  35:IMU/BMI088Middleware.c **** void BMI088_ACCEL_NS_H(void)
+  36:IMU/BMI088Middleware.c **** {
+ 156              		.loc 1 36 1 is_stmt 1 view -0
+ 157              		.cfi_startproc
+ 158              		@ args = 0, pretend = 0, frame = 0
+ 159              		@ frame_needed = 0, uses_anonymous_args = 0
+ 160 0000 08B5     		push	{r3, lr}
+ 161              	.LCFI3:
+ 162              		.cfi_def_cfa_offset 8
+ 163              		.cfi_offset 3, -8
+ 164              		.cfi_offset 14, -4
+  37:IMU/BMI088Middleware.c ****     HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
+ 165              		.loc 1 37 5 view .LVU16
+ 166 0002 0122     		movs	r2, #1
+ 167 0004 1021     		movs	r1, #16
+ 168 0006 0248     		ldr	r0, .L13
+ 169 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 170              	.LVL5:
+  38:IMU/BMI088Middleware.c **** }
+ 171              		.loc 1 38 1 is_stmt 0 view .LVU17
+ 172 000c 08BD     		pop	{r3, pc}
+ 173              	.L14:
+ 174 000e 00BF     		.align	2
+ 175              	.L13:
+ 176 0010 00000240 		.word	1073872896
+ 177              		.cfi_endproc
+ 178              	.LFE140:
+ 180              		.section	.text.BMI088_GYRO_NS_L,"ax",%progbits
+ 181              		.align	1
+ 182              		.global	BMI088_GYRO_NS_L
+ 183              		.syntax unified
+ 184              		.thumb
+ 185              		.thumb_func
+ 187              	BMI088_GYRO_NS_L:
+ 188              	.LFB141:
+  39:IMU/BMI088Middleware.c **** 
+  40:IMU/BMI088Middleware.c **** void BMI088_GYRO_NS_L(void)
+  41:IMU/BMI088Middleware.c **** {
+ 189              		.loc 1 41 1 is_stmt 1 view -0
+ 190              		.cfi_startproc
+ 191              		@ args = 0, pretend = 0, frame = 0
+ 192              		@ frame_needed = 0, uses_anonymous_args = 0
+ 193 0000 08B5     		push	{r3, lr}
+ 194              	.LCFI4:
+ 195              		.cfi_def_cfa_offset 8
+ 196              		.cfi_offset 3, -8
+ 197              		.cfi_offset 14, -4
+  42:IMU/BMI088Middleware.c ****     HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_RESET);
+ 198              		.loc 1 42 5 view .LVU19
+ 199 0002 0022     		movs	r2, #0
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 5
+
+
+ 200 0004 0121     		movs	r1, #1
+ 201 0006 0248     		ldr	r0, .L17
+ 202 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 203              	.LVL6:
+  43:IMU/BMI088Middleware.c **** }
+ 204              		.loc 1 43 1 is_stmt 0 view .LVU20
+ 205 000c 08BD     		pop	{r3, pc}
+ 206              	.L18:
+ 207 000e 00BF     		.align	2
+ 208              	.L17:
+ 209 0010 00040240 		.word	1073873920
+ 210              		.cfi_endproc
+ 211              	.LFE141:
+ 213              		.section	.text.BMI088_GYRO_NS_H,"ax",%progbits
+ 214              		.align	1
+ 215              		.global	BMI088_GYRO_NS_H
+ 216              		.syntax unified
+ 217              		.thumb
+ 218              		.thumb_func
+ 220              	BMI088_GYRO_NS_H:
+ 221              	.LFB142:
+  44:IMU/BMI088Middleware.c **** void BMI088_GYRO_NS_H(void)
+  45:IMU/BMI088Middleware.c **** {
+ 222              		.loc 1 45 1 is_stmt 1 view -0
+ 223              		.cfi_startproc
+ 224              		@ args = 0, pretend = 0, frame = 0
+ 225              		@ frame_needed = 0, uses_anonymous_args = 0
+ 226 0000 08B5     		push	{r3, lr}
+ 227              	.LCFI5:
+ 228              		.cfi_def_cfa_offset 8
+ 229              		.cfi_offset 3, -8
+ 230              		.cfi_offset 14, -4
+  46:IMU/BMI088Middleware.c ****     HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);
+ 231              		.loc 1 46 5 view .LVU22
+ 232 0002 0122     		movs	r2, #1
+ 233 0004 1146     		mov	r1, r2
+ 234 0006 0248     		ldr	r0, .L21
+ 235 0008 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 236              	.LVL7:
+  47:IMU/BMI088Middleware.c **** }
+ 237              		.loc 1 47 1 is_stmt 0 view .LVU23
+ 238 000c 08BD     		pop	{r3, pc}
+ 239              	.L22:
+ 240 000e 00BF     		.align	2
+ 241              	.L21:
+ 242 0010 00040240 		.word	1073873920
+ 243              		.cfi_endproc
+ 244              	.LFE142:
+ 246              		.section	.text.BMI088_read_write_byte,"ax",%progbits
+ 247              		.align	1
+ 248              		.global	BMI088_read_write_byte
+ 249              		.syntax unified
+ 250              		.thumb
+ 251              		.thumb_func
+ 253              	BMI088_read_write_byte:
+ 254              	.LVL8:
+ 255              	.LFB143:
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 6
+
+
+  48:IMU/BMI088Middleware.c **** 
+  49:IMU/BMI088Middleware.c **** uint8_t BMI088_read_write_byte(uint8_t txdata)
+  50:IMU/BMI088Middleware.c **** {
+ 256              		.loc 1 50 1 is_stmt 1 view -0
+ 257              		.cfi_startproc
+ 258              		@ args = 0, pretend = 0, frame = 16
+ 259              		@ frame_needed = 0, uses_anonymous_args = 0
+ 260              		.loc 1 50 1 is_stmt 0 view .LVU25
+ 261 0000 00B5     		push	{lr}
+ 262              	.LCFI6:
+ 263              		.cfi_def_cfa_offset 4
+ 264              		.cfi_offset 14, -4
+ 265 0002 87B0     		sub	sp, sp, #28
+ 266              	.LCFI7:
+ 267              		.cfi_def_cfa_offset 32
+ 268 0004 8DF80F00 		strb	r0, [sp, #15]
+  51:IMU/BMI088Middleware.c ****     uint8_t rx_data;
+ 269              		.loc 1 51 5 is_stmt 1 view .LVU26
+  52:IMU/BMI088Middleware.c ****     HAL_SPI_TransmitReceive(&hspi1, &txdata, &rx_data, 1, 1000);
+ 270              		.loc 1 52 5 view .LVU27
+ 271 0008 4FF47A73 		mov	r3, #1000
+ 272 000c 0093     		str	r3, [sp]
+ 273 000e 0123     		movs	r3, #1
+ 274 0010 0DF11702 		add	r2, sp, #23
+ 275 0014 0DF10F01 		add	r1, sp, #15
+ 276 0018 0348     		ldr	r0, .L25
+ 277              	.LVL9:
+ 278              		.loc 1 52 5 is_stmt 0 view .LVU28
+ 279 001a FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 280              	.LVL10:
+  53:IMU/BMI088Middleware.c ****     return rx_data;
+ 281              		.loc 1 53 5 is_stmt 1 view .LVU29
+  54:IMU/BMI088Middleware.c **** }
+ 282              		.loc 1 54 1 is_stmt 0 view .LVU30
+ 283 001e 9DF81700 		ldrb	r0, [sp, #23]	@ zero_extendqisi2
+ 284 0022 07B0     		add	sp, sp, #28
+ 285              	.LCFI8:
+ 286              		.cfi_def_cfa_offset 4
+ 287              		@ sp needed
+ 288 0024 5DF804FB 		ldr	pc, [sp], #4
+ 289              	.L26:
+ 290              		.align	2
+ 291              	.L25:
+ 292 0028 00000000 		.word	hspi1
+ 293              		.cfi_endproc
+ 294              	.LFE143:
+ 296              		.text
+ 297              	.Letext0:
+ 298              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 299              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 300              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 301              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 302              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
+ 303              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 304              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h"
+ 305              		.file 9 "IMU/bsp_delay.h"
+ 306              		.file 10 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 7
+
+
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s 			page 8
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 BMI088Middleware.c
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:20     .text.BMI088_GPIO_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:26     .text.BMI088_GPIO_init:00000000 BMI088_GPIO_init
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:40     .text.BMI088_com_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:46     .text.BMI088_com_init:00000000 BMI088_com_init
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:59     .text.BMI088_delay_ms:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:65     .text.BMI088_delay_ms:00000000 BMI088_delay_ms
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:87     .text.BMI088_delay_us:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:93     .text.BMI088_delay_us:00000000 BMI088_delay_us
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:115    .text.BMI088_ACCEL_NS_L:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:121    .text.BMI088_ACCEL_NS_L:00000000 BMI088_ACCEL_NS_L
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:143    .text.BMI088_ACCEL_NS_L:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:148    .text.BMI088_ACCEL_NS_H:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:154    .text.BMI088_ACCEL_NS_H:00000000 BMI088_ACCEL_NS_H
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:176    .text.BMI088_ACCEL_NS_H:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:181    .text.BMI088_GYRO_NS_L:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:187    .text.BMI088_GYRO_NS_L:00000000 BMI088_GYRO_NS_L
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:209    .text.BMI088_GYRO_NS_L:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:214    .text.BMI088_GYRO_NS_H:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:220    .text.BMI088_GYRO_NS_H:00000000 BMI088_GYRO_NS_H
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:242    .text.BMI088_GYRO_NS_H:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:247    .text.BMI088_read_write_byte:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:253    .text.BMI088_read_write_byte:00000000 BMI088_read_write_byte
+C:\Users\xixi\AppData\Local\Temp\cc0f3dB9.s:292    .text.BMI088_read_write_byte:00000028 $d
+
+UNDEFINED SYMBOLS
+osDelay
+delay_us
+HAL_GPIO_WritePin
+HAL_SPI_TransmitReceive
+hspi1

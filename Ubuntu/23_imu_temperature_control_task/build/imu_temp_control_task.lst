@@ -1,0 +1,533 @@
+ARM GAS  /tmp/ccauA9HT.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"imu_temp_control_task.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.imu_temp_control_task,"ax",%progbits
+  20              		.align	1
+  21              		.global	imu_temp_control_task
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	imu_temp_control_task:
+  27              	.LVL0:
+  28              	.LFB135:
+  29              		.file 1 "applications/imu_temp_control_task.c"
+   1:applications/imu_temp_control_task.c **** 
+   2:applications/imu_temp_control_task.c **** #include "imu_temp_control_task.h"
+   3:applications/imu_temp_control_task.c **** #include "BMI088driver.h"
+   4:applications/imu_temp_control_task.c **** #include "cmsis_os.h"
+   5:applications/imu_temp_control_task.c **** #include "main.h"
+   6:applications/imu_temp_control_task.c **** #include "pid.h"
+   7:applications/imu_temp_control_task.c **** #include "bsp_imu_pwm.h"
+   8:applications/imu_temp_control_task.c **** 
+   9:applications/imu_temp_control_task.c **** #define IMU_temp_PWM(pwm)  imu_pwm_set(pwm)                    //pwm给定
+  10:applications/imu_temp_control_task.c **** 
+  11:applications/imu_temp_control_task.c **** #define TEMPERATURE_PID_KP 1600.0f //kp of temperature control PID 
+  12:applications/imu_temp_control_task.c **** #define TEMPERATURE_PID_KI 0.2f    //ki of temperature control PID 
+  13:applications/imu_temp_control_task.c **** #define TEMPERATURE_PID_KD 0.0f    //kd of temperature control PID 
+  14:applications/imu_temp_control_task.c **** 
+  15:applications/imu_temp_control_task.c **** #define TEMPERATURE_PID_MAX_OUT 4500.0f  //max out of temperature control PID 
+  16:applications/imu_temp_control_task.c **** #define TEMPERATURE_PID_MAX_IOUT 4400.0f //max iout of temperature control PID 
+  17:applications/imu_temp_control_task.c **** 
+  18:applications/imu_temp_control_task.c **** 
+  19:applications/imu_temp_control_task.c **** extern SPI_HandleTypeDef hspi1;
+  20:applications/imu_temp_control_task.c **** 
+  21:applications/imu_temp_control_task.c **** //task handler 任务句柄
+  22:applications/imu_temp_control_task.c **** TaskHandle_t INS_task_local_handler;
+  23:applications/imu_temp_control_task.c **** 
+  24:applications/imu_temp_control_task.c **** 
+  25:applications/imu_temp_control_task.c **** volatile uint8_t imu_start_flag = 0;
+  26:applications/imu_temp_control_task.c **** 
+  27:applications/imu_temp_control_task.c **** fp32 gyro[3], accel[3], temp;
+  28:applications/imu_temp_control_task.c **** 
+  29:applications/imu_temp_control_task.c **** //kp, ki,kd three params
+ARM GAS  /tmp/ccauA9HT.s 			page 2
+
+
+  30:applications/imu_temp_control_task.c **** const fp32 imu_temp_PID[3] = {TEMPERATURE_PID_KP, TEMPERATURE_PID_KI, TEMPERATURE_PID_KD};
+  31:applications/imu_temp_control_task.c **** //pid struct 
+  32:applications/imu_temp_control_task.c **** pid_type_def imu_temp_pid;
+  33:applications/imu_temp_control_task.c **** 
+  34:applications/imu_temp_control_task.c **** /**
+  35:applications/imu_temp_control_task.c ****   * @brief          bmi088 temperature control 
+  36:applications/imu_temp_control_task.c ****   * @param[in]      argument: NULL
+  37:applications/imu_temp_control_task.c ****   * @retval         none
+  38:applications/imu_temp_control_task.c ****   */
+  39:applications/imu_temp_control_task.c **** /**
+  40:applications/imu_temp_control_task.c ****   * @brief          bmi088温度控制
+  41:applications/imu_temp_control_task.c ****   * @param[in]      argument: NULL
+  42:applications/imu_temp_control_task.c ****   * @retval         none
+  43:applications/imu_temp_control_task.c ****   */
+  44:applications/imu_temp_control_task.c **** void imu_temp_control_task(void const * argument)
+  45:applications/imu_temp_control_task.c **** {
+  30              		.loc 1 45 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		.loc 1 45 1 is_stmt 0 view .LVU1
+  35 0000 38B5     		push	{r3, r4, r5, lr}
+  36              	.LCFI0:
+  37              		.cfi_def_cfa_offset 16
+  38              		.cfi_offset 3, -16
+  39              		.cfi_offset 4, -12
+  40              		.cfi_offset 5, -8
+  41              		.cfi_offset 14, -4
+  46:applications/imu_temp_control_task.c ****     osDelay(500);
+  42              		.loc 1 46 5 is_stmt 1 view .LVU2
+  43 0002 4FF4FA70 		mov	r0, #500
+  44              	.LVL1:
+  45              		.loc 1 46 5 is_stmt 0 view .LVU3
+  46 0006 FFF7FEFF 		bl	osDelay
+  47              	.LVL2:
+  47:applications/imu_temp_control_task.c ****     //pid init  PID初始化
+  48:applications/imu_temp_control_task.c ****     PID_init(&imu_temp_pid, PID_POSITION, imu_temp_PID, TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MA
+  48              		.loc 1 48 5 is_stmt 1 view .LVU4
+  49 000a DFED250A 		vldr.32	s1, .L11
+  50 000e 9FED250A 		vldr.32	s0, .L11+4
+  51 0012 254A     		ldr	r2, .L11+8
+  52 0014 0021     		movs	r1, #0
+  53 0016 2548     		ldr	r0, .L11+12
+  54 0018 FFF7FEFF 		bl	PID_init
+  55              	.LVL3:
+  49:applications/imu_temp_control_task.c **** 
+  50:applications/imu_temp_control_task.c ****     //bmi088 init. bmi088初始化
+  51:applications/imu_temp_control_task.c ****     while(BMI088_init())
+  56              		.loc 1 51 5 view .LVU5
+  57              	.L2:
+  52:applications/imu_temp_control_task.c ****     {
+  53:applications/imu_temp_control_task.c ****         ;
+  58              		.loc 1 53 9 discriminator 1 view .LVU6
+  51:applications/imu_temp_control_task.c ****     {
+  59              		.loc 1 51 10 discriminator 1 view .LVU7
+  51:applications/imu_temp_control_task.c ****     {
+  60              		.loc 1 51 11 is_stmt 0 discriminator 1 view .LVU8
+ARM GAS  /tmp/ccauA9HT.s 			page 3
+
+
+  61 001c FFF7FEFF 		bl	BMI088_init
+  62              	.LVL4:
+  51:applications/imu_temp_control_task.c ****     {
+  63              		.loc 1 51 10 discriminator 1 view .LVU9
+  64 0020 0028     		cmp	r0, #0
+  65 0022 FBD1     		bne	.L2
+  54:applications/imu_temp_control_task.c ****     }
+  55:applications/imu_temp_control_task.c ****     //set spi frequency
+  56:applications/imu_temp_control_task.c ****     hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  66              		.loc 1 56 5 is_stmt 1 view .LVU10
+  67              		.loc 1 56 34 is_stmt 0 view .LVU11
+  68 0024 2248     		ldr	r0, .L11+16
+  69 0026 1023     		movs	r3, #16
+  70 0028 C361     		str	r3, [r0, #28]
+  57:applications/imu_temp_control_task.c ****     
+  58:applications/imu_temp_control_task.c ****     if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  71              		.loc 1 58 5 is_stmt 1 view .LVU12
+  72              		.loc 1 58 9 is_stmt 0 view .LVU13
+  73 002a FFF7FEFF 		bl	HAL_SPI_Init
+  74              	.LVL5:
+  75              		.loc 1 58 8 view .LVU14
+  76 002e 50B9     		cbnz	r0, .L10
+  77              	.L3:
+  59:applications/imu_temp_control_task.c ****     {
+  60:applications/imu_temp_control_task.c ****         Error_Handler();
+  61:applications/imu_temp_control_task.c ****     }
+  62:applications/imu_temp_control_task.c ****     //get task handle, must enable 'xTaskGetHandle' in cubeMX
+  63:applications/imu_temp_control_task.c ****     //获取任务句柄，必须在cubeMX使能'xTaskGetHandle'
+  64:applications/imu_temp_control_task.c ****     INS_task_local_handler = xTaskGetHandle(pcTaskGetName(NULL));
+  78              		.loc 1 64 5 is_stmt 1 view .LVU15
+  79              		.loc 1 64 45 is_stmt 0 view .LVU16
+  80 0030 0020     		movs	r0, #0
+  81 0032 FFF7FEFF 		bl	pcTaskGetName
+  82              	.LVL6:
+  83              		.loc 1 64 30 view .LVU17
+  84 0036 FFF7FEFF 		bl	xTaskGetHandle
+  85              	.LVL7:
+  86              		.loc 1 64 28 view .LVU18
+  87 003a 1E4B     		ldr	r3, .L11+20
+  88 003c 1860     		str	r0, [r3]
+  65:applications/imu_temp_control_task.c ****     imu_start_flag = 1;
+  89              		.loc 1 65 5 is_stmt 1 view .LVU19
+  90              		.loc 1 65 20 is_stmt 0 view .LVU20
+  91 003e 1E4B     		ldr	r3, .L11+24
+  92 0040 0122     		movs	r2, #1
+  93 0042 1A70     		strb	r2, [r3]
+  94 0044 0CE0     		b	.L4
+  95              	.L10:
+  60:applications/imu_temp_control_task.c ****     }
+  96              		.loc 1 60 9 is_stmt 1 view .LVU21
+  97 0046 FFF7FEFF 		bl	Error_Handler
+  98              	.LVL8:
+  99 004a F1E7     		b	.L3
+ 100              	.L5:
+ 101              	.LBB2:
+  66:applications/imu_temp_control_task.c ****     while(1)
+  67:applications/imu_temp_control_task.c ****     {
+ARM GAS  /tmp/ccauA9HT.s 			page 4
+
+
+  68:applications/imu_temp_control_task.c ****         //wait for task waked up
+  69:applications/imu_temp_control_task.c ****         //等待任务被唤醒
+  70:applications/imu_temp_control_task.c ****         while (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != pdPASS)
+  71:applications/imu_temp_control_task.c ****         {
+  72:applications/imu_temp_control_task.c ****         }
+  73:applications/imu_temp_control_task.c ****         //read data.读取数据
+  74:applications/imu_temp_control_task.c ****         BMI088_read(gyro, accel, &temp);
+  75:applications/imu_temp_control_task.c **** 
+  76:applications/imu_temp_control_task.c ****         uint16_t tempPWM;
+  77:applications/imu_temp_control_task.c ****         //pid calculate. PID计算
+  78:applications/imu_temp_control_task.c ****         PID_calc(&imu_temp_pid, temp, 40.0f);
+  79:applications/imu_temp_control_task.c ****         if (imu_temp_pid.out < 0.0f)
+  80:applications/imu_temp_control_task.c ****         {
+  81:applications/imu_temp_control_task.c ****             imu_temp_pid.out = 0.0f;
+  82:applications/imu_temp_control_task.c ****         }
+  83:applications/imu_temp_control_task.c ****         tempPWM = (uint16_t)imu_temp_pid.out;
+ 102              		.loc 1 83 9 view .LVU22
+ 103              		.loc 1 83 41 is_stmt 0 view .LVU23
+ 104 004c 174B     		ldr	r3, .L11+12
+ 105 004e D3ED087A 		vldr.32	s15, [r3, #32]
+ 106              		.loc 1 83 17 view .LVU24
+ 107 0052 FCEEE77A 		vcvt.u32.f32	s15, s15
+ 108              	.LVL9:
+  84:applications/imu_temp_control_task.c ****         IMU_temp_PWM(tempPWM);
+ 109              		.loc 1 84 9 is_stmt 1 view .LVU25
+ 110 0056 17EE903A 		vmov	r3, s15	@ int
+ 111 005a 98B2     		uxth	r0, r3
+ 112 005c FFF7FEFF 		bl	imu_pwm_set
+ 113              	.LVL10:
+ 114              		.loc 1 84 9 is_stmt 0 view .LVU26
+ 115              	.LBE2:
+  66:applications/imu_temp_control_task.c ****     while(1)
+ 116              		.loc 1 66 10 is_stmt 1 view .LVU27
+ 117              	.L4:
+ 118              	.LBB3:
+  72:applications/imu_temp_control_task.c ****         //read data.读取数据
+ 119              		.loc 1 72 9 discriminator 1 view .LVU28
+  70:applications/imu_temp_control_task.c ****         {
+ 120              		.loc 1 70 15 discriminator 1 view .LVU29
+  70:applications/imu_temp_control_task.c ****         {
+ 121              		.loc 1 70 16 is_stmt 0 discriminator 1 view .LVU30
+ 122 0060 4FF0FF31 		mov	r1, #-1
+ 123 0064 0120     		movs	r0, #1
+ 124 0066 FFF7FEFF 		bl	ulTaskNotifyTake
+ 125              	.LVL11:
+  70:applications/imu_temp_control_task.c ****         {
+ 126              		.loc 1 70 15 discriminator 1 view .LVU31
+ 127 006a 0128     		cmp	r0, #1
+ 128 006c F8D1     		bne	.L4
+  74:applications/imu_temp_control_task.c **** 
+ 129              		.loc 1 74 9 is_stmt 1 view .LVU32
+ 130 006e 134D     		ldr	r5, .L11+28
+ 131 0070 2A46     		mov	r2, r5
+ 132 0072 1349     		ldr	r1, .L11+32
+ 133 0074 1348     		ldr	r0, .L11+36
+ 134 0076 FFF7FEFF 		bl	BMI088_read
+ 135              	.LVL12:
+ARM GAS  /tmp/ccauA9HT.s 			page 5
+
+
+  76:applications/imu_temp_control_task.c ****         //pid calculate. PID计算
+ 136              		.loc 1 76 9 view .LVU33
+  78:applications/imu_temp_control_task.c ****         if (imu_temp_pid.out < 0.0f)
+ 137              		.loc 1 78 9 view .LVU34
+ 138 007a 0C4C     		ldr	r4, .L11+12
+ 139 007c DFED120A 		vldr.32	s1, .L11+40
+ 140 0080 95ED000A 		vldr.32	s0, [r5]
+ 141 0084 2046     		mov	r0, r4
+ 142 0086 FFF7FEFF 		bl	PID_calc
+ 143              	.LVL13:
+  79:applications/imu_temp_control_task.c ****         {
+ 144              		.loc 1 79 9 view .LVU35
+  79:applications/imu_temp_control_task.c ****         {
+ 145              		.loc 1 79 25 is_stmt 0 view .LVU36
+ 146 008a D4ED087A 		vldr.32	s15, [r4, #32]
+  79:applications/imu_temp_control_task.c ****         {
+ 147              		.loc 1 79 12 view .LVU37
+ 148 008e F5EEC07A 		vcmpe.f32	s15, #0
+ 149 0092 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 150 0096 D9D5     		bpl	.L5
+  81:applications/imu_temp_control_task.c ****         }
+ 151              		.loc 1 81 13 is_stmt 1 view .LVU38
+  81:applications/imu_temp_control_task.c ****         }
+ 152              		.loc 1 81 30 is_stmt 0 view .LVU39
+ 153 0098 0022     		movs	r2, #0
+ 154 009a 2262     		str	r2, [r4, #32]	@ float
+ 155 009c D6E7     		b	.L5
+ 156              	.L12:
+ 157 009e 00BF     		.align	2
+ 158              	.L11:
+ 159 00a0 00808945 		.word	1166639104
+ 160 00a4 00A08C45 		.word	1166843904
+ 161 00a8 00000000 		.word	.LANCHOR0
+ 162 00ac 00000000 		.word	.LANCHOR1
+ 163 00b0 00000000 		.word	hspi1
+ 164 00b4 00000000 		.word	.LANCHOR2
+ 165 00b8 00000000 		.word	.LANCHOR3
+ 166 00bc 00000000 		.word	.LANCHOR4
+ 167 00c0 00000000 		.word	.LANCHOR5
+ 168 00c4 00000000 		.word	.LANCHOR6
+ 169 00c8 00002042 		.word	1109393408
+ 170              	.LBE3:
+ 171              		.cfi_endproc
+ 172              	.LFE135:
+ 174              		.section	.text.HAL_GPIO_EXTI_Callback,"ax",%progbits
+ 175              		.align	1
+ 176              		.global	HAL_GPIO_EXTI_Callback
+ 177              		.syntax unified
+ 178              		.thumb
+ 179              		.thumb_func
+ 181              	HAL_GPIO_EXTI_Callback:
+ 182              	.LVL14:
+ 183              	.LFB136:
+  85:applications/imu_temp_control_task.c **** 
+  86:applications/imu_temp_control_task.c ****     }
+  87:applications/imu_temp_control_task.c **** }
+  88:applications/imu_temp_control_task.c **** 
+ARM GAS  /tmp/ccauA9HT.s 			page 6
+
+
+  89:applications/imu_temp_control_task.c **** 
+  90:applications/imu_temp_control_task.c **** void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+  91:applications/imu_temp_control_task.c **** {
+ 184              		.loc 1 91 1 is_stmt 1 view -0
+ 185              		.cfi_startproc
+ 186              		@ args = 0, pretend = 0, frame = 0
+ 187              		@ frame_needed = 0, uses_anonymous_args = 0
+  92:applications/imu_temp_control_task.c ****     if(GPIO_Pin == INT1_ACCEL_Pin)
+ 188              		.loc 1 92 5 view .LVU41
+ 189              		.loc 1 92 7 is_stmt 0 view .LVU42
+ 190 0000 1028     		cmp	r0, #16
+ 191 0002 00D0     		beq	.L19
+ 192              	.L16:
+ 193 0004 7047     		bx	lr
+ 194              	.L19:
+  93:applications/imu_temp_control_task.c ****     {
+  94:applications/imu_temp_control_task.c **** 
+  95:applications/imu_temp_control_task.c ****         if(imu_start_flag)
+ 195              		.loc 1 95 9 is_stmt 1 view .LVU43
+ 196              		.loc 1 95 12 is_stmt 0 view .LVU44
+ 197 0006 0F4B     		ldr	r3, .L21
+ 198 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 199              		.loc 1 95 11 view .LVU45
+ 200 000a 002B     		cmp	r3, #0
+ 201 000c FAD0     		beq	.L16
+  91:applications/imu_temp_control_task.c ****     if(GPIO_Pin == INT1_ACCEL_Pin)
+ 202              		.loc 1 91 1 view .LVU46
+ 203 000e 10B5     		push	{r4, lr}
+ 204              	.LCFI1:
+ 205              		.cfi_def_cfa_offset 8
+ 206              		.cfi_offset 4, -8
+ 207              		.cfi_offset 14, -4
+  96:applications/imu_temp_control_task.c ****         {
+  97:applications/imu_temp_control_task.c ****             //wake up the task
+  98:applications/imu_temp_control_task.c ****             //唤醒任务
+  99:applications/imu_temp_control_task.c ****             if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+ 208              		.loc 1 99 13 is_stmt 1 view .LVU47
+ 209              		.loc 1 99 17 is_stmt 0 view .LVU48
+ 210 0010 FFF7FEFF 		bl	xTaskGetSchedulerState
+ 211              	.LVL15:
+ 212              		.loc 1 99 16 view .LVU49
+ 213 0014 0128     		cmp	r0, #1
+ 214 0016 00D1     		bne	.L20
+ 215              	.L13:
+ 100:applications/imu_temp_control_task.c ****             {
+ 101:applications/imu_temp_control_task.c ****                 static BaseType_t xHigherPriorityTaskWoken;
+ 102:applications/imu_temp_control_task.c ****                 vTaskNotifyGiveFromISR(INS_task_local_handler, &xHigherPriorityTaskWoken);
+ 103:applications/imu_temp_control_task.c ****                 portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+ 104:applications/imu_temp_control_task.c ****             }
+ 105:applications/imu_temp_control_task.c ****         }
+ 106:applications/imu_temp_control_task.c ****     }
+ 107:applications/imu_temp_control_task.c ****     else if(GPIO_Pin == INT1_GRYO_Pin)
+ 108:applications/imu_temp_control_task.c ****     {
+ 109:applications/imu_temp_control_task.c **** 
+ 110:applications/imu_temp_control_task.c ****     }
+ 111:applications/imu_temp_control_task.c **** }
+ 216              		.loc 1 111 1 view .LVU50
+ARM GAS  /tmp/ccauA9HT.s 			page 7
+
+
+ 217 0018 10BD     		pop	{r4, pc}
+ 218              	.L20:
+ 219              	.LBB4:
+ 101:applications/imu_temp_control_task.c ****                 vTaskNotifyGiveFromISR(INS_task_local_handler, &xHigherPriorityTaskWoken);
+ 220              		.loc 1 101 17 is_stmt 1 view .LVU51
+ 102:applications/imu_temp_control_task.c ****                 portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+ 221              		.loc 1 102 17 view .LVU52
+ 222 001a 0B4C     		ldr	r4, .L21+4
+ 223 001c 2146     		mov	r1, r4
+ 224 001e 0B4B     		ldr	r3, .L21+8
+ 225 0020 1868     		ldr	r0, [r3]
+ 226 0022 FFF7FEFF 		bl	vTaskNotifyGiveFromISR
+ 227              	.LVL16:
+ 103:applications/imu_temp_control_task.c ****             }
+ 228              		.loc 1 103 17 view .LVU53
+ 229 0026 2368     		ldr	r3, [r4]
+ 230 0028 002B     		cmp	r3, #0
+ 231 002a F5D0     		beq	.L13
+ 103:applications/imu_temp_control_task.c ****             }
+ 232              		.loc 1 103 17 discriminator 1 view .LVU54
+ 233 002c 4FF0E023 		mov	r3, #-536813568
+ 234 0030 4FF08052 		mov	r2, #268435456
+ 235 0034 C3F8042D 		str	r2, [r3, #3332]
+ 103:applications/imu_temp_control_task.c ****             }
+ 236              		.loc 1 103 17 discriminator 1 view .LVU55
+ 237              		.syntax unified
+ 238              	@ 103 "applications/imu_temp_control_task.c" 1
+ 239 0038 BFF34F8F 		dsb
+ 240              	@ 0 "" 2
+ 103:applications/imu_temp_control_task.c ****             }
+ 241              		.loc 1 103 17 discriminator 1 view .LVU56
+ 242              	@ 103 "applications/imu_temp_control_task.c" 1
+ 243 003c BFF36F8F 		isb
+ 244              	@ 0 "" 2
+ 245              		.thumb
+ 246              		.syntax unified
+ 247              	.LBE4:
+ 110:applications/imu_temp_control_task.c **** }
+ 248              		.loc 1 110 5 discriminator 1 view .LVU57
+ 249              		.loc 1 111 1 is_stmt 0 discriminator 1 view .LVU58
+ 250 0040 EAE7     		b	.L13
+ 251              	.L22:
+ 252 0042 00BF     		.align	2
+ 253              	.L21:
+ 254 0044 00000000 		.word	.LANCHOR3
+ 255 0048 00000000 		.word	.LANCHOR7
+ 256 004c 00000000 		.word	.LANCHOR2
+ 257              		.cfi_endproc
+ 258              	.LFE136:
+ 260              		.global	imu_temp_pid
+ 261              		.global	imu_temp_PID
+ 262              		.global	temp
+ 263              		.global	accel
+ 264              		.global	gyro
+ 265              		.global	imu_start_flag
+ 266              		.global	INS_task_local_handler
+ 267              		.section	.bss.INS_task_local_handler,"aw",%nobits
+ARM GAS  /tmp/ccauA9HT.s 			page 8
+
+
+ 268              		.align	2
+ 269              		.set	.LANCHOR2,. + 0
+ 272              	INS_task_local_handler:
+ 273 0000 00000000 		.space	4
+ 274              		.section	.bss.accel,"aw",%nobits
+ 275              		.align	2
+ 276              		.set	.LANCHOR5,. + 0
+ 279              	accel:
+ 280 0000 00000000 		.space	12
+ 280      00000000 
+ 280      00000000 
+ 281              		.section	.bss.gyro,"aw",%nobits
+ 282              		.align	2
+ 283              		.set	.LANCHOR6,. + 0
+ 286              	gyro:
+ 287 0000 00000000 		.space	12
+ 287      00000000 
+ 287      00000000 
+ 288              		.section	.bss.imu_start_flag,"aw",%nobits
+ 289              		.set	.LANCHOR3,. + 0
+ 292              	imu_start_flag:
+ 293 0000 00       		.space	1
+ 294              		.section	.bss.imu_temp_pid,"aw",%nobits
+ 295              		.align	2
+ 296              		.set	.LANCHOR1,. + 0
+ 299              	imu_temp_pid:
+ 300 0000 00000000 		.space	72
+ 300      00000000 
+ 300      00000000 
+ 300      00000000 
+ 300      00000000 
+ 301              		.section	.bss.temp,"aw",%nobits
+ 302              		.align	2
+ 303              		.set	.LANCHOR4,. + 0
+ 306              	temp:
+ 307 0000 00000000 		.space	4
+ 308              		.section	.bss.xHigherPriorityTaskWoken.0,"aw",%nobits
+ 309              		.align	2
+ 310              		.set	.LANCHOR7,. + 0
+ 313              	xHigherPriorityTaskWoken.0:
+ 314 0000 00000000 		.space	4
+ 315              		.section	.rodata.imu_temp_PID,"a"
+ 316              		.align	2
+ 317              		.set	.LANCHOR0,. + 0
+ 320              	imu_temp_PID:
+ 321 0000 0000C844 		.word	1153957888
+ 322 0004 CDCC4C3E 		.word	1045220557
+ 323 0008 00000000 		.word	0
+ 324              		.text
+ 325              	.Letext0:
+ 326              		.file 2 "bsp/boards/struct_typedef.h"
+ 327              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 328              		.file 4 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 329              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 330              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 331              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 332              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h"
+ARM GAS  /tmp/ccauA9HT.s 			page 9
+
+
+ 333              		.file 9 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
+ 334              		.file 10 "Middlewares/Third_Party/FreeRTOS/Source/include/task.h"
+ 335              		.file 11 "applications/pid.h"
+ 336              		.file 12 "bsp/boards/bsp_imu_pwm.h"
+ 337              		.file 13 "component/devices/BMI088driver.h"
+ 338              		.file 14 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ 339              		.file 15 "Inc/main.h"
+ARM GAS  /tmp/ccauA9HT.s 			page 10
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 imu_temp_control_task.c
+     /tmp/ccauA9HT.s:20     .text.imu_temp_control_task:0000000000000000 $t
+     /tmp/ccauA9HT.s:26     .text.imu_temp_control_task:0000000000000000 imu_temp_control_task
+     /tmp/ccauA9HT.s:159    .text.imu_temp_control_task:00000000000000a0 $d
+     /tmp/ccauA9HT.s:175    .text.HAL_GPIO_EXTI_Callback:0000000000000000 $t
+     /tmp/ccauA9HT.s:181    .text.HAL_GPIO_EXTI_Callback:0000000000000000 HAL_GPIO_EXTI_Callback
+     /tmp/ccauA9HT.s:254    .text.HAL_GPIO_EXTI_Callback:0000000000000044 $d
+     /tmp/ccauA9HT.s:299    .bss.imu_temp_pid:0000000000000000 imu_temp_pid
+     /tmp/ccauA9HT.s:320    .rodata.imu_temp_PID:0000000000000000 imu_temp_PID
+     /tmp/ccauA9HT.s:306    .bss.temp:0000000000000000 temp
+     /tmp/ccauA9HT.s:279    .bss.accel:0000000000000000 accel
+     /tmp/ccauA9HT.s:286    .bss.gyro:0000000000000000 gyro
+     /tmp/ccauA9HT.s:292    .bss.imu_start_flag:0000000000000000 imu_start_flag
+     /tmp/ccauA9HT.s:272    .bss.INS_task_local_handler:0000000000000000 INS_task_local_handler
+     /tmp/ccauA9HT.s:268    .bss.INS_task_local_handler:0000000000000000 $d
+     /tmp/ccauA9HT.s:275    .bss.accel:0000000000000000 $d
+     /tmp/ccauA9HT.s:282    .bss.gyro:0000000000000000 $d
+     /tmp/ccauA9HT.s:293    .bss.imu_start_flag:0000000000000000 $d
+     /tmp/ccauA9HT.s:295    .bss.imu_temp_pid:0000000000000000 $d
+     /tmp/ccauA9HT.s:302    .bss.temp:0000000000000000 $d
+     /tmp/ccauA9HT.s:309    .bss.xHigherPriorityTaskWoken.0:0000000000000000 $d
+     /tmp/ccauA9HT.s:313    .bss.xHigherPriorityTaskWoken.0:0000000000000000 xHigherPriorityTaskWoken.0
+     /tmp/ccauA9HT.s:316    .rodata.imu_temp_PID:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+osDelay
+PID_init
+BMI088_init
+HAL_SPI_Init
+pcTaskGetName
+xTaskGetHandle
+Error_Handler
+imu_pwm_set
+ulTaskNotifyTake
+BMI088_read
+PID_calc
+hspi1
+xTaskGetSchedulerState
+vTaskNotifyGiveFromISR

@@ -1,0 +1,369 @@
+ARM GAS  /tmp/ccAWF7Um.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"freertos.c"
+  16              		.section	.rodata.str1.4,"aMS",%progbits,1
+  17              		.align	2
+  18              	.LC0:
+  19 0000 54454D50 		.ascii	"TEMP\000"
+  19      00
+  20              		.text
+  21              	.Ltext0:
+  22              		.cfi_sections	.debug_frame
+  23              		.section	.text.imu_temp_control_task,"ax",%progbits
+  24              		.align	1
+  25              		.weak	imu_temp_control_task
+  26              		.syntax unified
+  27              		.thumb
+  28              		.thumb_func
+  30              	imu_temp_control_task:
+  31              	.LFB137:
+  32              		.file 1 "Src/freertos.c"
+   1:Src/freertos.c **** /* USER CODE BEGIN Header */
+   2:Src/freertos.c **** /**
+   3:Src/freertos.c ****   ******************************************************************************
+   4:Src/freertos.c ****   * File Name          : freertos.c
+   5:Src/freertos.c ****   * Description        : Code for freertos applications
+   6:Src/freertos.c ****   ******************************************************************************
+   7:Src/freertos.c ****   * @attention
+   8:Src/freertos.c ****   *
+   9:Src/freertos.c ****   * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  10:Src/freertos.c ****   * All rights reserved.</center></h2>
+  11:Src/freertos.c ****   *
+  12:Src/freertos.c ****   * This software component is licensed by ST under Ultimate Liberty license
+  13:Src/freertos.c ****   * SLA0044, the "License"; You may not use this file except in compliance with
+  14:Src/freertos.c ****   * the License. You may obtain a copy of the License at:
+  15:Src/freertos.c ****   *                             www.st.com/SLA0044
+  16:Src/freertos.c ****   *
+  17:Src/freertos.c ****   ******************************************************************************
+  18:Src/freertos.c ****   */
+  19:Src/freertos.c **** /* USER CODE END Header */
+  20:Src/freertos.c **** 
+  21:Src/freertos.c **** /* Includes ------------------------------------------------------------------*/
+  22:Src/freertos.c **** #include "FreeRTOS.h"
+  23:Src/freertos.c **** #include "task.h"
+  24:Src/freertos.c **** #include "main.h"
+  25:Src/freertos.c **** #include "cmsis_os.h"
+ARM GAS  /tmp/ccAWF7Um.s 			page 2
+
+
+  26:Src/freertos.c **** 
+  27:Src/freertos.c **** /* Private includes ----------------------------------------------------------*/
+  28:Src/freertos.c **** /* USER CODE BEGIN Includes */
+  29:Src/freertos.c **** 
+  30:Src/freertos.c **** /* USER CODE END Includes */
+  31:Src/freertos.c **** 
+  32:Src/freertos.c **** /* Private typedef -----------------------------------------------------------*/
+  33:Src/freertos.c **** /* USER CODE BEGIN PTD */
+  34:Src/freertos.c **** 
+  35:Src/freertos.c **** /* USER CODE END PTD */
+  36:Src/freertos.c **** 
+  37:Src/freertos.c **** /* Private define ------------------------------------------------------------*/
+  38:Src/freertos.c **** /* USER CODE BEGIN PD */
+  39:Src/freertos.c **** 
+  40:Src/freertos.c **** /* USER CODE END PD */
+  41:Src/freertos.c **** 
+  42:Src/freertos.c **** /* Private macro -------------------------------------------------------------*/
+  43:Src/freertos.c **** /* USER CODE BEGIN PM */
+  44:Src/freertos.c **** 
+  45:Src/freertos.c **** /* USER CODE END PM */
+  46:Src/freertos.c **** 
+  47:Src/freertos.c **** /* Private variables ---------------------------------------------------------*/
+  48:Src/freertos.c **** /* USER CODE BEGIN Variables */
+  49:Src/freertos.c **** 
+  50:Src/freertos.c **** /* USER CODE END Variables */
+  51:Src/freertos.c **** osThreadId TEMPHandle;
+  52:Src/freertos.c **** 
+  53:Src/freertos.c **** /* Private function prototypes -----------------------------------------------*/
+  54:Src/freertos.c **** /* USER CODE BEGIN FunctionPrototypes */
+  55:Src/freertos.c ****    
+  56:Src/freertos.c **** /* USER CODE END FunctionPrototypes */
+  57:Src/freertos.c **** 
+  58:Src/freertos.c **** void imu_temp_control_task(void const * argument);
+  59:Src/freertos.c **** 
+  60:Src/freertos.c **** void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+  61:Src/freertos.c **** 
+  62:Src/freertos.c **** /* GetIdleTaskMemory prototype (linked to static allocation support) */
+  63:Src/freertos.c **** void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskS
+  64:Src/freertos.c **** 
+  65:Src/freertos.c **** /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
+  66:Src/freertos.c **** static StaticTask_t xIdleTaskTCBBuffer;
+  67:Src/freertos.c **** static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
+  68:Src/freertos.c ****   
+  69:Src/freertos.c **** void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskS
+  70:Src/freertos.c **** {
+  71:Src/freertos.c ****   *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  72:Src/freertos.c ****   *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  73:Src/freertos.c ****   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  74:Src/freertos.c ****   /* place for user code */
+  75:Src/freertos.c **** }                   
+  76:Src/freertos.c **** /* USER CODE END GET_IDLE_TASK_MEMORY */
+  77:Src/freertos.c **** 
+  78:Src/freertos.c **** /**
+  79:Src/freertos.c ****   * @brief  FreeRTOS initialization
+  80:Src/freertos.c ****   * @param  None
+  81:Src/freertos.c ****   * @retval None
+  82:Src/freertos.c ****   */
+ARM GAS  /tmp/ccAWF7Um.s 			page 3
+
+
+  83:Src/freertos.c **** void MX_FREERTOS_Init(void) {
+  84:Src/freertos.c ****   /* USER CODE BEGIN Init */
+  85:Src/freertos.c ****        
+  86:Src/freertos.c ****   /* USER CODE END Init */
+  87:Src/freertos.c **** 
+  88:Src/freertos.c ****   /* USER CODE BEGIN RTOS_MUTEX */
+  89:Src/freertos.c ****   /* add mutexes, ... */
+  90:Src/freertos.c ****   /* USER CODE END RTOS_MUTEX */
+  91:Src/freertos.c **** 
+  92:Src/freertos.c ****   /* USER CODE BEGIN RTOS_SEMAPHORES */
+  93:Src/freertos.c ****   /* add semaphores, ... */
+  94:Src/freertos.c ****   /* USER CODE END RTOS_SEMAPHORES */
+  95:Src/freertos.c **** 
+  96:Src/freertos.c ****   /* USER CODE BEGIN RTOS_TIMERS */
+  97:Src/freertos.c ****   /* start timers, add new ones, ... */
+  98:Src/freertos.c ****   /* USER CODE END RTOS_TIMERS */
+  99:Src/freertos.c **** 
+ 100:Src/freertos.c ****   /* USER CODE BEGIN RTOS_QUEUES */
+ 101:Src/freertos.c ****   /* add queues, ... */
+ 102:Src/freertos.c ****   /* USER CODE END RTOS_QUEUES */
+ 103:Src/freertos.c **** 
+ 104:Src/freertos.c ****   /* Create the thread(s) */
+ 105:Src/freertos.c ****   /* definition and creation of TEMP */
+ 106:Src/freertos.c ****   osThreadDef(TEMP, imu_temp_control_task, osPriorityNormal, 0, 512);
+ 107:Src/freertos.c ****   TEMPHandle = osThreadCreate(osThread(TEMP), NULL);
+ 108:Src/freertos.c **** 
+ 109:Src/freertos.c ****   /* USER CODE BEGIN RTOS_THREADS */
+ 110:Src/freertos.c ****   /* add threads, ... */
+ 111:Src/freertos.c ****   /* USER CODE END RTOS_THREADS */
+ 112:Src/freertos.c **** 
+ 113:Src/freertos.c **** }
+ 114:Src/freertos.c **** 
+ 115:Src/freertos.c **** /* USER CODE BEGIN Header_imu_temp_control_task */
+ 116:Src/freertos.c **** /**
+ 117:Src/freertos.c ****   * @brief  Function implementing the TEMP thread.
+ 118:Src/freertos.c ****   * @param  argument: Not used 
+ 119:Src/freertos.c ****   * @retval None
+ 120:Src/freertos.c ****   */
+ 121:Src/freertos.c **** /* USER CODE END Header_imu_temp_control_task */
+ 122:Src/freertos.c **** __weak void imu_temp_control_task(void const * argument)
+ 123:Src/freertos.c **** {
+  33              		.loc 1 123 1 view -0
+  34              		.cfi_startproc
+  35              		@ args = 0, pretend = 0, frame = 0
+  36              		@ frame_needed = 0, uses_anonymous_args = 0
+  37              	.LVL0:
+  38              		.loc 1 123 1 is_stmt 0 view .LVU1
+  39 0000 08B5     		push	{r3, lr}
+  40              	.LCFI0:
+  41              		.cfi_def_cfa_offset 8
+  42              		.cfi_offset 3, -8
+  43              		.cfi_offset 14, -4
+  44              	.LVL1:
+  45              	.L2:
+ 124:Src/freertos.c **** 
+ 125:Src/freertos.c ****   /* USER CODE BEGIN imu_temp_control_task */
+ 126:Src/freertos.c ****   /* Infinite loop */
+ARM GAS  /tmp/ccAWF7Um.s 			page 4
+
+
+ 127:Src/freertos.c ****   for(;;)
+  46              		.loc 1 127 3 is_stmt 1 discriminator 1 view .LVU2
+ 128:Src/freertos.c ****   {
+ 129:Src/freertos.c ****     osDelay(1);
+  47              		.loc 1 129 5 discriminator 1 view .LVU3
+  48 0002 0120     		movs	r0, #1
+  49 0004 FFF7FEFF 		bl	osDelay
+  50              	.LVL2:
+ 127:Src/freertos.c ****   {
+  51              		.loc 1 127 8 discriminator 1 view .LVU4
+  52 0008 FBE7     		b	.L2
+  53              		.cfi_endproc
+  54              	.LFE137:
+  56              		.section	.text.vApplicationGetIdleTaskMemory,"ax",%progbits
+  57              		.align	1
+  58              		.global	vApplicationGetIdleTaskMemory
+  59              		.syntax unified
+  60              		.thumb
+  61              		.thumb_func
+  63              	vApplicationGetIdleTaskMemory:
+  64              	.LVL3:
+  65              	.LFB135:
+  70:Src/freertos.c ****   *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
+  66              		.loc 1 70 1 view -0
+  67              		.cfi_startproc
+  68              		@ args = 0, pretend = 0, frame = 0
+  69              		@ frame_needed = 0, uses_anonymous_args = 0
+  70              		@ link register save eliminated.
+  71:Src/freertos.c ****   *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  71              		.loc 1 71 3 view .LVU6
+  71:Src/freertos.c ****   *ppxIdleTaskStackBuffer = &xIdleStack[0];
+  72              		.loc 1 71 25 is_stmt 0 view .LVU7
+  73 0000 034B     		ldr	r3, .L5
+  74 0002 0360     		str	r3, [r0]
+  72:Src/freertos.c ****   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  75              		.loc 1 72 3 is_stmt 1 view .LVU8
+  72:Src/freertos.c ****   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+  76              		.loc 1 72 27 is_stmt 0 view .LVU9
+  77 0004 034B     		ldr	r3, .L5+4
+  78 0006 0B60     		str	r3, [r1]
+  73:Src/freertos.c ****   /* place for user code */
+  79              		.loc 1 73 3 is_stmt 1 view .LVU10
+  73:Src/freertos.c ****   /* place for user code */
+  80              		.loc 1 73 25 is_stmt 0 view .LVU11
+  81 0008 8023     		movs	r3, #128
+  82 000a 1360     		str	r3, [r2]
+  75:Src/freertos.c **** /* USER CODE END GET_IDLE_TASK_MEMORY */
+  83              		.loc 1 75 1 view .LVU12
+  84 000c 7047     		bx	lr
+  85              	.L6:
+  86 000e 00BF     		.align	2
+  87              	.L5:
+  88 0010 00000000 		.word	.LANCHOR0
+  89 0014 00000000 		.word	.LANCHOR1
+  90              		.cfi_endproc
+  91              	.LFE135:
+  93              		.section	.text.MX_FREERTOS_Init,"ax",%progbits
+ARM GAS  /tmp/ccAWF7Um.s 			page 5
+
+
+  94              		.align	1
+  95              		.global	MX_FREERTOS_Init
+  96              		.syntax unified
+  97              		.thumb
+  98              		.thumb_func
+ 100              	MX_FREERTOS_Init:
+ 101              	.LFB136:
+  83:Src/freertos.c ****   /* USER CODE BEGIN Init */
+ 102              		.loc 1 83 29 is_stmt 1 view -0
+ 103              		.cfi_startproc
+ 104              		@ args = 0, pretend = 0, frame = 32
+ 105              		@ frame_needed = 0, uses_anonymous_args = 0
+ 106 0000 10B5     		push	{r4, lr}
+ 107              	.LCFI1:
+ 108              		.cfi_def_cfa_offset 8
+ 109              		.cfi_offset 4, -8
+ 110              		.cfi_offset 14, -4
+ 111 0002 88B0     		sub	sp, sp, #32
+ 112              	.LCFI2:
+ 113              		.cfi_def_cfa_offset 40
+ 106:Src/freertos.c ****   TEMPHandle = osThreadCreate(osThread(TEMP), NULL);
+ 114              		.loc 1 106 3 view .LVU14
+ 115 0004 0DF1040C 		add	ip, sp, #4
+ 116 0008 074C     		ldr	r4, .L9
+ 117 000a 0FCC     		ldmia	r4!, {r0, r1, r2, r3}
+ 118 000c ACE80F00 		stmia	ip!, {r0, r1, r2, r3}
+ 119 0010 94E80700 		ldm	r4, {r0, r1, r2}
+ 120 0014 8CE80700 		stm	ip, {r0, r1, r2}
+ 107:Src/freertos.c **** 
+ 121              		.loc 1 107 3 view .LVU15
+ 107:Src/freertos.c **** 
+ 122              		.loc 1 107 16 is_stmt 0 view .LVU16
+ 123 0018 0021     		movs	r1, #0
+ 124 001a 01A8     		add	r0, sp, #4
+ 125 001c FFF7FEFF 		bl	osThreadCreate
+ 126              	.LVL4:
+ 107:Src/freertos.c **** 
+ 127              		.loc 1 107 14 view .LVU17
+ 128 0020 024B     		ldr	r3, .L9+4
+ 129 0022 1860     		str	r0, [r3]
+ 113:Src/freertos.c **** 
+ 130              		.loc 1 113 1 view .LVU18
+ 131 0024 08B0     		add	sp, sp, #32
+ 132              	.LCFI3:
+ 133              		.cfi_def_cfa_offset 8
+ 134              		@ sp needed
+ 135 0026 10BD     		pop	{r4, pc}
+ 136              	.L10:
+ 137              		.align	2
+ 138              	.L9:
+ 139 0028 00000000 		.word	.LANCHOR2
+ 140 002c 00000000 		.word	.LANCHOR3
+ 141              		.cfi_endproc
+ 142              	.LFE136:
+ 144              		.global	TEMPHandle
+ 145              		.section	.rodata
+ 146              		.align	2
+ARM GAS  /tmp/ccAWF7Um.s 			page 6
+
+
+ 147              		.set	.LANCHOR2,. + 0
+ 148              	.LC2:
+ 149 0000 00000000 		.word	.LC0
+ 150 0004 00000000 		.word	imu_temp_control_task
+ 151 0008 0000     		.short	0
+ 152 000a 0000     		.space	2
+ 153 000c 00000000 		.word	0
+ 154 0010 00020000 		.word	512
+ 155 0014 00000000 		.word	0
+ 156 0018 00000000 		.word	0
+ 157              		.section	.bss.TEMPHandle,"aw",%nobits
+ 158              		.align	2
+ 159              		.set	.LANCHOR3,. + 0
+ 162              	TEMPHandle:
+ 163 0000 00000000 		.space	4
+ 164              		.section	.bss.xIdleStack,"aw",%nobits
+ 165              		.align	2
+ 166              		.set	.LANCHOR1,. + 0
+ 169              	xIdleStack:
+ 170 0000 00000000 		.space	512
+ 170      00000000 
+ 170      00000000 
+ 170      00000000 
+ 170      00000000 
+ 171              		.section	.bss.xIdleTaskTCBBuffer,"aw",%nobits
+ 172              		.align	2
+ 173              		.set	.LANCHOR0,. + 0
+ 176              	xIdleTaskTCBBuffer:
+ 177 0000 00000000 		.space	84
+ 177      00000000 
+ 177      00000000 
+ 177      00000000 
+ 177      00000000 
+ 178              		.text
+ 179              	.Letext0:
+ 180              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 181              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 182              		.file 4 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
+ 183              		.file 5 "Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h"
+ 184              		.file 6 "Middlewares/Third_Party/FreeRTOS/Source/include/task.h"
+ 185              		.file 7 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ARM GAS  /tmp/ccAWF7Um.s 			page 7
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 freertos.c
+     /tmp/ccAWF7Um.s:17     .rodata.str1.4:0000000000000000 $d
+     /tmp/ccAWF7Um.s:24     .text.imu_temp_control_task:0000000000000000 $t
+     /tmp/ccAWF7Um.s:30     .text.imu_temp_control_task:0000000000000000 imu_temp_control_task
+     /tmp/ccAWF7Um.s:57     .text.vApplicationGetIdleTaskMemory:0000000000000000 $t
+     /tmp/ccAWF7Um.s:63     .text.vApplicationGetIdleTaskMemory:0000000000000000 vApplicationGetIdleTaskMemory
+     /tmp/ccAWF7Um.s:88     .text.vApplicationGetIdleTaskMemory:0000000000000010 $d
+     /tmp/ccAWF7Um.s:94     .text.MX_FREERTOS_Init:0000000000000000 $t
+     /tmp/ccAWF7Um.s:100    .text.MX_FREERTOS_Init:0000000000000000 MX_FREERTOS_Init
+     /tmp/ccAWF7Um.s:139    .text.MX_FREERTOS_Init:0000000000000028 $d
+     /tmp/ccAWF7Um.s:162    .bss.TEMPHandle:0000000000000000 TEMPHandle
+     /tmp/ccAWF7Um.s:146    .rodata:0000000000000000 $d
+     /tmp/ccAWF7Um.s:158    .bss.TEMPHandle:0000000000000000 $d
+     /tmp/ccAWF7Um.s:165    .bss.xIdleStack:0000000000000000 $d
+     /tmp/ccAWF7Um.s:169    .bss.xIdleStack:0000000000000000 xIdleStack
+     /tmp/ccAWF7Um.s:172    .bss.xIdleTaskTCBBuffer:0000000000000000 $d
+     /tmp/ccAWF7Um.s:176    .bss.xIdleTaskTCBBuffer:0000000000000000 xIdleTaskTCBBuffer
+
+UNDEFINED SYMBOLS
+osDelay
+osThreadCreate

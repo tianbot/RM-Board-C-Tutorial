@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
   28:Chassis/remote_control.c **** 
   29:Chassis/remote_control.c **** void RC_Init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
   30:Chassis/remote_control.c **** {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 2
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 2
 
 
   31:Chassis/remote_control.c **** 
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
   85:Chassis/remote_control.c **** //遥控器出错数据上限
   86:Chassis/remote_control.c **** #define RC_CHANNAL_ERROR_VALUE 700
   87:Chassis/remote_control.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 3
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 3
 
 
   88:Chassis/remote_control.c **** extern UART_HandleTypeDef huart3;
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  142:Chassis/remote_control.c **** }
  143:Chassis/remote_control.c **** 
  144:Chassis/remote_control.c **** //判断遥控器数据是否出错，
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 4
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 4
 
 
  145:Chassis/remote_control.c **** uint8_t RC_data_is_error(void)
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  199:Chassis/remote_control.c **** 
  200:Chassis/remote_control.c **** //串口中断
  201:Chassis/remote_control.c **** void USART3_IRQHandler(void)
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 5
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 5
 
 
  202:Chassis/remote_control.c **** {
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  256:Chassis/remote_control.c ****             //重新设定数据长度
  257:Chassis/remote_control.c ****             hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;
  258:Chassis/remote_control.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 6
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 6
 
 
  259:Chassis/remote_control.c ****             //set memory buffer 0
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
   49              		.cfi_endproc
   50              	.LFE139:
   52              		.section	.text.sbus_to_rc,"ax",%progbits
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 7
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 7
 
 
   53              		.align	1
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
   87              		.loc 1 310 60 view .LVU16
   88 0016 CCF30A0C 		ubfx	ip, ip, #0, #11
   89              		.loc 1 310 23 view .LVU17
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 8
 
 
   90 001a A1F800C0 		strh	ip, [r1]	@ unaligned
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  137              		.loc 1 315 22 view .LVU41
  138 005c 8C72     		strb	r4, [r1, #10]
  316:Chassis/remote_control.c ****     rc_ctrl->rc.s[1] = ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 9
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 9
 
 
  139              		.loc 1 316 5 is_stmt 1 view .LVU42
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  187 008e 44EA0524 		orr	r4, r4, r5, lsl #8
  188              		.loc 1 322 20 view .LVU69
  189 0092 8C82     		strh	r4, [r1, #20]	@ unaligned
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 10
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 10
 
 
  323:Chassis/remote_control.c ****     rc_ctrl->rc.ch[4] = sbus_buf[16] | (sbus_buf[17] << 8);                 //NULL
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  237              		.global	RC_Init
  238              		.syntax unified
  239              		.thumb
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 11
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 11
 
 
  240              		.thumb_func
@@ -658,7 +658,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  284              		.loc 1 43 34 view .LVU97
  285 0030 1C68     		ldr	r4, [r3]
   43:Chassis/remote_control.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 12
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 12
 
 
  286              		.loc 1 43 10 view .LVU98
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  329              		.section	.text.RC_unable,"ax",%progbits
  330              		.align	1
  331              		.global	RC_unable
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 13
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 13
 
 
  332              		.syntax unified
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  383 000c D360     		str	r3, [r2, #12]
   75:Chassis/remote_control.c **** 
  384              		.loc 1 75 5 view .LVU117
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 14
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 14
 
 
  385 000e 0B4A     		ldr	r2, .L21+4
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  434              		.cfi_offset 3, -8
  435              		.cfi_offset 14, -4
  127:Chassis/remote_control.c **** }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 15
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 15
 
 
  436              		.loc 1 127 5 view .LVU125
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  489 0000 08B5     		push	{r3, lr}
  490              	.LCFI7:
  491              		.cfi_def_cfa_offset 8
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 16
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 16
 
 
  492              		.cfi_offset 3, -8
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  532 0042 0D4B     		ldr	r3, .L35
  533 0044 9B7A     		ldrb	r3, [r3, #10]	@ zero_extendqisi2
  164:Chassis/remote_control.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 17
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 17
 
 
  534              		.loc 1 164 8 view .LVU145
@@ -1018,7 +1018,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  182:Chassis/remote_control.c ****     rc_ctrl.mouse.y = 0;
  570              		.loc 1 182 5 is_stmt 1 view .LVU164
  182:Chassis/remote_control.c ****     rc_ctrl.mouse.y = 0;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 18
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 18
 
 
  571              		.loc 1 182 21 is_stmt 0 view .LVU165
@@ -1078,7 +1078,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  613              		@ frame_needed = 0, uses_anonymous_args = 0
  614 0000 08B5     		push	{r3, lr}
  615              	.LCFI8:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 19
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 19
 
 
  616              		.cfi_def_cfa_offset 8
@@ -1138,7 +1138,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  668 0000 00B5     		push	{lr}
  669              	.LCFI10:
  670              		.cfi_def_cfa_offset 4
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 20
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 20
 
 
  671              		.cfi_offset 14, -4
@@ -1198,7 +1198,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  712 0024 2B4A     		ldr	r2, .L46+4
  713 0026 1268     		ldr	r2, [r2]
  207:Chassis/remote_control.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 21
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 21
 
 
  714              		.loc 1 207 12 view .LVU199
@@ -1258,7 +1258,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  223:Chassis/remote_control.c **** 
  753              		.loc 1 223 48 view .LVU215
  754 0056 C3F12403 		rsb	r3, r3, #36
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 22
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 22
 
 
  755 005a 9BB2     		uxth	r3, r3
@@ -1318,7 +1318,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  253:Chassis/remote_control.c **** 
  796              		.loc 1 253 73 view .LVU229
  797 0096 4368     		ldr	r3, [r0, #4]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 23
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 23
 
 
  253:Chassis/remote_control.c **** 
@@ -1378,7 +1378,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  839 00d0 00000000 		.word	huart3
  840 00d4 00480040 		.word	1073760256
  841 00d8 00000000 		.word	hdma_usart3_rx
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 24
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 24
 
 
  842 00dc 00000000 		.word	.LANCHOR2
@@ -1423,46 +1423,46 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 1
  880              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
  881              		.file 9 "Chassis/remote_control.h"
  882              		.file 10 "Inc/detect_task.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s 			page 25
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s 			page 25
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 remote_control.c
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:20     .text.RC_abs:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:25     .text.RC_abs:00000000 RC_abs
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:53     .text.sbus_to_rc:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:58     .text.sbus_to_rc:00000000 sbus_to_rc
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:236    .text.RC_Init:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:242    .text.RC_Init:00000000 RC_Init
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:323    .text.RC_Init:0000005c $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:330    .text.RC_unable:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:336    .text.RC_unable:00000000 RC_unable
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:354    .text.RC_unable:00000010 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:359    .text.RC_restart:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:365    .text.RC_restart:00000000 RC_restart
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:413    .text.RC_restart:00000038 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:419    .text.remote_control_init:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:425    .text.remote_control_init:00000000 remote_control_init
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:447    .text.remote_control_init:00000010 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:452    .text.get_remote_control_point:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:458    .text.get_remote_control_point:00000000 get_remote_control_point
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:472    .text.get_remote_control_point:00000004 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:477    .text.RC_data_is_error:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:483    .text.RC_data_is_error:00000000 RC_data_is_error
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:597    .text.RC_data_is_error:00000078 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:602    .text.slove_RC_lost:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:608    .text.slove_RC_lost:00000000 slove_RC_lost
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:629    .text.slove_data_error:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:635    .text.slove_data_error:00000000 slove_data_error
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:656    .text.USART3_IRQHandler:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:662    .text.USART3_IRQHandler:00000000 USART3_IRQHandler
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:839    .text.USART3_IRQHandler:000000d0 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:856    .bss.rc_ctrl:00000000 rc_ctrl
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:852    .bss.rc_ctrl:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:859    .bss.sbus_rx_buf:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:863    .bss.sbus_rx_buf:00000000 sbus_rx_buf
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:866    .bss.this_time_rx_len.0:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccU3T1H8.s:870    .bss.this_time_rx_len.0:00000000 this_time_rx_len.0
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:20     .text.RC_abs:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:25     .text.RC_abs:00000000 RC_abs
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:53     .text.sbus_to_rc:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:58     .text.sbus_to_rc:00000000 sbus_to_rc
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:236    .text.RC_Init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:242    .text.RC_Init:00000000 RC_Init
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:323    .text.RC_Init:0000005c $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:330    .text.RC_unable:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:336    .text.RC_unable:00000000 RC_unable
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:354    .text.RC_unable:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:359    .text.RC_restart:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:365    .text.RC_restart:00000000 RC_restart
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:413    .text.RC_restart:00000038 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:419    .text.remote_control_init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:425    .text.remote_control_init:00000000 remote_control_init
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:447    .text.remote_control_init:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:452    .text.get_remote_control_point:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:458    .text.get_remote_control_point:00000000 get_remote_control_point
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:472    .text.get_remote_control_point:00000004 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:477    .text.RC_data_is_error:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:483    .text.RC_data_is_error:00000000 RC_data_is_error
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:597    .text.RC_data_is_error:00000078 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:602    .text.slove_RC_lost:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:608    .text.slove_RC_lost:00000000 slove_RC_lost
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:629    .text.slove_data_error:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:635    .text.slove_data_error:00000000 slove_data_error
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:656    .text.USART3_IRQHandler:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:662    .text.USART3_IRQHandler:00000000 USART3_IRQHandler
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:839    .text.USART3_IRQHandler:000000d0 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:856    .bss.rc_ctrl:00000000 rc_ctrl
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:852    .bss.rc_ctrl:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:859    .bss.sbus_rx_buf:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:863    .bss.sbus_rx_buf:00000000 sbus_rx_buf
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:866    .bss.this_time_rx_len.0:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccQQM6pm.s:870    .bss.this_time_rx_len.0:00000000 this_time_rx_len.0
 
 UNDEFINED SYMBOLS
 huart3

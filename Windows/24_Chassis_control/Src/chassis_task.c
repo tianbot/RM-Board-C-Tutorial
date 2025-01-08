@@ -24,7 +24,7 @@
 #include "arm_math.h"
 #include "pid.h"
 #include "remote_control.h"
-#include "can.h"
+#include "bsp_can.h"
 #include "detect_task.h"
 //#include "INS_task.h"
 

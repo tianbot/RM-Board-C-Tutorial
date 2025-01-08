@@ -9,6 +9,8 @@
         "remote_control.h": "c",
         "arm_math.h": "c",
         "pid.h": "c",
-        "ahrs_middleware.h": "c"
+        "ahrs_middleware.h": "c",
+        "bsp_can.h": "c",
+        "can.h": "c"
     }
 }

@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
   28:Chassis/chassis_behaviour.c ****         third param: 'wz' can be rotation speed set or angle set, 
   29:Chassis/chassis_behaviour.c **** 
   30:Chassis/chassis_behaviour.c ****         in this new function, you can assign speed to "vx","vy",and "wz",as your wish
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 2
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 2
 
 
   31:Chassis/chassis_behaviour.c ****     3.  in "chassis_behaviour_mode_set" function, add new logical judgement to assign CHASSIS_XXX_X
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
   85:Chassis/chassis_behaviour.c **** #include "chassis_task.h"
   86:Chassis/chassis_behaviour.c **** #include "arm_math.h"
   87:Chassis/chassis_behaviour.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 3
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 3
 
 
   88:Chassis/chassis_behaviour.c **** 
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  142:Chassis/chassis_behaviour.c ****   * @author         RM
  143:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
  144:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 4
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 4
 
 
  145:Chassis/chassis_behaviour.c ****   * @param[in]      angle_set底盘与云台控制到的相对角度
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  199:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
  200:Chassis/chassis_behaviour.c ****   * @retval         none
  201:Chassis/chassis_behaviour.c ****   */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 5
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 5
 
 
  202:Chassis/chassis_behaviour.c **** /**
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  256:Chassis/chassis_behaviour.c ****     }
  257:Chassis/chassis_behaviour.c **** 
  258:Chassis/chassis_behaviour.c ****     //when gimbal in some mode, such as init mode, chassis must's move
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 6
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 6
 
 
  259:Chassis/chassis_behaviour.c ****     //当云台在某些模式下，像初始化， 底盘不动
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  313:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector,  包括底盘所有信息.
  314:Chassis/chassis_behaviour.c ****   * @retval         none
  315:Chassis/chassis_behaviour.c ****   */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 7
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 7
 
 
  316:Chassis/chassis_behaviour.c **** 
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  370:Chassis/chassis_behaviour.c **** 
  371:Chassis/chassis_behaviour.c **** static void chassis_zero_force_control(fp32 *vx_can_set, fp32 *vy_can_set, fp32 *wz_can_set, chassi
  372:Chassis/chassis_behaviour.c **** {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 8
 
 
   29              		.loc 1 372 1 view -0
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  388:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
  389:Chassis/chassis_behaviour.c ****   * @retval         none
  390:Chassis/chassis_behaviour.c ****   */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 9
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 9
 
 
  391:Chassis/chassis_behaviour.c **** /**
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  105              		.thumb
  106              		.thumb_func
  108              	chassis_open_set_control:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 10
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 10
 
 
  109              	.LVL4:
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  463:Chassis/chassis_behaviour.c ****             swing_time = 0.0f;
  464:Chassis/chassis_behaviour.c ****         }
  465:Chassis/chassis_behaviour.c ****     }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 11
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 11
 
 
  466:Chassis/chassis_behaviour.c ****     else
@@ -658,7 +658,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  520:Chassis/chassis_behaviour.c ****   */
  521:Chassis/chassis_behaviour.c **** 
  522:Chassis/chassis_behaviour.c **** static void chassis_engineer_follow_chassis_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 12
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 12
 
 
  523:Chassis/chassis_behaviour.c **** {
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  577:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set 旋转速度， 正值 逆时针旋转，负值 顺时针旋转
  578:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
  579:Chassis/chassis_behaviour.c ****   * @retval         none
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 13
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 13
 
 
  580:Chassis/chassis_behaviour.c ****   */
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  153              		.loc 1 591 5 is_stmt 1 view .LVU45
  154              		.loc 1 591 41 is_stmt 0 view .LVU46
  155 003c 1B68     		ldr	r3, [r3]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 14
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 14
 
 
  156              	.LVL7:
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  203 000c 7CB1     		cbz	r4, .L7
  560:Chassis/chassis_behaviour.c ****     *wz_set = -CHASSIS_WZ_RC_SEN * chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL]
  204              		.loc 1 560 5 is_stmt 1 view .LVU59
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 15
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 15
 
 
  205 000e 2246     		mov	r2, r4
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  252              		.cfi_startproc
  253              		@ args = 0, pretend = 0, frame = 0
  254              		@ frame_needed = 0, uses_anonymous_args = 0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 16
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 16
 
 
  433:Chassis/chassis_behaviour.c ****     {
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  293 001e 9B8A     		ldrh	r3, [r3, #20]	@ unaligned
  458:Chassis/chassis_behaviour.c ****     {
  294              		.loc 1 458 8 view .LVU85
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 17
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 17
 
 
  295 0020 13F0200F 		tst	r3, #32
@@ -1018,7 +1018,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  334 004e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
  483:Chassis/chassis_behaviour.c ****     {
  335              		.loc 1 483 8 view .LVU101
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 18
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 18
 
 
  336 0050 C3B9     		cbnz	r3, .L30
@@ -1078,7 +1078,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  376              		.loc 1 485 35 is_stmt 0 view .LVU115
  377 0084 0C4C     		ldr	r4, .L31+4
  378              	.LVL17:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 19
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 19
 
 
  485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
@@ -1138,7 +1138,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  429              	.LFB173:
  523:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
  430              		.loc 1 523 1 is_stmt 1 view -0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 20
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 20
 
 
  431              		.cfi_startproc
@@ -1198,7 +1198,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  474 003e 85ED000A 		vstr.32	s0, [r5]
  475              	.L33:
  532:Chassis/chassis_behaviour.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 21
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 21
 
 
  476              		.loc 1 532 1 view .LVU134
@@ -1258,7 +1258,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  249:Chassis/chassis_behaviour.c ****     {
  524              		.loc 1 249 13 is_stmt 0 view .LVU143
  525 000c 022B     		cmp	r3, #2
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 22
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 22
 
 
  526 000e 0ED0     		beq	.L52
@@ -1318,7 +1318,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  565 0036 012B     		cmp	r3, #1
  566 0038 08D0     		beq	.L53
  280:Chassis/chassis_behaviour.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 23
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 23
 
 
  567              		.loc 1 280 10 is_stmt 1 view .LVU159
@@ -1378,7 +1378,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  290:Chassis/chassis_behaviour.c ****     }
  606              		.loc 1 290 41 is_stmt 0 view .LVU175
  607 005e 0223     		movs	r3, #2
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 24
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 24
 
 
  608 0060 1372     		strb	r3, [r2, #8]
@@ -1438,7 +1438,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  325:Chassis/chassis_behaviour.c ****     {
  654              		.loc 1 325 32 is_stmt 0 view .LVU186
  655 000c 1248     		ldr	r0, .L76
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 25
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 25
 
 
  656              	.LVL27:
@@ -1498,7 +1498,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  694              		.loc 1 349 1 is_stmt 0 view .LVU202
  695 0034 10BD     		pop	{r4, pc}
  696              	.LVL31:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 26
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 26
 
 
  697              	.L72:
@@ -1558,7 +1558,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  743              		.global	chassis_behaviour_mode
  744              		.section	.bss.chassis_behaviour_mode,"aw",%nobits
  745              		.set	.LANCHOR4,. + 0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 27
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 27
 
 
  748              	chassis_behaviour_mode:
@@ -1588,49 +1588,49 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 1
  780              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
  781              		.file 4 "algorithm/struct_typedef.h"
  782              		.file 5 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
- 783              		.file 6 "Chassis/can.h"
+ 783              		.file 6 "Chassis/bsp_can.h"
  784              		.file 7 "algorithm/pid.h"
  785              		.file 8 "Chassis/remote_control.h"
  786              		.file 9 "algorithm/user_lib.h"
  787              		.file 10 "Inc/chassis_task.h"
  788              		.file 11 "Chassis/chassis_behaviour.h"
  789              		.file 12 "algorithm/Include/arm_math.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s 			page 28
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s 			page 28
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 chassis_behaviour.c
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:20     .text.chassis_zero_force_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:25     .text.chassis_zero_force_control:00000000 chassis_zero_force_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:62     .text.chassis_no_move_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:67     .text.chassis_no_move_control:00000000 chassis_no_move_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:103    .text.chassis_open_set_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:108    .text.chassis_open_set_control:00000000 chassis_open_set_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:173    .text.chassis_no_follow_yaw_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:178    .text.chassis_no_follow_yaw_control:00000000 chassis_no_follow_yaw_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:238    .text.chassis_no_follow_yaw_control:00000034 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:243    .text.chassis_infantry_follow_gimbal_yaw_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:248    .text.chassis_infantry_follow_gimbal_yaw_control:00000000 chassis_infantry_follow_gimbal_yaw_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:410    .text.chassis_infantry_follow_gimbal_yaw_control:000000b4 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:422    .text.chassis_engineer_follow_chassis_yaw_control:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:427    .text.chassis_engineer_follow_chassis_yaw_control:00000000 chassis_engineer_follow_chassis_yaw_control
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:491    .text.chassis_engineer_follow_chassis_yaw_control:00000048 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:498    .text.chassis_behaviour_mode_set:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:504    .text.chassis_behaviour_mode_set:00000000 chassis_behaviour_mode_set
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:619    .text.chassis_behaviour_mode_set:0000006c $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:624    .text.chassis_behaviour_control_set:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:630    .text.chassis_behaviour_control_set:00000000 chassis_behaviour_control_set
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:739    .text.chassis_behaviour_control_set:00000058 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:748    .bss.chassis_behaviour_mode:00000000 chassis_behaviour_mode
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:749    .bss.chassis_behaviour_mode:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:751    .bss.swing_angle.0:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:755    .bss.swing_angle.0:00000000 swing_angle.0
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:761    .bss.swing_flag.3:00000000 swing_flag.3
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:762    .bss.swing_flag.3:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:764    .bss.swing_time.2:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:768    .bss.swing_time.2:00000000 swing_time.2
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:771    .data.max_angle.1:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\ccppwQ6F.s:775    .data.max_angle.1:00000000 max_angle.1
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:20     .text.chassis_zero_force_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:25     .text.chassis_zero_force_control:00000000 chassis_zero_force_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:62     .text.chassis_no_move_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:67     .text.chassis_no_move_control:00000000 chassis_no_move_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:103    .text.chassis_open_set_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:108    .text.chassis_open_set_control:00000000 chassis_open_set_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:173    .text.chassis_no_follow_yaw_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:178    .text.chassis_no_follow_yaw_control:00000000 chassis_no_follow_yaw_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:238    .text.chassis_no_follow_yaw_control:00000034 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:243    .text.chassis_infantry_follow_gimbal_yaw_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:248    .text.chassis_infantry_follow_gimbal_yaw_control:00000000 chassis_infantry_follow_gimbal_yaw_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:410    .text.chassis_infantry_follow_gimbal_yaw_control:000000b4 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:422    .text.chassis_engineer_follow_chassis_yaw_control:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:427    .text.chassis_engineer_follow_chassis_yaw_control:00000000 chassis_engineer_follow_chassis_yaw_control
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:491    .text.chassis_engineer_follow_chassis_yaw_control:00000048 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:498    .text.chassis_behaviour_mode_set:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:504    .text.chassis_behaviour_mode_set:00000000 chassis_behaviour_mode_set
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:619    .text.chassis_behaviour_mode_set:0000006c $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:624    .text.chassis_behaviour_control_set:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:630    .text.chassis_behaviour_control_set:00000000 chassis_behaviour_control_set
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:739    .text.chassis_behaviour_control_set:00000058 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:748    .bss.chassis_behaviour_mode:00000000 chassis_behaviour_mode
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:749    .bss.chassis_behaviour_mode:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:751    .bss.swing_angle.0:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:755    .bss.swing_angle.0:00000000 swing_angle.0
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:761    .bss.swing_flag.3:00000000 swing_flag.3
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:762    .bss.swing_flag.3:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:764    .bss.swing_time.2:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:768    .bss.swing_time.2:00000000 swing_time.2
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:771    .data.max_angle.1:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccc4I4D2.s:775    .data.max_angle.1:00000000 max_angle.1
 
 UNDEFINED SYMBOLS
 chassis_rc_to_control_vector

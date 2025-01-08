@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -43,212 +43,212 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
   12:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           + Callbacks functions
   13:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           + Peripheral State and Error functions
   14:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
-  15:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   @verbatim
-  16:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
-  17:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                         ##### How to use this driver #####
-  18:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
-  19:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
-  20:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Initialize the CAN low level resources by implementing the
-  21:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_MspInit():
-  22:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) Enable the CAN interface clock using __HAL_RCC_CANx_CLK_ENABLE()
-  23:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) Configure CAN pins
-  24:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Enable the clock for the CAN GPIOs
-  25:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Configure CAN pins as alternate function open-drain
-  26:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) In case of using interrupts (e.g. HAL_CAN_ActivateNotification())
-  27:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Configure the CAN interrupt priority using
-  28:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                    HAL_NVIC_SetPriority()
-  29:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Enable the CAN IRQ handler using HAL_NVIC_EnableIRQ()
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 2
+  15:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ******************************************************************************
+  16:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @attention
+  17:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
+  18:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * Copyright (c) 2016 STMicroelectronics.
+  19:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * All rights reserved.
+  20:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
+  21:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * This software is licensed under terms that can be found in the LICENSE file
+  22:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * in the root directory of this software component.
+  23:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * If no LICENSE file comes with this software, it is provided AS-IS.
+  24:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
+  25:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ******************************************************************************
+  26:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   @verbatim
+  27:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
+  28:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                         ##### How to use this driver #####
+  29:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 2
 
 
-  30:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) In CAN IRQ handler, call HAL_CAN_IRQHandler()
-  31:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  32:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Initialize the CAN peripheral using HAL_CAN_Init() function. This
-  33:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           function resorts to HAL_CAN_MspInit() for low-level initialization.
-  34:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  35:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Configure the reception filters using the following configuration
-  36:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           functions:
-  37:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_ConfigFilter()
-  38:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  39:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Start the CAN module using HAL_CAN_Start() function. At this level
-  40:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           the node is active on the bus: it receive messages, and can send
-  41:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           messages.
+  30:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
+  31:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Initialize the CAN low level resources by implementing the
+  32:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_MspInit():
+  33:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) Enable the CAN interface clock using __HAL_RCC_CANx_CLK_ENABLE()
+  34:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) Configure CAN pins
+  35:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Enable the clock for the CAN GPIOs
+  36:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Configure CAN pins as alternate function open-drain
+  37:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****          (++) In case of using interrupts (e.g. HAL_CAN_ActivateNotification())
+  38:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Configure the CAN interrupt priority using
+  39:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                    HAL_NVIC_SetPriority()
+  40:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) Enable the CAN IRQ handler using HAL_NVIC_EnableIRQ()
+  41:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****              (+++) In CAN IRQ handler, call HAL_CAN_IRQHandler()
   42:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  43:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) To manage messages transmission, the following Tx control functions
-  44:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           can be used:
-  45:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_AddTxMessage() to request transmission of a new
-  46:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  message.
-  47:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_AbortTxRequest() to abort transmission of a pending
-  48:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  message.
-  49:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_GetTxMailboxesFreeLevel() to get the number of free Tx
-  50:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  mailboxes.
-  51:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_IsTxMessagePending() to check if a message is pending
-  52:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  in a Tx mailbox.
-  53:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_GetTxTimestamp() to get the timestamp of Tx message
-  54:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  sent, if time triggered communication mode is enabled.
-  55:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  56:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) When a message is received into the CAN Rx FIFOs, it can be retrieved
-  57:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           using the HAL_CAN_GetRxMessage() function. The function
-  58:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_GetRxFifoFillLevel() allows to know how many Rx message are
-  59:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           stored in the Rx Fifo.
-  60:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  61:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Calling the HAL_CAN_Stop() function stops the CAN module.
-  62:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  63:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The deinitialization is achieved with HAL_CAN_DeInit() function.
-  64:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  65:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  66:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Polling mode operation ***
-  67:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ==============================
-  68:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
-  69:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Reception:
-  70:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Monitor reception of message using HAL_CAN_GetRxFifoFillLevel()
-  71:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  until at least one message is received.
-  72:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Then get the message using HAL_CAN_GetRxMessage().
+  43:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Initialize the CAN peripheral using HAL_CAN_Init() function. This
+  44:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           function resorts to HAL_CAN_MspInit() for low-level initialization.
+  45:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  46:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Configure the reception filters using the following configuration
+  47:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           functions:
+  48:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_ConfigFilter()
+  49:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  50:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Start the CAN module using HAL_CAN_Start() function. At this level
+  51:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           the node is active on the bus: it receive messages, and can send
+  52:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           messages.
+  53:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  54:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) To manage messages transmission, the following Tx control functions
+  55:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           can be used:
+  56:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_AddTxMessage() to request transmission of a new
+  57:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  message.
+  58:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_AbortTxRequest() to abort transmission of a pending
+  59:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  message.
+  60:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_GetTxMailboxesFreeLevel() to get the number of free Tx
+  61:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  mailboxes.
+  62:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_IsTxMessagePending() to check if a message is pending
+  63:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  in a Tx mailbox.
+  64:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) HAL_CAN_GetTxTimestamp() to get the timestamp of Tx message
+  65:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  sent, if time triggered communication mode is enabled.
+  66:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  67:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) When a message is received into the CAN Rx FIFOs, it can be retrieved
+  68:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           using the HAL_CAN_GetRxMessage() function. The function
+  69:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_GetRxFifoFillLevel() allows to know how many Rx message are
+  70:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           stored in the Rx Fifo.
+  71:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  72:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Calling the HAL_CAN_Stop() function stops the CAN module.
   73:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  74:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Transmission:
-  75:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Monitor the Tx mailboxes availability until at least one Tx
-  76:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  mailbox is free, using HAL_CAN_GetTxMailboxesFreeLevel().
-  77:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Then request transmission of a message using
-  78:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  HAL_CAN_AddTxMessage().
-  79:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  80:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  81:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Interrupt mode operation ***
-  82:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ================================
-  83:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
-  84:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Notifications are activated using HAL_CAN_ActivateNotification()
-  85:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           function. Then, the process can be controlled through the
-  86:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           available user callbacks: HAL_CAN_xxxCallback(), using same APIs
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 3
+  74:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The deinitialization is achieved with HAL_CAN_DeInit() function.
+  75:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  76:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  77:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Polling mode operation ***
+  78:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ==============================
+  79:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
+  80:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Reception:
+  81:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Monitor reception of message using HAL_CAN_GetRxFifoFillLevel()
+  82:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  until at least one message is received.
+  83:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Then get the message using HAL_CAN_GetRxMessage().
+  84:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+  85:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Transmission:
+  86:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Monitor the Tx mailboxes availability until at least one Tx
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 3
 
 
-  87:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_GetRxMessage() and HAL_CAN_AddTxMessage().
-  88:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  89:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Notifications can be deactivated using
-  90:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_DeactivateNotification() function.
+  87:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  mailbox is free, using HAL_CAN_GetTxMailboxesFreeLevel().
+  88:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Then request transmission of a message using
+  89:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  HAL_CAN_AddTxMessage().
+  90:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
   91:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-  92:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Special care should be taken for CAN_IT_RX_FIFO0_MSG_PENDING and
-  93:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           CAN_IT_RX_FIFO1_MSG_PENDING notifications. These notifications trig
-  94:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           the callbacks HAL_CAN_RxFIFO0MsgPendingCallback() and
-  95:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_RxFIFO1MsgPendingCallback(). User has two possible options
-  96:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           here.
-  97:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Directly get the Rx message in the callback, using
-  98:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  HAL_CAN_GetRxMessage().
-  99:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Or deactivate the notification in the callback without
- 100:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  getting the Rx message. The Rx message can then be got later
- 101:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  using HAL_CAN_GetRxMessage(). Once the Rx message have been
- 102:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  read, the notification can be activated again.
- 103:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 104:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 105:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Sleep mode ***
- 106:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ==================
- 107:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
- 108:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The CAN peripheral can be put in sleep mode (low power), using
- 109:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_RequestSleep(). The sleep mode will be entered as soon as the
- 110:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           current CAN activity (transmission or reception of a CAN frame) will
- 111:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           be completed.
- 112:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 113:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) A notification can be activated to be informed when the sleep mode
- 114:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           will be entered.
+  92:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Interrupt mode operation ***
+  93:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ================================
+  94:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
+  95:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Notifications are activated using HAL_CAN_ActivateNotification()
+  96:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           function. Then, the process can be controlled through the
+  97:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           available user callbacks: HAL_CAN_xxxCallback(), using same APIs
+  98:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_GetRxMessage() and HAL_CAN_AddTxMessage().
+  99:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 100:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Notifications can be deactivated using
+ 101:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_DeactivateNotification() function.
+ 102:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 103:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) Special care should be taken for CAN_IT_RX_FIFO0_MSG_PENDING and
+ 104:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           CAN_IT_RX_FIFO1_MSG_PENDING notifications. These notifications trig
+ 105:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           the callbacks HAL_CAN_RxFIFO0MsgPendingCallback() and
+ 106:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_RxFIFO1MsgPendingCallback(). User has two possible options
+ 107:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           here.
+ 108:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Directly get the Rx message in the callback, using
+ 109:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  HAL_CAN_GetRxMessage().
+ 110:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Or deactivate the notification in the callback without
+ 111:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  getting the Rx message. The Rx message can then be got later
+ 112:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  using HAL_CAN_GetRxMessage(). Once the Rx message have been
+ 113:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  read, the notification can be activated again.
+ 114:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  115:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 116:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) It can be checked if the sleep mode is entered using
- 117:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_IsSleepActive().
- 118:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           Note that the CAN state (accessible from the API HAL_CAN_GetState())
- 119:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           is HAL_CAN_STATE_SLEEP_PENDING as soon as the sleep mode request is
- 120:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           submitted (the sleep mode is not yet entered), and become
- 121:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_STATE_SLEEP_ACTIVE when the sleep mode is effective.
- 122:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 123:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The wake-up from sleep mode can be trigged by two ways:
- 124:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Using HAL_CAN_WakeUp(). When returning from this function,
- 125:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  the sleep mode is exited (if return status is HAL_OK).
- 126:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) When a start of Rx CAN frame is detected by the CAN peripheral,
- 127:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  if automatic wake up mode is enabled.
- 128:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 129:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *** Callback registration ***
- 130:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   =============================================
- 131:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 132:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   The compilation define  USE_HAL_CAN_REGISTER_CALLBACKS when set to 1
- 133:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   allows the user to configure dynamically the driver callbacks.
- 134:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Use Function @ref HAL_CAN_RegisterCallback() to register an interrupt callback.
- 135:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 136:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Function @ref HAL_CAN_RegisterCallback() allows to register following callbacks:
- 137:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0CompleteCallback   : Tx Mailbox 0 Complete Callback.
- 138:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1CompleteCallback   : Tx Mailbox 1 Complete Callback.
- 139:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2CompleteCallback   : Tx Mailbox 2 Complete Callback.
- 140:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0AbortCallback      : Tx Mailbox 0 Abort Callback.
- 141:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1AbortCallback      : Tx Mailbox 1 Abort Callback.
- 142:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2AbortCallback      : Tx Mailbox 2 Abort Callback.
- 143:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0MsgPendingCallback    : Rx Fifo 0 Message Pending Callback.
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 4
+ 116:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       *** Sleep mode ***
+ 117:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       ==================
+ 118:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]
+ 119:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The CAN peripheral can be put in sleep mode (low power), using
+ 120:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_RequestSleep(). The sleep mode will be entered as soon as the
+ 121:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           current CAN activity (transmission or reception of a CAN frame) will
+ 122:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           be completed.
+ 123:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 124:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) A notification can be activated to be informed when the sleep mode
+ 125:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           will be entered.
+ 126:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 127:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) It can be checked if the sleep mode is entered using
+ 128:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_IsSleepActive().
+ 129:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           Note that the CAN state (accessible from the API HAL_CAN_GetState())
+ 130:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           is HAL_CAN_STATE_SLEEP_PENDING as soon as the sleep mode request is
+ 131:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           submitted (the sleep mode is not yet entered), and become
+ 132:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           HAL_CAN_STATE_SLEEP_ACTIVE when the sleep mode is effective.
+ 133:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 134:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (#) The wake-up from sleep mode can be triggered by two ways:
+ 135:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) Using HAL_CAN_WakeUp(). When returning from this function,
+ 136:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  the sleep mode is exited (if return status is HAL_OK).
+ 137:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             (++) When a start of Rx CAN frame is detected by the CAN peripheral,
+ 138:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****                  if automatic wake up mode is enabled.
+ 139:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 140:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *** Callback registration ***
+ 141:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   =============================================
+ 142:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 143:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   The compilation define  USE_HAL_CAN_REGISTER_CALLBACKS when set to 1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 4
 
 
- 144:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0FullCallback          : Rx Fifo 0 Full Callback.
- 145:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1MsgPendingCallback    : Rx Fifo 1 Message Pending Callback.
- 146:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1FullCallback          : Rx Fifo 1 Full Callback.
- 147:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) SleepCallback                : Sleep Callback.
- 148:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) WakeUpFromRxMsgCallback      : Wake Up From Rx Message Callback.
- 149:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) ErrorCallback                : Error Callback.
- 150:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspInitCallback              : CAN MspInit.
- 151:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspDeInitCallback            : CAN MspDeInit.
- 152:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   This function takes as parameters the HAL peripheral handle, the Callback ID
- 153:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   and a pointer to the user callback function.
- 154:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 155:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Use function @ref HAL_CAN_UnRegisterCallback() to reset a callback to the default
- 156:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   weak function.
- 157:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   @ref HAL_CAN_UnRegisterCallback takes as parameters the HAL peripheral handle,
- 158:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   and the Callback ID.
- 159:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   This function allows to reset following callbacks:
- 160:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0CompleteCallback   : Tx Mailbox 0 Complete Callback.
- 161:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1CompleteCallback   : Tx Mailbox 1 Complete Callback.
- 162:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2CompleteCallback   : Tx Mailbox 2 Complete Callback.
- 163:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0AbortCallback      : Tx Mailbox 0 Abort Callback.
- 164:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1AbortCallback      : Tx Mailbox 1 Abort Callback.
- 165:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2AbortCallback      : Tx Mailbox 2 Abort Callback.
- 166:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0MsgPendingCallback    : Rx Fifo 0 Message Pending Callback.
- 167:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0FullCallback          : Rx Fifo 0 Full Callback.
- 168:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1MsgPendingCallback    : Rx Fifo 1 Message Pending Callback.
- 169:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1FullCallback          : Rx Fifo 1 Full Callback.
- 170:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) SleepCallback                : Sleep Callback.
- 171:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) WakeUpFromRxMsgCallback      : Wake Up From Rx Message Callback.
- 172:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) ErrorCallback                : Error Callback.
- 173:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspInitCallback              : CAN MspInit.
- 174:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspDeInitCallback            : CAN MspDeInit.
- 175:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 176:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   By default, after the @ref HAL_CAN_Init() and when the state is HAL_CAN_STATE_RESET,
- 177:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   all callbacks are set to the corresponding weak functions:
- 178:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   example @ref HAL_CAN_ErrorCallback().
- 179:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Exception done for MspInit and MspDeInit functions that are
- 180:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   reset to the legacy weak function in the @ref HAL_CAN_Init()/ @ref HAL_CAN_DeInit() only when
- 181:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   these callbacks are null (not registered beforehand).
- 182:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if not, MspInit or MspDeInit are not null, the @ref HAL_CAN_Init()/ @ref HAL_CAN_DeInit()
- 183:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   keep and use the user MspInit/MspDeInit callbacks (registered beforehand)
- 184:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 185:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Callbacks can be registered/unregistered in HAL_CAN_STATE_READY state only.
- 186:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Exception done MspInit/MspDeInit that can be registered/unregistered
- 187:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   in HAL_CAN_STATE_READY or HAL_CAN_STATE_RESET state,
- 188:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   thus registered (user) MspInit/DeInit callbacks can be used during the Init/DeInit.
- 189:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   In that case first register the MspInit/MspDeInit user callbacks
- 190:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   using @ref HAL_CAN_RegisterCallback() before calling @ref HAL_CAN_DeInit()
- 191:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   or @ref HAL_CAN_Init() function.
- 192:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 193:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   When The compilation define USE_HAL_CAN_REGISTER_CALLBACKS is set to 0 or
- 194:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   not defined, the callback registration feature is not available and all callbacks
- 195:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   are set to the corresponding weak functions.
- 196:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 197:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   @endverbatim
- 198:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ******************************************************************************
- 199:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @attention
- 200:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 5
+ 144:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   allows the user to configure dynamically the driver callbacks.
+ 145:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Use Function HAL_CAN_RegisterCallback() to register an interrupt callback.
+ 146:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 147:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Function HAL_CAN_RegisterCallback() allows to register following callbacks:
+ 148:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0CompleteCallback   : Tx Mailbox 0 Complete Callback.
+ 149:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1CompleteCallback   : Tx Mailbox 1 Complete Callback.
+ 150:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2CompleteCallback   : Tx Mailbox 2 Complete Callback.
+ 151:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0AbortCallback      : Tx Mailbox 0 Abort Callback.
+ 152:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1AbortCallback      : Tx Mailbox 1 Abort Callback.
+ 153:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2AbortCallback      : Tx Mailbox 2 Abort Callback.
+ 154:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0MsgPendingCallback    : Rx Fifo 0 Message Pending Callback.
+ 155:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0FullCallback          : Rx Fifo 0 Full Callback.
+ 156:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1MsgPendingCallback    : Rx Fifo 1 Message Pending Callback.
+ 157:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1FullCallback          : Rx Fifo 1 Full Callback.
+ 158:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) SleepCallback                : Sleep Callback.
+ 159:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) WakeUpFromRxMsgCallback      : Wake Up From Rx Message Callback.
+ 160:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) ErrorCallback                : Error Callback.
+ 161:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspInitCallback              : CAN MspInit.
+ 162:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspDeInitCallback            : CAN MspDeInit.
+ 163:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   This function takes as parameters the HAL peripheral handle, the Callback ID
+ 164:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   and a pointer to the user callback function.
+ 165:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 166:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Use function HAL_CAN_UnRegisterCallback() to reset a callback to the default
+ 167:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   weak function.
+ 168:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   HAL_CAN_UnRegisterCallback takes as parameters the HAL peripheral handle,
+ 169:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   and the Callback ID.
+ 170:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   This function allows to reset following callbacks:
+ 171:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0CompleteCallback   : Tx Mailbox 0 Complete Callback.
+ 172:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1CompleteCallback   : Tx Mailbox 1 Complete Callback.
+ 173:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2CompleteCallback   : Tx Mailbox 2 Complete Callback.
+ 174:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox0AbortCallback      : Tx Mailbox 0 Abort Callback.
+ 175:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox1AbortCallback      : Tx Mailbox 1 Abort Callback.
+ 176:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) TxMailbox2AbortCallback      : Tx Mailbox 2 Abort Callback.
+ 177:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0MsgPendingCallback    : Rx Fifo 0 Message Pending Callback.
+ 178:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo0FullCallback          : Rx Fifo 0 Full Callback.
+ 179:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1MsgPendingCallback    : Rx Fifo 1 Message Pending Callback.
+ 180:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) RxFifo1FullCallback          : Rx Fifo 1 Full Callback.
+ 181:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) SleepCallback                : Sleep Callback.
+ 182:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) WakeUpFromRxMsgCallback      : Wake Up From Rx Message Callback.
+ 183:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) ErrorCallback                : Error Callback.
+ 184:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspInitCallback              : CAN MspInit.
+ 185:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     (+) MspDeInitCallback            : CAN MspDeInit.
+ 186:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 187:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   By default, after the HAL_CAN_Init() and when the state is HAL_CAN_STATE_RESET,
+ 188:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   all callbacks are set to the corresponding weak functions:
+ 189:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   example HAL_CAN_ErrorCallback().
+ 190:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Exception done for MspInit and MspDeInit functions that are
+ 191:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   reset to the legacy weak function in the HAL_CAN_Init()/ HAL_CAN_DeInit() only when
+ 192:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   these callbacks are null (not registered beforehand).
+ 193:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if not, MspInit or MspDeInit are not null, the HAL_CAN_Init()/ HAL_CAN_DeInit()
+ 194:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   keep and use the user MspInit/MspDeInit callbacks (registered beforehand)
+ 195:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 196:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Callbacks can be registered/unregistered in HAL_CAN_STATE_READY state only.
+ 197:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   Exception done MspInit/MspDeInit that can be registered/unregistered
+ 198:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   in HAL_CAN_STATE_READY or HAL_CAN_STATE_RESET state,
+ 199:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   thus registered (user) MspInit/DeInit callbacks can be used during the Init/DeInit.
+ 200:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   In that case first register the MspInit/MspDeInit user callbacks
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 5
 
 
- 201:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * <h2><center>&copy; Copyright (c) 2016 STMicroelectronics.
- 202:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * All rights reserved.</center></h2>
- 203:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
- 204:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * This software component is licensed by ST under BSD 3-Clause license,
- 205:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * the "License"; You may not use this file except in compliance with the
- 206:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * License. You may obtain a copy of the License at:
- 207:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *                        opensource.org/licenses/BSD-3-Clause
- 208:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *
+ 201:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   using HAL_CAN_RegisterCallback() before calling HAL_CAN_DeInit()
+ 202:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   or HAL_CAN_Init() function.
+ 203:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 204:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   When The compilation define USE_HAL_CAN_REGISTER_CALLBACKS is set to 0 or
+ 205:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   not defined, the callback registration feature is not available and all callbacks
+ 206:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   are set to the corresponding weak functions.
+ 207:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
+ 208:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   @endverbatim
  209:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ******************************************************************************
  210:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   */
  211:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  255:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****               ##### Initialization and de-initialization functions #####
  256:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
  257:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]  This section provides functions allowing to:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 6
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 6
 
 
  258:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (+) HAL_CAN_Init                       : Initialize and configure the CAN.
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  312:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     hcan->SleepCallback              =  HAL_CAN_SleepCallback;              /* Legacy weak SleepCal
  313:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     hcan->WakeUpFromRxMsgCallback    =  HAL_CAN_WakeUpFromRxMsgCallback;    /* Legacy weak WakeUpFr
  314:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     hcan->ErrorCallback              =  HAL_CAN_ErrorCallback;              /* Legacy weak ErrorCal
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 7
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 7
 
 
  315:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -379,14 +379,14 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  330:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
  331:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif /* (USE_HAL_CAN_REGISTER_CALLBACKS) */
  332:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 333:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Exit from sleep mode */
- 334:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   CLEAR_BIT(hcan->Instance->MCR, CAN_MCR_SLEEP);
+ 333:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Request initialisation */
+ 334:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   SET_BIT(hcan->Instance->MCR, CAN_MCR_INRQ);
  335:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  336:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Get tick */
  337:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   tickstart = HAL_GetTick();
  338:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 339:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Check Sleep mode leave acknowledge */
- 340:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   while ((hcan->Instance->MSR & CAN_MSR_SLAK) != 0U)
+ 339:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Wait initialisation acknowledge */
+ 340:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   while ((hcan->Instance->MSR & CAN_MSR_INAK) == 0U)
  341:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  342:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((HAL_GetTick() - tickstart) > CAN_TIMEOUT_VALUE)
  343:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -400,14 +400,14 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  351:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
  352:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
  353:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 354:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Request initialisation */
- 355:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   SET_BIT(hcan->Instance->MCR, CAN_MCR_INRQ);
+ 354:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Exit from sleep mode */
+ 355:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   CLEAR_BIT(hcan->Instance->MCR, CAN_MCR_SLEEP);
  356:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  357:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Get tick */
  358:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   tickstart = HAL_GetTick();
  359:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
- 360:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Wait initialisation acknowledge */
- 361:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   while ((hcan->Instance->MSR & CAN_MSR_INAK) == 0U)
+ 360:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Check Sleep mode leave acknowledge */
+ 361:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   while ((hcan->Instance->MSR & CAN_MSR_SLAK) != 0U)
  362:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  363:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((HAL_GetTick() - tickstart) > CAN_TIMEOUT_VALUE)
  364:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  369:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       hcan->State = HAL_CAN_STATE_ERROR;
  370:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  371:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       return HAL_ERROR;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 8
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 8
 
 
  372:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  426:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if (hcan->Init.TransmitFifoPriority == ENABLE)
  427:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  428:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     SET_BIT(hcan->Instance->MCR, CAN_MCR_TXFP);
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 9
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 9
 
 
  429:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  483:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* DeInit the low level hardware: CLOCK, NVIC */
  484:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   HAL_CAN_MspDeInit(hcan);
  485:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif /* (USE_HAL_CAN_REGISTER_CALLBACKS) */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 10
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 10
 
 
  486:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
   55              		.loc 1 276 3 view .LVU4
  279:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
   56              		.loc 1 279 3 view .LVU5
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 11
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 11
 
 
  279:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
@@ -653,12 +653,12 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
   88              		.loc 1 334 3 is_stmt 1 view .LVU23
   89 0010 2268     		ldr	r2, [r4]
   90 0012 1368     		ldr	r3, [r2]
-  91 0014 23F00203 		bic	r3, r3, #2
+  91 0014 43F00103 		orr	r3, r3, #1
   92 0018 1360     		str	r3, [r2]
  337:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
   93              		.loc 1 337 3 view .LVU24
  337:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 12
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 12
 
 
   94              		.loc 1 337 15 is_stmt 0 view .LVU25
@@ -679,8 +679,8 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  105 0022 5A68     		ldr	r2, [r3, #4]
  340:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  106              		.loc 1 340 9 view .LVU30
- 107 0024 12F0020F 		tst	r2, #2
- 108 0028 10D0     		beq	.L27
+ 107 0024 12F0010F 		tst	r2, #1
+ 108 0028 10D1     		bne	.L27
  342:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
  109              		.loc 1 342 5 is_stmt 1 view .LVU31
  342:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  132 0044 38BD     		pop	{r3, r4, r5, pc}
  133              	.LVL6:
  134              	.L26:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 13
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 13
 
 
  329:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
@@ -733,7 +733,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  355:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  142              		.loc 1 355 3 is_stmt 1 view .LVU44
  143 004c 1A68     		ldr	r2, [r3]
- 144 004e 42F00102 		orr	r2, r2, #1
+ 144 004e 22F00202 		bic	r2, r2, #2
  145 0052 1A60     		str	r2, [r3]
  358:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  146              		.loc 1 358 3 view .LVU45
@@ -756,8 +756,8 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  158 005c 5A68     		ldr	r2, [r3, #4]
  361:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  159              		.loc 1 361 9 view .LVU51
- 160 005e 12F0010F 		tst	r2, #1
- 161 0062 0DD1     		bne	.L28
+ 160 005e 12F0020F 		tst	r2, #2
+ 161 0062 0DD0     		beq	.L28
  363:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
  162              		.loc 1 363 5 is_stmt 1 view .LVU52
  363:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  173 006e 636A     		ldr	r3, [r4, #36]
  174 0070 43F40033 		orr	r3, r3, #131072
  175 0074 6362     		str	r3, [r4, #36]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 14
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 14
 
 
  369:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  214              		.loc 1 402 5 is_stmt 1 view .LVU73
  215 00a4 2268     		ldr	r2, [r4]
  216 00a6 1368     		ldr	r3, [r2]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 15
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 15
 
 
  217 00a8 23F02003 		bic	r3, r3, #32
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  258 00e0 E268     		ldr	r2, [r4, #12]
  259 00e2 1343     		orrs	r3, r3, r2
  260 00e4 2269     		ldr	r2, [r4, #16]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 16
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 16
 
 
  261 00e6 1343     		orrs	r3, r3, r2
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  305 012c 1360     		str	r3, [r2]
  306 012e C6E7     		b	.L16
  307              	.L33:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 17
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 17
 
 
  418:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
@@ -1018,7 +1018,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  351              		@ link register save eliminated.
  524:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Prevent unused argument(s) compilation warning */
  525:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   UNUSED(hcan);
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 18
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 18
 
 
  352              		.loc 1 525 3 view .LVU102
@@ -1049,19 +1049,19 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  537:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         the configuration information for CAN module
  538:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  CallbackID ID of the callback to be registered
  539:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         This parameter can be one of the following values:
- 540:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_COMPLETE_CALLBACK_CB_ID Tx Mailbox 0 Complete callback 
- 541:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_COMPLETE_CALLBACK_CB_ID Tx Mailbox 1 Complete callback 
- 542:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_COMPLETE_CALLBACK_CB_ID Tx Mailbox 2 Complete callback 
- 543:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_ABORT_CALLBACK_CB_ID Tx Mailbox 0 Abort callback ID
- 544:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_ABORT_CALLBACK_CB_ID Tx Mailbox 1 Abort callback ID
- 545:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_ABORT_CALLBACK_CB_ID Tx Mailbox 2 Abort callback ID
- 546:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_MSG_PENDING_CALLBACK_CB_ID Rx Fifo 0 message pending callb
- 547:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_FULL_CALLBACK_CB_ID Rx Fifo 0 full callback ID
- 548:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_MSGPENDING_CALLBACK_CB_ID Rx Fifo 1 message pending callba
- 549:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_FULL_CALLBACK_CB_ID Rx Fifo 1 full callback ID
- 550:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_SLEEP_CALLBACK_CB_ID Sleep callback ID
- 551:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_WAKEUP_FROM_RX_MSG_CALLBACK_CB_ID Wake Up from Rx message callback 
- 552:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_ERROR_CALLBACK_CB_ID Error callback ID
+ 540:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_COMPLETE_CB_ID Tx Mailbox 0 Complete callback ID
+ 541:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_COMPLETE_CB_ID Tx Mailbox 1 Complete callback ID
+ 542:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_COMPLETE_CB_ID Tx Mailbox 2 Complete callback ID
+ 543:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_ABORT_CB_ID Tx Mailbox 0 Abort callback ID
+ 544:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_ABORT_CB_ID Tx Mailbox 1 Abort callback ID
+ 545:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_ABORT_CB_ID Tx Mailbox 2 Abort callback ID
+ 546:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID Rx Fifo 0 message pending callback ID
+ 547:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_FULL_CB_ID Rx Fifo 0 full callback ID
+ 548:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_MSG_PENDING_CB_ID Rx Fifo 1 message pending callback ID
+ 549:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_FULL_CB_ID Rx Fifo 1 full callback ID
+ 550:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_SLEEP_CB_ID Sleep callback ID
+ 551:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_WAKEUP_FROM_RX_MSG_CB_ID Wake Up from Rx message callback ID
+ 552:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_ERROR_CB_ID Error callback ID
  553:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_MSPINIT_CB_ID MspInit callback ID
  554:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_MSPDEINIT_CB_ID MspDeInit callback ID
  555:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  pCallback pointer to the Callback function
@@ -1078,7 +1078,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  566:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  567:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     return HAL_ERROR;
  568:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 19
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 19
 
 
  569:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -1138,7 +1138,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  623:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         hcan->ErrorCallback = pCallback;
  624:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         break;
  625:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 20
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 20
 
 
  626:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       case HAL_CAN_MSPINIT_CB_ID :
@@ -1193,27 +1193,27 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  675:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  676:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
  677:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @brief  Unregister a CAN CallBack.
- 678:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         CAN callabck is redirected to the weak predefined callback
+ 678:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         CAN callback is redirected to the weak predefined callback
  679:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  hcan pointer to a CAN_HandleTypeDef structure that contains
  680:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         the configuration information for CAN module
  681:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  CallbackID ID of the callback to be unregistered
  682:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         This parameter can be one of the following values:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 21
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 21
 
 
- 683:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_COMPLETE_CALLBACK_CB_ID Tx Mailbox 0 Complete callback 
- 684:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_COMPLETE_CALLBACK_CB_ID Tx Mailbox 1 Complete callback 
- 685:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_COMPLETE_CALLBACK_CB_ID Tx Mailbox 2 Complete callback 
- 686:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_ABORT_CALLBACK_CB_ID Tx Mailbox 0 Abort callback ID
- 687:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_ABORT_CALLBACK_CB_ID Tx Mailbox 1 Abort callback ID
- 688:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_ABORT_CALLBACK_CB_ID Tx Mailbox 2 Abort callback ID
- 689:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_MSG_PENDING_CALLBACK_CB_ID Rx Fifo 0 message pending callb
- 690:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_FULL_CALLBACK_CB_ID Rx Fifo 0 full callback ID
- 691:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_MSGPENDING_CALLBACK_CB_ID Rx Fifo 1 message pending callba
- 692:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_FULL_CALLBACK_CB_ID Rx Fifo 1 full callback ID
- 693:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_SLEEP_CALLBACK_CB_ID Sleep callback ID
- 694:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_WAKEUP_FROM_RX_MSG_CALLBACK_CB_ID Wake Up from Rx message callback 
- 695:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_ERROR_CALLBACK_CB_ID Error callback ID
+ 683:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_COMPLETE_CB_ID Tx Mailbox 0 Complete callback ID
+ 684:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_COMPLETE_CB_ID Tx Mailbox 1 Complete callback ID
+ 685:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_COMPLETE_CB_ID Tx Mailbox 2 Complete callback ID
+ 686:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX0_ABORT_CB_ID Tx Mailbox 0 Abort callback ID
+ 687:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX1_ABORT_CB_ID Tx Mailbox 1 Abort callback ID
+ 688:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_TX_MAILBOX2_ABORT_CB_ID Tx Mailbox 2 Abort callback ID
+ 689:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID Rx Fifo 0 message pending callback ID
+ 690:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO0_FULL_CB_ID Rx Fifo 0 full callback ID
+ 691:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_MSG_PENDING_CB_ID Rx Fifo 1 message pending callback ID
+ 692:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_RX_FIFO1_FULL_CB_ID Rx Fifo 1 full callback ID
+ 693:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_SLEEP_CB_ID Sleep callback ID
+ 694:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_WAKEUP_FROM_RX_MSG_CB_ID Wake Up from Rx message callback ID
+ 695:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_ERROR_CB_ID Error callback ID
  696:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_MSPINIT_CB_ID MspInit callback ID
  697:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *           @arg @ref HAL_CAN_MSPDEINIT_CB_ID MspDeInit callback ID
  698:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @retval HAL status
@@ -1258,7 +1258,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  737:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         hcan->RxFifo0FullCallback = HAL_CAN_RxFifo0FullCallback;
  738:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         break;
  739:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 22
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 22
 
 
  740:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       case HAL_CAN_RX_FIFO1_MSG_PENDING_CB_ID :
@@ -1318,7 +1318,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  794:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         status =  HAL_ERROR;
  795:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         break;
  796:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 23
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 23
 
 
  797:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
@@ -1378,7 +1378,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  376 0000 90F82030 		ldrb	r3, [r0, #32]	@ zero_extendqisi2
  377              	.LVL16:
  843:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 24
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 24
 
 
  844:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if ((state == HAL_CAN_STATE_READY) ||
@@ -1438,7 +1438,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  889:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif
  890:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  891:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Initialisation mode for the filter */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 25
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 25
 
 
  892:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     SET_BIT(can_ip->FMR, CAN_FMR_FINIT);
@@ -1498,7 +1498,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  946:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         ((0x0000FFFFU & (uint32_t)sFilterConfig->FilterMaskIdHigh) << 16U) |
  947:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         (0x0000FFFFU & (uint32_t)sFilterConfig->FilterMaskIdLow);
  948:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 26
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 26
 
 
  949:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -1558,7 +1558,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  396              		.loc 1 993 1 view .LVU117
  397 0016 7047     		bx	lr
  398              	.LVL19:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 27
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 27
 
 
  399              	.L50:
@@ -1618,7 +1618,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  910:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  436              		.loc 1 910 52 is_stmt 0 view .LVU135
  437 0042 4A69     		ldr	r2, [r1, #20]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 28
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 28
 
 
  910:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -1678,7 +1678,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  476 0084 40EA0440 		orr	r0, r0, r4, lsl #16
  929:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         ((0x0000FFFFU & (uint32_t)sFilterConfig->FilterMaskIdHigh) << 16U) |
  477              		.loc 1 929 62 view .LVU152
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 29
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 29
 
 
  478 0088 4C69     		ldr	r4, [r1, #20]
@@ -1738,7 +1738,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  518 00c4 2ED0     		beq	.L52
  519              	.LVL23:
  520              	.L44:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 30
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 30
 
 
  981:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -1798,7 +1798,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  561 0106 C8E7     		b	.L39
  562              	.L40:
  959:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 31
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 31
 
 
  563              		.loc 1 959 7 is_stmt 1 view .LVU182
@@ -1858,7 +1858,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1005:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   ==============================================================================
 1006:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     [..]  This section provides functions allowing to:
 1007:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (+) HAL_CAN_Start                    : Start the CAN module
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 32
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 32
 
 
 1008:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (+) HAL_CAN_Stop                     : Stop the CAN module
@@ -1918,7 +1918,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1041:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Request leave initialisation */
 1042:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     CLEAR_BIT(hcan->Instance->MCR, CAN_MCR_INRQ);
 1043:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 33
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 33
 
 
 1044:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Get tick */
@@ -1978,7 +1978,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1042:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  644              		.loc 1 1042 5 is_stmt 1 view .LVU200
  645 0022 0268     		ldr	r2, [r0]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 34
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 34
 
 
  646 0024 1368     		ldr	r3, [r2]
@@ -2038,7 +2038,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1059:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
  684              		.loc 1 1059 9 is_stmt 1 view .LVU217
 1059:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 35
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 35
 
 
  685              		.loc 1 1059 16 is_stmt 0 view .LVU218
@@ -2098,7 +2098,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  725 0008 DBB2     		uxtb	r3, r3
  726              		.loc 1 1088 6 view .LVU228
  727 000a 022B     		cmp	r3, #2
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 36
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 36
 
 
  728 000c 05D0     		beq	.L69
@@ -2158,7 +2158,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  742              	.L69:
 1091:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  743              		.loc 1 1091 5 is_stmt 1 view .LVU234
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 37
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 37
 
 
  744 001a 0268     		ldr	r2, [r0]
@@ -2218,7 +2218,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  782 0048 84F82030 		strb	r3, [r4, #32]
 1108:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
  783              		.loc 1 1108 9 is_stmt 1 view .LVU251
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 38
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 38
 
 
 1108:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
@@ -2278,7 +2278,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  828              		.loc 1 471 3 view .LVU263
  471:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
  829              		.loc 1 471 9 is_stmt 0 view .LVU264
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 39
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 39
 
 
  830 0006 FFF7FEFF 		bl	HAL_CAN_Stop
@@ -2338,7 +2338,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1130:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
 1131:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @brief  Request the sleep mode (low power) entry.
 1132:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         When returning from this function, Sleep mode will be entered
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 40
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 40
 
 
 1133:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   *         as soon as the current CAN activity (transmission or reception
@@ -2398,7 +2398,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1160:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** }
  902              		.loc 1 1160 1 view .LVU286
  903 0016 7047     		bx	lr
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 41
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 41
 
 
  904              	.LVL48:
@@ -2458,7 +2458,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  943              		.loc 1 1173 3 is_stmt 1 view .LVU295
  944              	.LVL51:
 1174:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   HAL_CAN_StateTypeDef state = hcan->State;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 42
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 42
 
 
  945              		.loc 1 1174 3 view .LVU296
@@ -2518,7 +2518,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1197:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     while ((hcan->Instance->MSR & CAN_MSR_SLAK) != 0U);
  977              		.loc 1 1197 11 is_stmt 1 view .LVU309
  978              		.loc 1 1197 17 is_stmt 0 view .LVU310
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 43
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 43
 
 
  979 002a 0368     		ldr	r3, [r0]
@@ -2578,7 +2578,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1016 004e 02B0     		add	sp, sp, #8
  1017              	.LCFI8:
  1018              		.cfi_def_cfa_offset 0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 44
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 44
 
 
  1019              		@ sp needed
@@ -2638,7 +2638,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1059              	.LVL62:
 1221:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   HAL_CAN_StateTypeDef state = hcan->State;
  1060              		.loc 1 1221 12 view .LVU334
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 45
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 45
 
 
  1061 000e 7047     		bx	lr
@@ -2698,7 +2698,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1248:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @retval HAL status
 1249:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   */
 1250:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** HAL_StatusTypeDef HAL_CAN_AddTxMessage(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *pHeader, uint8
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 46
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 46
 
 
 1251:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** {
@@ -2758,7 +2758,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1128 0012 BCF1010F 		cmp	ip, #1
  1129 0016 6BD8     		bhi	.L97
 1271:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (state == HAL_CAN_STATE_LISTENING))
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 47
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 47
 
 
 1272:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
@@ -2818,7 +2818,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1164 003a 1C60     		str	r4, [r3]
 1292:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1293:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Set up the Id */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 48
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 48
 
 
 1294:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       if (pHeader->IDE == CAN_ID_STD)
@@ -2878,7 +2878,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1199 0064 012B     		cmp	r3, #1
  1200 0066 35D0     		beq	.L105
  1201              	.LVL76:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 49
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 49
 
 
  1202              	.L103:
@@ -2938,7 +2938,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1329:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1330:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Return function status */
 1331:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       return HAL_OK;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 50
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 50
 
 
  1238              		.loc 1 1331 7 is_stmt 1 view .LVU396
@@ -2998,7 +2998,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1279 00ea 4362     		str	r3, [r0, #36]
 1337:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1338:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       return HAL_ERROR;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 51
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 51
 
 
  1280              		.loc 1 1338 7 is_stmt 1 view .LVU410
@@ -3058,7 +3058,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1315              		.loc 1 1359 1 is_stmt 1 view -0
  1316              		.cfi_startproc
  1317              		@ args = 0, pretend = 0, frame = 0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 52
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 52
 
 
  1318              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -3118,7 +3118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1336 000c 436A     		ldr	r3, [r0, #36]
  1337 000e 43F48023 		orr	r3, r3, #262144
  1338 0012 4362     		str	r3, [r0, #36]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 53
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 53
 
 
 1396:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -3178,7 +3178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1378              		.loc 1 1390 12 is_stmt 0 view .LVU442
  1379 0048 0020     		movs	r0, #0
  1380              	.LVL93:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 54
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 54
 
 
 1390:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
@@ -3238,7 +3238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1417:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
 1418:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       freelevel++;
 1419:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 55
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 55
 
 
 1420:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -3298,7 +3298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1445 0024 0130     		adds	r0, r0, #1
  1446              	.LVL101:
  1447              	.L116:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 56
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 56
 
 
 1428:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -3358,7 +3358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1481 0000 90F82030 		ldrb	r3, [r0, #32]	@ zero_extendqisi2
  1482              	.LVL104:
 1454:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 57
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 57
 
 
 1455:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Check function parameters */
@@ -3418,7 +3418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1518              		.loc 1 1452 12 view .LVU490
  1519 0022 0020     		movs	r0, #0
  1520              	.LVL110:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 58
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 58
 
 
 1452:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   HAL_CAN_StateTypeDef state = hcan->State;
@@ -3478,7 +3478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1555 0008 012B     		cmp	r3, #1
  1556 000a 01D9     		bls	.L129
 1484:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   uint32_t transmitmailbox;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 59
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 59
 
 
  1557              		.loc 1 1484 12 view .LVU502
@@ -3538,7 +3538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
   30:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wsign-conversion"
   31:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wconversion"
   32:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wunused-parameter"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 60
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 60
 
 
   33:Drivers/CMSIS/Include/cmsis_gcc.h **** 
@@ -3598,7 +3598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
   87:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
   88:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
   89:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 61
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 61
 
 
   90:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_READ { uint16_t v; };
@@ -3658,7 +3658,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  144:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  145:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  146:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 62
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 62
 
 
  147:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Control Register
@@ -3718,7 +3718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  201:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get IPSR Register
  202:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the IPSR Register.
  203:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               IPSR Register value
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 63
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 63
 
 
  204:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
@@ -3778,7 +3778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  258:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Process Stack Pointer (non-secure)
  259:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the non-secure Process Stack Pointer (PSP) when in secure s
  260:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               PSP Register value
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 64
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 64
 
 
  261:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
@@ -3838,7 +3838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  315:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
  316:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_MSP_NS(void)
  317:Drivers/CMSIS/Include/cmsis_gcc.h **** {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 65
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 65
 
 
  318:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
@@ -3898,7 +3898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  372:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR sp_ns, %0" : : "r" (topOfStack) : );
  373:Drivers/CMSIS/Include/cmsis_gcc.h **** }
  374:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 66
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 66
 
 
  375:Drivers/CMSIS/Include/cmsis_gcc.h **** 
@@ -3958,7 +3958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  429:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  430:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  431:Drivers/CMSIS/Include/cmsis_gcc.h **** #if ((defined (__ARM_ARCH_7M__      ) && (__ARM_ARCH_7M__      == 1)) || \
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 67
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 67
 
 
  432:Drivers/CMSIS/Include/cmsis_gcc.h ****      (defined (__ARM_ARCH_7EM__     ) && (__ARM_ARCH_7EM__     == 1)) || \
@@ -4018,7 +4018,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  486:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
  487:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Base Priority
  488:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the Base Priority register.
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 68
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 68
 
 
  489:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    basePri  Base Priority value to set
@@ -4078,7 +4078,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  543:Drivers/CMSIS/Include/cmsis_gcc.h **** {
  544:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
  545:Drivers/CMSIS/Include/cmsis_gcc.h **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 69
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 69
 
 
  546:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, faultmask_ns" : "=r" (result) );
@@ -4138,7 +4138,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  600:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, psplim"  : "=r" (result) );
  601:Drivers/CMSIS/Include/cmsis_gcc.h ****   return result;
  602:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 70
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 70
 
 
  603:Drivers/CMSIS/Include/cmsis_gcc.h **** }
@@ -4198,7 +4198,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  657:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
  658:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_PSPLIM_NS(uint32_t ProcStackPtrLimit)
  659:Drivers/CMSIS/Include/cmsis_gcc.h **** {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 71
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 71
 
 
  660:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (!(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)))
@@ -4258,7 +4258,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  714:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  715:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  716:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 72
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 72
 
 
  717:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Main Stack Pointer Limit
@@ -4318,7 +4318,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  771:Drivers/CMSIS/Include/cmsis_gcc.h **** // Re-enable using built-in when GCC has been fixed
  772:Drivers/CMSIS/Include/cmsis_gcc.h **** // || (__GNUC__ > 7) || (__GNUC__ == 7 && __GNUC_MINOR__ >= 2)
  773:Drivers/CMSIS/Include/cmsis_gcc.h ****   /* see https://gcc.gnu.org/ml/gcc-patches/2017-04/msg00443.html */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 73
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 73
 
 
  774:Drivers/CMSIS/Include/cmsis_gcc.h ****   return __builtin_arm_get_fpscr();
@@ -4378,7 +4378,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  828:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_RW_REG(r) "+r" (r)
  829:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_USE_REG(r) "r" (r)
  830:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 74
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 74
 
 
  831:Drivers/CMSIS/Include/cmsis_gcc.h **** 
@@ -4438,7 +4438,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  885:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Ensures the apparent order of the explicit memory operations before
  886:Drivers/CMSIS/Include/cmsis_gcc.h ****            and after the instruction, without ensuring their completion.
  887:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 75
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 75
 
 
  888:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __DMB(void)
@@ -4498,7 +4498,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  942:Drivers/CMSIS/Include/cmsis_gcc.h ****   return result;
  943:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
  944:Drivers/CMSIS/Include/cmsis_gcc.h **** }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 76
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 76
 
 
  945:Drivers/CMSIS/Include/cmsis_gcc.h **** 
@@ -4558,7 +4558,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  990:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t s = (4U /*sizeof(v)*/ * 8U) - 1U; /* extra shift needed at end */
  991:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  992:Drivers/CMSIS/Include/cmsis_gcc.h ****   result = value;                      /* r will be reversed bits of v; first get LSB of v */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 77
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 77
 
 
  993:Drivers/CMSIS/Include/cmsis_gcc.h ****   for (value >>= 1U; value != 0U; value >>= 1U)
@@ -4618,7 +4618,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1504:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1505:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
 1506:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @brief  Get an CAN frame from the Rx FIFO zone into the message RAM.
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 78
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 78
 
 
 1507:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  hcan pointer to an CAN_HandleTypeDef structure that contains
@@ -4678,7 +4678,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1647 0018 0468     		ldr	r4, [r0]
  1648              		.loc 1 1529 26 view .LVU532
  1649 001a E468     		ldr	r4, [r4, #12]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 79
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 79
 
 
  1650              		.loc 1 1529 10 view .LVU533
@@ -4738,7 +4738,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1688 0042 6CE0     		b	.L134
  1689              	.LVL130:
  1690              	.L133:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 80
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 80
 
 
 1546:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
@@ -4779,7 +4779,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1556:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
 1557:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       pHeader->ExtId = ((CAN_RI0R_EXID | CAN_RI0R_STID) & hcan->Instance->sFIFOMailBox[RxFifo].RIR)
 1558:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     }
-1559:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     pHeader->RTR = (CAN_RI0R_RTR & hcan->Instance->sFIFOMailBox[RxFifo].RIR) >> CAN_RI0R_RTR_Pos;
+1559:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     pHeader->RTR = (CAN_RI0R_RTR & hcan->Instance->sFIFOMailBox[RxFifo].RIR);
  1716              		.loc 1 1559 5 is_stmt 1 view .LVU560
  1717              		.loc 1 1559 40 is_stmt 0 view .LVU561
  1718 0066 0468     		ldr	r4, [r0]
@@ -4787,8 +4787,8 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1720 0068 01F11B0C 		add	ip, r1, #27
  1721 006c 4FEA0C1C 		lsl	ip, ip, #4
  1722 0070 54F80C40 		ldr	r4, [r4, ip]
- 1723              		.loc 1 1559 78 view .LVU563
- 1724 0074 C4F34004 		ubfx	r4, r4, #1, #1
+ 1723              		.loc 1 1559 34 view .LVU563
+ 1724 0074 04F00204 		and	r4, r4, #2
  1725              		.loc 1 1559 18 view .LVU564
  1726 0078 D460     		str	r4, [r2, #12]
 1560:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     pHeader->DLC = (CAN_RDT0R_DLC & hcan->Instance->sFIFOMailBox[RxFifo].RDTR) >> CAN_RDT0R_DLC_Pos
@@ -4798,7 +4798,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1730              		.loc 1 1560 73 view .LVU567
  1731 007c 6444     		add	r4, r4, ip
  1732 007e 6468     		ldr	r4, [r4, #4]
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 81
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 81
 
 
  1733              		.loc 1 1560 80 view .LVU568
@@ -4858,7 +4858,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1780 00ba 02EB0112 		add	r2, r2, r1, lsl #4
  1781 00be D2F8B821 		ldr	r2, [r2, #440]
  1782              		.loc 1 1567 16 view .LVU592
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 82
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 82
 
 
  1783 00c2 C2F30742 		ubfx	r2, r2, #16, #8
@@ -4918,7 +4918,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1832              		.loc 1 1572 14 view .LVU617
  1833 010e DA71     		strb	r2, [r3, #7]
 1573:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 83
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 83
 
 
 1574:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Release the FIFO */
@@ -4978,7 +4978,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1863              		.loc 1 1557 95 is_stmt 0 view .LVU626
  1864 0122 01F11B04 		add	r4, r1, #27
  1865 0126 2401     		lsls	r4, r4, #4
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 84
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 84
 
 
  1866 0128 0568     		ldr	r5, [r0]
@@ -5038,7 +5038,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  1913              	.LVL140:
  1914              	.LFB146:
 1597:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 85
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 85
 
 
 1598:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
@@ -5098,7 +5098,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1628:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   return filllevel;
  1938              		.loc 1 1628 3 is_stmt 1 view .LVU647
 1629:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 86
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 86
 
 
  1939              		.loc 1 1629 1 is_stmt 0 view .LVU648
@@ -5158,7 +5158,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1630:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1631:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
 1632:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @}
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 87
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 87
 
 
 1633:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   */
@@ -5218,7 +5218,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1668:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
 1669:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Enable the selected interrupts */
 1670:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     __HAL_CAN_ENABLE_IT(hcan, ActiveITs);
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 88
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 88
 
 
 1671:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -5278,7 +5278,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1683:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 1684:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
 1685:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @brief  Disable interrupts.
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 89
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 89
 
 
 1686:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @param  hcan pointer to an CAN_HandleTypeDef structure that contains
@@ -5338,7 +5338,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2067 0014 0120     		movs	r0, #1
  2068              	.LVL160:
 1714:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 90
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 90
 
 
 1715:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** }
@@ -5398,7 +5398,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1736:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Transmit Mailbox 0 management *****************************************/
 1737:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((tsrflags & CAN_TSR_RQCP0) != 0U)
 1738:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 91
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 91
 
 
 1739:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Clear the Transmission Complete flag (and TXOK0,ALST0,TERR0 bits) */
@@ -5458,7 +5458,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1793:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         HAL_CAN_TxMailbox1CompleteCallback(hcan);
 1794:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif /* USE_HAL_CAN_REGISTER_CALLBACKS */
 1795:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 92
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 92
 
 
 1796:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       else
@@ -5518,7 +5518,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1850:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         }
 1851:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         else
 1852:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 93
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 93
 
 
 1853:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           /* Transmission Mailbox 2 abort callback */
@@ -5572,13 +5572,13 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1901:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Check if message is still pending */
 1902:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((hcan->Instance->RF0R & CAN_RF0R_FMP0) != 0U)
 1903:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
-1904:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Receive FIFO 0 mesage pending Callback */
+1904:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Receive FIFO 0 message pending Callback */
 1905:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #if USE_HAL_CAN_REGISTER_CALLBACKS == 1
 1906:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Call registered callback*/
 1907:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       hcan->RxFifo0MsgPendingCallback(hcan);
 1908:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #else
 1909:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Call weak (surcharged) callback */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 94
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 94
 
 
 1910:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       HAL_CAN_RxFifo0MsgPendingCallback(hcan);
@@ -5624,7 +5624,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1950:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Check if message is still pending */
 1951:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((hcan->Instance->RF1R & CAN_RF1R_FMP1) != 0U)
 1952:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
-1953:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Receive FIFO 1 mesage pending Callback */
+1953:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Receive FIFO 1 message pending Callback */
 1954:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #if USE_HAL_CAN_REGISTER_CALLBACKS == 1
 1955:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       /* Call registered callback*/
 1956:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       hcan->RxFifo1MsgPendingCallback(hcan);
@@ -5638,7 +5638,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1964:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Sleep interrupt management *********************************************/
 1965:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if ((interrupts & CAN_IT_SLEEP_ACK) != 0U)
 1966:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 95
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 95
 
 
 1967:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     if ((msrflags & CAN_MSR_SLAKI) != 0U)
@@ -5698,7 +5698,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2021:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         /* Set CAN error code to Error Passive */
 2022:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         errorcode |= HAL_CAN_ERROR_EPV;
 2023:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 96
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 96
 
 
 2024:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         /* No need for clear of Error Passive Flag as read-only */
@@ -5758,7 +5758,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2078:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   }
 2079:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 2080:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Call the Error call Back in case of Errors */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 97
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 97
 
 
 2081:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   if (errorcode != HAL_CAN_ERROR_NONE)
@@ -5818,7 +5818,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2135:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** {
  2099              		.loc 1 2135 1 is_stmt 1 view -0
  2100              		.cfi_startproc
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 98
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 98
 
 
  2101              		@ args = 0, pretend = 0, frame = 0
@@ -5878,7 +5878,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2133              		.weak	HAL_CAN_TxMailbox2CompleteCallback
  2134              		.syntax unified
  2135              		.thumb
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 99
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 99
 
 
  2136              		.thumb_func
@@ -5938,7 +5938,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2187:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Prevent unused argument(s) compilation warning */
 2188:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   UNUSED(hcan);
  2167              		.loc 1 2188 3 view .LVU707
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 100
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 100
 
 
 2189:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
@@ -5998,7 +5998,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2203              	.LFB155:
 2212:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
 2213:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** /**
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 101
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 101
 
 
 2214:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @brief  Transmission Mailbox 2 Cancellation callback.
@@ -6058,7 +6058,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2243:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****             user file
 2244:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****    */
 2245:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** }
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 102
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 102
 
 
  2231              		.loc 1 2245 1 is_stmt 0 view .LVU717
@@ -6118,7 +6118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2268:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @retval None
 2269:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   */
 2270:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** __weak void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 103
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 103
 
 
 2271:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** {
@@ -6178,7 +6178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2297              	.LFE159:
  2299              		.section	.text.HAL_CAN_SleepCallback,"ax",%progbits
  2300              		.align	1
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 104
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 104
 
 
  2301              		.weak	HAL_CAN_SleepCallback
@@ -6238,7 +6238,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2333              		@ frame_needed = 0, uses_anonymous_args = 0
  2334              		@ link register save eliminated.
 2322:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   /* Prevent unused argument(s) compilation warning */
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 105
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 105
 
 
 2323:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   UNUSED(hcan);
@@ -6298,7 +6298,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2370              	.LVL177:
  2371              	.LFB149:
 1724:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   uint32_t errorcode = HAL_CAN_ERROR_NONE;
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 106
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 106
 
 
  2372              		.loc 1 1724 1 is_stmt 1 view -0
@@ -6358,7 +6358,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2413 0014 D3F810A0 		ldr	r10, [r3, #16]
  2414              	.LVL183:
 1731:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 107
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 107
 
 
  2415              		.loc 1 1731 3 is_stmt 1 view .LVU750
@@ -6418,7 +6418,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1773:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif /* USE_HAL_CAN_REGISTER_CALLBACKS */
  2454              		.loc 1 1773 11 is_stmt 1 view .LVU766
  2455 004c FFF7FEFF 		bl	HAL_CAN_TxMailbox0AbortCallback
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 108
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 108
 
 
  2456              	.LVL187:
@@ -6478,7 +6478,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1828:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       {
  2495              		.loc 1 1828 10 is_stmt 0 view .LVU782
  2496 0086 17F4003F 		tst	r7, #131072
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 109
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 109
 
 
  2497 008a 40F08380 		bne	.L208
@@ -6538,7 +6538,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2534              		.loc 1 1899 6 is_stmt 0 view .LVU799
  2535 00bc 14F0020F 		tst	r4, #2
  2536 00c0 04D0     		beq	.L182
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 110
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 110
 
 
 1902:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
@@ -6598,7 +6598,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2574 00ee 14F0100F 		tst	r4, #16
  2575 00f2 04D0     		beq	.L185
 1951:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 111
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 111
 
 
  2576              		.loc 1 1951 5 is_stmt 1 view .LVU817
@@ -6658,7 +6658,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2613 0122 14F4807F 		tst	r4, #256
  2614 0126 04D0     		beq	.L190
 2008:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           ((esrflags & CAN_ESR_EWGF) != 0U))
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 112
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 112
 
 
  2615              		.loc 1 2008 55 discriminator 1 view .LVU835
@@ -6718,7 +6718,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2038:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****           ((esrflags & CAN_ESR_LEC) != 0U))
  2654              		.loc 1 2038 57 discriminator 1 view .LVU851
  2655 015c 56D0     		beq	.L189
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 113
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 113
 
 
 2041:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         {
@@ -6778,7 +6778,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2698              	.LVL203:
  2699 019a 7EE7     		b	.L170
  2700              	.L178:
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 114
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 114
 
 
 1846:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****         {
@@ -6838,7 +6838,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 1959:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** #endif /* USE_HAL_CAN_REGISTER_CALLBACKS */
  2744              		.loc 1 1959 7 view .LVU875
  2745 01d4 2846     		mov	r0, r5
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 115
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 115
 
 
  2746 01d6 FFF7FEFF 		bl	HAL_CAN_RxFifo1MsgPendingCallback
@@ -6898,7 +6898,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2790              	.L188:
 2081:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
  2791              		.loc 1 2081 3 view .LVU886
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 116
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 116
 
 
 2081:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
@@ -6958,7 +6958,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2831 023a E2E7     		b	.L198
  2832              	.L216:
 2084:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 117
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 117
 
 
  2833              		.loc 1 2084 5 view .LVU902
@@ -7018,7 +7018,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2372:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   * @retval HAL state
 2373:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   */
 2374:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** HAL_CAN_StateTypeDef HAL_CAN_GetState(CAN_HandleTypeDef *hcan)
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 118
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 118
 
 
 2375:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** {
@@ -7078,7 +7078,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2382:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
  2886              		.loc 1 2382 5 is_stmt 1 view .LVU917
 2382:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 119
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 119
 
 
  2887              		.loc 1 2382 14 is_stmt 0 view .LVU918
@@ -7138,7 +7138,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
 2410:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c **** {
  2926              		.loc 1 2410 1 is_stmt 1 view -0
  2927              		.cfi_startproc
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 120
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 120
 
 
  2928              		@ args = 0, pretend = 0, frame = 0
@@ -7198,7 +7198,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  2968 000a 05D9     		bls	.L226
 2427:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****       (state == HAL_CAN_STATE_LISTENING))
 2428:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****   {
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 121
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 121
 
 
 2429:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c ****     /* Reset CAN error code */
@@ -7254,88 +7254,88 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 1
  3002              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
  3003              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h"
  3004              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 122
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 122
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 stm32f4xx_hal_can.c
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:20     .text.HAL_CAN_MspInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:26     .text.HAL_CAN_MspInit:00000000 HAL_CAN_MspInit
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:42     .text.HAL_CAN_Init:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:48     .text.HAL_CAN_Init:00000000 HAL_CAN_Init
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:338    .text.HAL_CAN_MspDeInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:344    .text.HAL_CAN_MspDeInit:00000000 HAL_CAN_MspDeInit
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:359    .text.HAL_CAN_ConfigFilter:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:365    .text.HAL_CAN_ConfigFilter:00000000 HAL_CAN_ConfigFilter
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:590    .text.HAL_CAN_ConfigFilter:00000134 $d
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:595    .text.HAL_CAN_Start:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:601    .text.HAL_CAN_Start:00000000 HAL_CAN_Start
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:699    .text.HAL_CAN_Stop:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:705    .text.HAL_CAN_Stop:00000000 HAL_CAN_Stop
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:804    .text.HAL_CAN_DeInit:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:810    .text.HAL_CAN_DeInit:00000000 HAL_CAN_DeInit
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:866    .text.HAL_CAN_RequestSleep:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:872    .text.HAL_CAN_RequestSleep:00000000 HAL_CAN_RequestSleep
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:921    .text.HAL_CAN_WakeUp:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:927    .text.HAL_CAN_WakeUp:00000000 HAL_CAN_WakeUp
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1024   .text.HAL_CAN_WakeUp:00000054 $d
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1029   .text.HAL_CAN_IsSleepActive:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1035   .text.HAL_CAN_IsSleepActive:00000000 HAL_CAN_IsSleepActive
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1085   .text.HAL_CAN_AddTxMessage:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1091   .text.HAL_CAN_AddTxMessage:00000000 HAL_CAN_AddTxMessage
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1306   .text.HAL_CAN_AbortTxRequest:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1312   .text.HAL_CAN_AbortTxRequest:00000000 HAL_CAN_AbortTxRequest
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1387   .text.HAL_CAN_GetTxMailboxesFreeLevel:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1393   .text.HAL_CAN_GetTxMailboxesFreeLevel:00000000 HAL_CAN_GetTxMailboxesFreeLevel
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1464   .text.HAL_CAN_IsTxMessagePending:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1470   .text.HAL_CAN_IsTxMessagePending:00000000 HAL_CAN_IsTxMessagePending
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1527   .text.HAL_CAN_GetTxTimestamp:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1533   .text.HAL_CAN_GetTxTimestamp:00000000 HAL_CAN_GetTxTimestamp
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1608   .text.HAL_CAN_GetRxMessage:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1614   .text.HAL_CAN_GetRxMessage:00000000 HAL_CAN_GetRxMessage
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1906   .text.HAL_CAN_GetRxFifoFillLevel:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1912   .text.HAL_CAN_GetRxFifoFillLevel:00000000 HAL_CAN_GetRxFifoFillLevel
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1974   .text.HAL_CAN_ActivateNotification:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:1980   .text.HAL_CAN_ActivateNotification:00000000 HAL_CAN_ActivateNotification
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2032   .text.HAL_CAN_DeactivateNotification:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2038   .text.HAL_CAN_DeactivateNotification:00000000 HAL_CAN_DeactivateNotification
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2090   .text.HAL_CAN_TxMailbox0CompleteCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2096   .text.HAL_CAN_TxMailbox0CompleteCallback:00000000 HAL_CAN_TxMailbox0CompleteCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2111   .text.HAL_CAN_TxMailbox1CompleteCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2117   .text.HAL_CAN_TxMailbox1CompleteCallback:00000000 HAL_CAN_TxMailbox1CompleteCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2132   .text.HAL_CAN_TxMailbox2CompleteCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2138   .text.HAL_CAN_TxMailbox2CompleteCallback:00000000 HAL_CAN_TxMailbox2CompleteCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2153   .text.HAL_CAN_TxMailbox0AbortCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2159   .text.HAL_CAN_TxMailbox0AbortCallback:00000000 HAL_CAN_TxMailbox0AbortCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2174   .text.HAL_CAN_TxMailbox1AbortCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2180   .text.HAL_CAN_TxMailbox1AbortCallback:00000000 HAL_CAN_TxMailbox1AbortCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2195   .text.HAL_CAN_TxMailbox2AbortCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2201   .text.HAL_CAN_TxMailbox2AbortCallback:00000000 HAL_CAN_TxMailbox2AbortCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2216   .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2222   .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 HAL_CAN_RxFifo0MsgPendingCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2237   .text.HAL_CAN_RxFifo0FullCallback:00000000 $t
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s 			page 123
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:20     .text.HAL_CAN_MspInit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:26     .text.HAL_CAN_MspInit:00000000 HAL_CAN_MspInit
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:42     .text.HAL_CAN_Init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:48     .text.HAL_CAN_Init:00000000 HAL_CAN_Init
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:338    .text.HAL_CAN_MspDeInit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:344    .text.HAL_CAN_MspDeInit:00000000 HAL_CAN_MspDeInit
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:359    .text.HAL_CAN_ConfigFilter:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:365    .text.HAL_CAN_ConfigFilter:00000000 HAL_CAN_ConfigFilter
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:590    .text.HAL_CAN_ConfigFilter:00000134 $d
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:595    .text.HAL_CAN_Start:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:601    .text.HAL_CAN_Start:00000000 HAL_CAN_Start
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:699    .text.HAL_CAN_Stop:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:705    .text.HAL_CAN_Stop:00000000 HAL_CAN_Stop
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:804    .text.HAL_CAN_DeInit:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:810    .text.HAL_CAN_DeInit:00000000 HAL_CAN_DeInit
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:866    .text.HAL_CAN_RequestSleep:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:872    .text.HAL_CAN_RequestSleep:00000000 HAL_CAN_RequestSleep
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:921    .text.HAL_CAN_WakeUp:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:927    .text.HAL_CAN_WakeUp:00000000 HAL_CAN_WakeUp
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1024   .text.HAL_CAN_WakeUp:00000054 $d
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1029   .text.HAL_CAN_IsSleepActive:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1035   .text.HAL_CAN_IsSleepActive:00000000 HAL_CAN_IsSleepActive
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1085   .text.HAL_CAN_AddTxMessage:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1091   .text.HAL_CAN_AddTxMessage:00000000 HAL_CAN_AddTxMessage
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1306   .text.HAL_CAN_AbortTxRequest:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1312   .text.HAL_CAN_AbortTxRequest:00000000 HAL_CAN_AbortTxRequest
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1387   .text.HAL_CAN_GetTxMailboxesFreeLevel:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1393   .text.HAL_CAN_GetTxMailboxesFreeLevel:00000000 HAL_CAN_GetTxMailboxesFreeLevel
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1464   .text.HAL_CAN_IsTxMessagePending:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1470   .text.HAL_CAN_IsTxMessagePending:00000000 HAL_CAN_IsTxMessagePending
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1527   .text.HAL_CAN_GetTxTimestamp:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1533   .text.HAL_CAN_GetTxTimestamp:00000000 HAL_CAN_GetTxTimestamp
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1608   .text.HAL_CAN_GetRxMessage:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1614   .text.HAL_CAN_GetRxMessage:00000000 HAL_CAN_GetRxMessage
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1906   .text.HAL_CAN_GetRxFifoFillLevel:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1912   .text.HAL_CAN_GetRxFifoFillLevel:00000000 HAL_CAN_GetRxFifoFillLevel
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1974   .text.HAL_CAN_ActivateNotification:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:1980   .text.HAL_CAN_ActivateNotification:00000000 HAL_CAN_ActivateNotification
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2032   .text.HAL_CAN_DeactivateNotification:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2038   .text.HAL_CAN_DeactivateNotification:00000000 HAL_CAN_DeactivateNotification
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2090   .text.HAL_CAN_TxMailbox0CompleteCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2096   .text.HAL_CAN_TxMailbox0CompleteCallback:00000000 HAL_CAN_TxMailbox0CompleteCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2111   .text.HAL_CAN_TxMailbox1CompleteCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2117   .text.HAL_CAN_TxMailbox1CompleteCallback:00000000 HAL_CAN_TxMailbox1CompleteCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2132   .text.HAL_CAN_TxMailbox2CompleteCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2138   .text.HAL_CAN_TxMailbox2CompleteCallback:00000000 HAL_CAN_TxMailbox2CompleteCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2153   .text.HAL_CAN_TxMailbox0AbortCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2159   .text.HAL_CAN_TxMailbox0AbortCallback:00000000 HAL_CAN_TxMailbox0AbortCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2174   .text.HAL_CAN_TxMailbox1AbortCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2180   .text.HAL_CAN_TxMailbox1AbortCallback:00000000 HAL_CAN_TxMailbox1AbortCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2195   .text.HAL_CAN_TxMailbox2AbortCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2201   .text.HAL_CAN_TxMailbox2AbortCallback:00000000 HAL_CAN_TxMailbox2AbortCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2216   .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2222   .text.HAL_CAN_RxFifo0MsgPendingCallback:00000000 HAL_CAN_RxFifo0MsgPendingCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2237   .text.HAL_CAN_RxFifo0FullCallback:00000000 $t
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s 			page 123
 
 
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2243   .text.HAL_CAN_RxFifo0FullCallback:00000000 HAL_CAN_RxFifo0FullCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2258   .text.HAL_CAN_RxFifo1MsgPendingCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2264   .text.HAL_CAN_RxFifo1MsgPendingCallback:00000000 HAL_CAN_RxFifo1MsgPendingCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2279   .text.HAL_CAN_RxFifo1FullCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2285   .text.HAL_CAN_RxFifo1FullCallback:00000000 HAL_CAN_RxFifo1FullCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2300   .text.HAL_CAN_SleepCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2306   .text.HAL_CAN_SleepCallback:00000000 HAL_CAN_SleepCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2321   .text.HAL_CAN_WakeUpFromRxMsgCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2327   .text.HAL_CAN_WakeUpFromRxMsgCallback:00000000 HAL_CAN_WakeUpFromRxMsgCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2342   .text.HAL_CAN_ErrorCallback:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2348   .text.HAL_CAN_ErrorCallback:00000000 HAL_CAN_ErrorCallback
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2363   .text.HAL_CAN_IRQHandler:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2369   .text.HAL_CAN_IRQHandler:00000000 HAL_CAN_IRQHandler
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2850   .text.HAL_CAN_GetState:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2856   .text.HAL_CAN_GetState:00000000 HAL_CAN_GetState
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2917   .text.HAL_CAN_GetError:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2923   .text.HAL_CAN_GetError:00000000 HAL_CAN_GetError
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2941   .text.HAL_CAN_ResetError:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\ccJp3Hjt.s:2947   .text.HAL_CAN_ResetError:00000000 HAL_CAN_ResetError
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2243   .text.HAL_CAN_RxFifo0FullCallback:00000000 HAL_CAN_RxFifo0FullCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2258   .text.HAL_CAN_RxFifo1MsgPendingCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2264   .text.HAL_CAN_RxFifo1MsgPendingCallback:00000000 HAL_CAN_RxFifo1MsgPendingCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2279   .text.HAL_CAN_RxFifo1FullCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2285   .text.HAL_CAN_RxFifo1FullCallback:00000000 HAL_CAN_RxFifo1FullCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2300   .text.HAL_CAN_SleepCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2306   .text.HAL_CAN_SleepCallback:00000000 HAL_CAN_SleepCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2321   .text.HAL_CAN_WakeUpFromRxMsgCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2327   .text.HAL_CAN_WakeUpFromRxMsgCallback:00000000 HAL_CAN_WakeUpFromRxMsgCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2342   .text.HAL_CAN_ErrorCallback:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2348   .text.HAL_CAN_ErrorCallback:00000000 HAL_CAN_ErrorCallback
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2363   .text.HAL_CAN_IRQHandler:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2369   .text.HAL_CAN_IRQHandler:00000000 HAL_CAN_IRQHandler
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2850   .text.HAL_CAN_GetState:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2856   .text.HAL_CAN_GetState:00000000 HAL_CAN_GetState
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2917   .text.HAL_CAN_GetError:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2923   .text.HAL_CAN_GetError:00000000 HAL_CAN_GetError
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2941   .text.HAL_CAN_ResetError:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccbJ7Z0x.s:2947   .text.HAL_CAN_ResetError:00000000 HAL_CAN_ResetError
 
 UNDEFINED SYMBOLS
 HAL_GetTick

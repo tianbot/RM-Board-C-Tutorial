@@ -19,7 +19,7 @@
 #ifndef CHASSIS_TASK_H
 #define CHASSIS_TASK_H
 #include "struct_typedef.h"
-#include "can.h"
+#include "bsp_can.h"
 #include "pid.h"
 #include "remote_control.h"
 #include "user_lib.h"

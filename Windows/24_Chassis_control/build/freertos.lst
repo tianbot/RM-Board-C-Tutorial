@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
   15:Src/freertos.c ****   *                             www.st.com/SLA0044
   16:Src/freertos.c ****   *
   17:Src/freertos.c ****   ******************************************************************************
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 2
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 2
 
 
   18:Src/freertos.c ****   */
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
   72:Src/freertos.c **** /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
   73:Src/freertos.c **** static StaticTask_t xIdleTaskTCBBuffer;
   74:Src/freertos.c **** static StackType_t xIdleStack[configMINIMAL_STACK_SIZE];
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 3
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 3
 
 
   75:Src/freertos.c **** 
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  129:Src/freertos.c ****   /* USER CODE BEGIN RTOS_THREADS */
  130:Src/freertos.c ****   /* add threads, ... */
  131:Src/freertos.c ****   osThreadDef(ChassisTask, chassis_task, osPriorityAboveNormal, 0, 512);
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 4
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 4
 
 
  132:Src/freertos.c ****   chassisTaskHandle = osThreadCreate(osThread(ChassisTask), NULL);
@@ -211,19 +211,18 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
   49              		.cfi_offset 14, -4
   50              	.LVL1:
   51              	.L2:
- 149:Src/freertos.c **** 
- 150:Src/freertos.c ****   /* USER CODE BEGIN test_task */
- 151:Src/freertos.c ****   /* Infinite loop */
- 152:Src/freertos.c ****   for(;;)
-  52              		.loc 1 152 3 is_stmt 1 discriminator 1 view .LVU2
- 153:Src/freertos.c ****   {
- 154:Src/freertos.c ****     osDelay(1);
-  53              		.loc 1 154 5 discriminator 1 view .LVU3
+ 149:Src/freertos.c ****   /* USER CODE BEGIN test_task */
+ 150:Src/freertos.c ****   /* Infinite loop */
+ 151:Src/freertos.c ****   for(;;)
+  52              		.loc 1 151 3 is_stmt 1 discriminator 1 view .LVU2
+ 152:Src/freertos.c ****   {
+ 153:Src/freertos.c ****     osDelay(1);
+  53              		.loc 1 153 5 discriminator 1 view .LVU3
   54 0002 0120     		movs	r0, #1
   55 0004 FFF7FEFF 		bl	osDelay
   56              	.LVL2:
- 152:Src/freertos.c ****   {
-  57              		.loc 1 152 8 discriminator 1 view .LVU4
+ 151:Src/freertos.c ****   {
+  57              		.loc 1 151 8 discriminator 1 view .LVU4
   58 0008 FBE7     		b	.L2
   59              		.cfi_endproc
   60              	.LFE138:
@@ -238,10 +237,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
   71              	.LFB135:
   77:Src/freertos.c ****   *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
   72              		.loc 1 77 1 view -0
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 5
-
-
   73              		.cfi_startproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 5
+
+
   74              		@ args = 0, pretend = 0, frame = 0
   75              		@ frame_needed = 0, uses_anonymous_args = 0
   76              		@ link register save eliminated.
@@ -298,10 +297,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  118              		.loc 1 92 3 is_stmt 1 view .LVU16
   92:Src/freertos.c ****   *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
  119              		.loc 1 92 28 is_stmt 0 view .LVU17
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 6
-
-
  120 0004 034B     		ldr	r3, .L8+4
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 6
+
+
  121 0006 0B60     		str	r3, [r1]
   93:Src/freertos.c ****   /* place for user code */
  122              		.loc 1 93 3 is_stmt 1 view .LVU18
@@ -358,10 +357,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  169 0020 FFF7FEFF 		bl	osThreadCreate
  170              	.LVL5:
  127:Src/freertos.c **** 
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 7
-
-
  171              		.loc 1 127 14 view .LVU25
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 7
+
+
  172 0024 144B     		ldr	r3, .L12+4
  173 0026 1860     		str	r0, [r3]
  131:Src/freertos.c ****   chassisTaskHandle = osThreadCreate(osThread(ChassisTask), NULL);
@@ -418,10 +417,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  216 0078 00000000 		.word	.LANCHOR5
  217 007c 00000000 		.word	.LANCHOR6
  218 0080 00000000 		.word	.LANCHOR7
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 8
-
-
  219              		.cfi_endproc
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 8
+
+
  220              	.LFE137:
  222              		.global	testHandle
  223              		.global	detect_handle
@@ -478,10 +477,10 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  282 0000 00000000 		.space	4
  283              		.section	.bss.xIdleStack,"aw",%nobits
  284              		.align	2
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 9
-
-
  285              		.set	.LANCHOR1,. + 0
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 9
+
+
  288              	xIdleStack:
  289 0000 00000000 		.space	512
  289      00000000 
@@ -523,40 +522,40 @@ ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 1
  316              		.file 5 "Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h"
  317              		.file 6 "Middlewares/Third_Party/FreeRTOS/Source/include/task.h"
  318              		.file 7 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
-ARM GAS  C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s 			page 10
+ARM GAS  C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s 			page 10
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 freertos.c
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:17     .rodata.str1.4:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:30     .text.test_task:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:36     .text.test_task:00000000 test_task
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:63     .text.vApplicationGetIdleTaskMemory:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:69     .text.vApplicationGetIdleTaskMemory:00000000 vApplicationGetIdleTaskMemory
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:94     .text.vApplicationGetIdleTaskMemory:00000010 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:100    .text.vApplicationGetTimerTaskMemory:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:106    .text.vApplicationGetTimerTaskMemory:00000000 vApplicationGetTimerTaskMemory
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:131    .text.vApplicationGetTimerTaskMemory:00000010 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:137    .text.MX_FREERTOS_Init:00000000 $t
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:143    .text.MX_FREERTOS_Init:00000000 MX_FREERTOS_Init
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:215    .text.MX_FREERTOS_Init:00000074 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:281    .bss.testHandle:00000000 testHandle
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:267    .bss.detect_handle:00000000 detect_handle
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:261    .bss.chassisTaskHandle:00000000 chassisTaskHandle
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:274    .bss.led_RGB_flow_handle:00000000 led_RGB_flow_handle
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:227    .rodata:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:257    .bss.chassisTaskHandle:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:264    .bss.detect_handle:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:270    .bss.led_RGB_flow_handle:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:277    .bss.testHandle:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:284    .bss.xIdleStack:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:288    .bss.xIdleStack:00000000 xIdleStack
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:291    .bss.xIdleTaskTCBBuffer:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:295    .bss.xIdleTaskTCBBuffer:00000000 xIdleTaskTCBBuffer
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:298    .bss.xTimerStack:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:302    .bss.xTimerStack:00000000 xTimerStack
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:305    .bss.xTimerTaskTCBBuffer:00000000 $d
-C:\Users\xixi\AppData\Local\Temp\cc5zg2xf.s:309    .bss.xTimerTaskTCBBuffer:00000000 xTimerTaskTCBBuffer
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:17     .rodata.str1.4:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:30     .text.test_task:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:36     .text.test_task:00000000 test_task
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:63     .text.vApplicationGetIdleTaskMemory:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:69     .text.vApplicationGetIdleTaskMemory:00000000 vApplicationGetIdleTaskMemory
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:94     .text.vApplicationGetIdleTaskMemory:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:100    .text.vApplicationGetTimerTaskMemory:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:106    .text.vApplicationGetTimerTaskMemory:00000000 vApplicationGetTimerTaskMemory
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:131    .text.vApplicationGetTimerTaskMemory:00000010 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:137    .text.MX_FREERTOS_Init:00000000 $t
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:143    .text.MX_FREERTOS_Init:00000000 MX_FREERTOS_Init
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:215    .text.MX_FREERTOS_Init:00000074 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:281    .bss.testHandle:00000000 testHandle
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:267    .bss.detect_handle:00000000 detect_handle
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:261    .bss.chassisTaskHandle:00000000 chassisTaskHandle
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:274    .bss.led_RGB_flow_handle:00000000 led_RGB_flow_handle
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:227    .rodata:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:257    .bss.chassisTaskHandle:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:264    .bss.detect_handle:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:270    .bss.led_RGB_flow_handle:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:277    .bss.testHandle:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:284    .bss.xIdleStack:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:288    .bss.xIdleStack:00000000 xIdleStack
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:291    .bss.xIdleTaskTCBBuffer:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:295    .bss.xIdleTaskTCBBuffer:00000000 xIdleTaskTCBBuffer
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:298    .bss.xTimerStack:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:302    .bss.xTimerStack:00000000 xTimerStack
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:305    .bss.xTimerTaskTCBBuffer:00000000 $d
+C:\Users\xixi\AppData\Local\Temp\ccRtMiaX.s:309    .bss.xTimerTaskTCBBuffer:00000000 xTimerTaskTCBBuffer
 
 UNDEFINED SYMBOLS
 osDelay

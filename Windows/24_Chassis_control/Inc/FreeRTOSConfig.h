@@ -25,7 +25,7 @@
  *
  * 1 tab == 4 spaces!
  */
- /* USER CODE END Header */
+/* USER CODE END Header */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
@@ -46,11 +46,14 @@
 /* Section where include file can be added */
 /* USER CODE END Includes */
 
-/* Ensure stdint is only used by the compiler, and not the assembler. */
+/* Ensure definitions are only used by the compiler, and not by the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
-    #include <stdint.h>
-    extern uint32_t SystemCoreClock;
+  #include <stdint.h>
+  extern uint32_t SystemCoreClock;
+  void xPortSysTickHandler(void);
 #endif
+#define configENABLE_FPU                         0
+#define configENABLE_MPU                         0
 
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          1
@@ -67,6 +70,11 @@
 #define configUSE_MUTEXES                        1
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+/* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
+/* Defaults to size_t for backward compatibility, but can be changed
+   if lengths will always be less than the number of bytes in a size_t. */
+#define configMESSAGE_BUFFER_LENGTH_TYPE         size_t
+/* USER CODE END MESSAGE_BUFFER_LENGTH_TYPE */
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -80,24 +88,24 @@
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
-#define INCLUDE_vTaskPrioritySet            1
-#define INCLUDE_uxTaskPriorityGet           1
-#define INCLUDE_vTaskDelete                 1
-#define INCLUDE_vTaskCleanUpResources       1
-#define INCLUDE_vTaskSuspend                1
-#define INCLUDE_vTaskDelayUntil             1
-#define INCLUDE_vTaskDelay                  1
-#define INCLUDE_xTaskGetSchedulerState      1
-#define INCLUDE_xEventGroupSetBitFromISR    1
-#define INCLUDE_xTimerPendFunctionCall      1
-#define INCLUDE_xQueueGetMutexHolder        1
-#define INCLUDE_xSemaphoreGetMutexHolder    1
-#define INCLUDE_pcTaskGetTaskName           1
-#define INCLUDE_uxTaskGetStackHighWaterMark 1
-#define INCLUDE_xTaskGetCurrentTaskHandle   1
-#define INCLUDE_eTaskGetState               1
-#define INCLUDE_xTaskAbortDelay             1
-#define INCLUDE_xTaskGetHandle              1
+#define INCLUDE_vTaskPrioritySet             1
+#define INCLUDE_uxTaskPriorityGet            1
+#define INCLUDE_vTaskDelete                  1
+#define INCLUDE_vTaskCleanUpResources        1
+#define INCLUDE_vTaskSuspend                 1
+#define INCLUDE_vTaskDelayUntil              1
+#define INCLUDE_vTaskDelay                   1
+#define INCLUDE_xTaskGetSchedulerState       1
+#define INCLUDE_xEventGroupSetBitFromISR     1
+#define INCLUDE_xTimerPendFunctionCall       1
+#define INCLUDE_xQueueGetMutexHolder         1
+#define INCLUDE_xSemaphoreGetMutexHolder     1
+#define INCLUDE_pcTaskGetTaskName            1
+#define INCLUDE_uxTaskGetStackHighWaterMark  1
+#define INCLUDE_xTaskGetCurrentTaskHandle    1
+#define INCLUDE_eTaskGetState                1
+#define INCLUDE_xTaskAbortDelay              1
+#define INCLUDE_xTaskGetHandle               1
 
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS
@@ -137,6 +145,7 @@ standard names. */
 
 /* IMPORTANT: This define is commented when used with STM32Cube firmware, when the timebase source is SysTick,
               to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
+
 /* #define xPortSysTickHandler SysTick_Handler */
 
 /* USER CODE BEGIN Defines */

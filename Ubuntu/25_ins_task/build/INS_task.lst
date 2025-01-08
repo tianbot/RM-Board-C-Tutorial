@@ -1,0 +1,3432 @@
+ARM GAS  /tmp/ccnvFXjJ.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"INS_task.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.imu_temp_control,"ax",%progbits
+  20              		.align	1
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	imu_temp_control:
+  26              	.LVL0:
+  27              	.LFB139:
+  28              		.file 1 "Src/INS_task.c"
+   1:Src/INS_task.c **** /**
+   2:Src/INS_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Src/INS_task.c ****   * @file       INS_task.c/h
+   4:Src/INS_task.c ****   * @brief      use bmi088 to calculate the euler angle. no use ist8310, so only
+   5:Src/INS_task.c ****   *             enable data ready pin to save cpu time.enalbe bmi088 data ready
+   6:Src/INS_task.c ****   *             enable spi DMA to save the time spi transmit
+   7:Src/INS_task.c ****   *             主要利用陀螺仪bmi088，磁力计ist8310，完成姿态解算，得出欧拉�
+   8:Src/INS_task.c ****   *             提供通过bmi088的data ready 中断完成外部触发，减少数据等待延迟
+   9:Src/INS_task.c ****   *             通过DMA的SPI传输节约CPU时间.
+  10:Src/INS_task.c ****   * @note       
+  11:Src/INS_task.c ****   * @history
+  12:Src/INS_task.c ****   *  Version    Date            Author          Modification
+  13:Src/INS_task.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  14:Src/INS_task.c ****   *  V2.0.0     Nov-11-2019     RM              1. support bmi088, but don't support mpu6500
+  15:Src/INS_task.c ****   *
+  16:Src/INS_task.c ****   @verbatim
+  17:Src/INS_task.c ****   ==============================================================================
+  18:Src/INS_task.c **** 
+  19:Src/INS_task.c ****   ==============================================================================
+  20:Src/INS_task.c ****   @endverbatim
+  21:Src/INS_task.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  22:Src/INS_task.c ****   */
+  23:Src/INS_task.c **** 
+  24:Src/INS_task.c **** #include "INS_task.h"
+  25:Src/INS_task.c **** 
+  26:Src/INS_task.c **** #include "main.h"
+  27:Src/INS_task.c **** 
+  28:Src/INS_task.c **** #include "cmsis_os.h"
+  29:Src/INS_task.c **** 
+  30:Src/INS_task.c **** #include "bsp_imu_pwm.h"
+ARM GAS  /tmp/ccnvFXjJ.s 			page 2
+
+
+  31:Src/INS_task.c **** #include "bsp_spi.h"
+  32:Src/INS_task.c **** #include "BMI088driver.h"
+  33:Src/INS_task.c **** #include "ist8310driver.h"
+  34:Src/INS_task.c **** #include "pid.h"
+  35:Src/INS_task.c **** 
+  36:Src/INS_task.c **** #include "MahonyAHRS.h"
+  37:Src/INS_task.c **** #include "math.h"
+  38:Src/INS_task.c **** 
+  39:Src/INS_task.c **** 
+  40:Src/INS_task.c **** #define IMU_temp_PWM(pwm)  imu_pwm_set(pwm)                    //pwm给定
+  41:Src/INS_task.c **** 
+  42:Src/INS_task.c **** 
+  43:Src/INS_task.c **** /**
+  44:Src/INS_task.c ****   * @brief          control the temperature of bmi088
+  45:Src/INS_task.c ****   * @param[in]      temp: the temperature of bmi088
+  46:Src/INS_task.c ****   * @retval         none
+  47:Src/INS_task.c ****   */
+  48:Src/INS_task.c **** /**
+  49:Src/INS_task.c ****   * @brief          控制bmi088的温度
+  50:Src/INS_task.c ****   * @param[in]      temp:bmi088的温度
+  51:Src/INS_task.c ****   * @retval         none
+  52:Src/INS_task.c ****   */
+  53:Src/INS_task.c **** static void imu_temp_control(fp32 temp);
+  54:Src/INS_task.c **** 
+  55:Src/INS_task.c **** /**
+  56:Src/INS_task.c ****   * @brief          open the SPI DMA accord to the value of imu_update_flag
+  57:Src/INS_task.c ****   * @param[in]      none
+  58:Src/INS_task.c ****   * @retval         none
+  59:Src/INS_task.c ****   */
+  60:Src/INS_task.c **** /**
+  61:Src/INS_task.c ****   * @brief          根据imu_update_flag的值开启SPI DMA
+  62:Src/INS_task.c ****   * @param[in]      temp:bmi088的温度
+  63:Src/INS_task.c ****   * @retval         none
+  64:Src/INS_task.c ****   */
+  65:Src/INS_task.c **** static void imu_cmd_spi_dma(void);
+  66:Src/INS_task.c **** 
+  67:Src/INS_task.c **** 
+  68:Src/INS_task.c **** void AHRS_init(fp32 quat[4], fp32 accel[3], fp32 mag[3]);
+  69:Src/INS_task.c **** void AHRS_update(fp32 quat[4], fp32 time, fp32 gyro[3], fp32 accel[3], fp32 mag[3]);
+  70:Src/INS_task.c **** void get_angle(fp32 quat[4], fp32 *yaw, fp32 *pitch, fp32 *roll);
+  71:Src/INS_task.c **** 
+  72:Src/INS_task.c **** extern SPI_HandleTypeDef hspi1;
+  73:Src/INS_task.c **** 
+  74:Src/INS_task.c **** static TaskHandle_t INS_task_local_handler;
+  75:Src/INS_task.c **** 
+  76:Src/INS_task.c **** uint8_t gyro_dma_rx_buf[SPI_DMA_GYRO_LENGHT];
+  77:Src/INS_task.c **** uint8_t gyro_dma_tx_buf[SPI_DMA_GYRO_LENGHT] = {0x82,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+  78:Src/INS_task.c **** 
+  79:Src/INS_task.c **** uint8_t accel_dma_rx_buf[SPI_DMA_ACCEL_LENGHT];
+  80:Src/INS_task.c **** uint8_t accel_dma_tx_buf[SPI_DMA_ACCEL_LENGHT] = {0x92,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+  81:Src/INS_task.c **** 
+  82:Src/INS_task.c **** uint8_t accel_temp_dma_rx_buf[SPI_DMA_ACCEL_TEMP_LENGHT];
+  83:Src/INS_task.c **** uint8_t accel_temp_dma_tx_buf[SPI_DMA_ACCEL_TEMP_LENGHT] = {0xA2,0xFF,0xFF,0xFF};
+  84:Src/INS_task.c **** 
+  85:Src/INS_task.c **** 
+  86:Src/INS_task.c **** 
+  87:Src/INS_task.c **** volatile uint8_t gyro_update_flag = 0;
+ARM GAS  /tmp/ccnvFXjJ.s 			page 3
+
+
+  88:Src/INS_task.c **** volatile uint8_t accel_update_flag = 0;
+  89:Src/INS_task.c **** volatile uint8_t accel_temp_update_flag = 0;
+  90:Src/INS_task.c **** volatile uint8_t mag_update_flag = 0;
+  91:Src/INS_task.c **** volatile uint8_t imu_start_dma_flag = 0;
+  92:Src/INS_task.c **** 
+  93:Src/INS_task.c **** 
+  94:Src/INS_task.c **** bmi088_real_data_t bmi088_real_data;
+  95:Src/INS_task.c **** ist8310_real_data_t ist8310_real_data;
+  96:Src/INS_task.c **** 
+  97:Src/INS_task.c **** 
+  98:Src/INS_task.c **** static uint8_t first_temperate;
+  99:Src/INS_task.c **** static const fp32 imu_temp_PID[3] = {TEMPERATURE_PID_KP, TEMPERATURE_PID_KI, TEMPERATURE_PID_KD};
+ 100:Src/INS_task.c **** static pid_type_def imu_temp_pid;
+ 101:Src/INS_task.c **** 
+ 102:Src/INS_task.c **** 
+ 103:Src/INS_task.c **** fp32 INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+ 104:Src/INS_task.c **** fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};      //euler angle, unit rad.欧拉角 单位 rad
+ 105:Src/INS_task.c **** 
+ 106:Src/INS_task.c **** 
+ 107:Src/INS_task.c **** 
+ 108:Src/INS_task.c **** /**
+ 109:Src/INS_task.c ****   * @brief          imu task, init bmi088, ist8310, calculate the euler angle
+ 110:Src/INS_task.c ****   * @param[in]      pvParameters: NULL
+ 111:Src/INS_task.c ****   * @retval         none
+ 112:Src/INS_task.c ****   */
+ 113:Src/INS_task.c **** /**
+ 114:Src/INS_task.c ****   * @brief          imu任务, 初始化 bmi088, ist8310, 计算欧拉角
+ 115:Src/INS_task.c ****   * @param[in]      pvParameters: NULL
+ 116:Src/INS_task.c ****   * @retval         none
+ 117:Src/INS_task.c ****   */
+ 118:Src/INS_task.c **** void INS_task(void const *pvParameters)
+ 119:Src/INS_task.c **** {
+ 120:Src/INS_task.c ****     //wait a time
+ 121:Src/INS_task.c ****     osDelay(INS_TASK_INIT_TIME);
+ 122:Src/INS_task.c ****     while(BMI088_init())
+ 123:Src/INS_task.c ****     {
+ 124:Src/INS_task.c ****         osDelay(100);
+ 125:Src/INS_task.c ****     }
+ 126:Src/INS_task.c ****     while(ist8310_init())
+ 127:Src/INS_task.c ****     {
+ 128:Src/INS_task.c ****         osDelay(100);
+ 129:Src/INS_task.c ****     }
+ 130:Src/INS_task.c **** 
+ 131:Src/INS_task.c ****     BMI088_read(bmi088_real_data.gyro, bmi088_real_data.accel, &bmi088_real_data.temp);
+ 132:Src/INS_task.c **** 
+ 133:Src/INS_task.c ****     PID_init(&imu_temp_pid, PID_POSITION, imu_temp_PID, TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MA
+ 134:Src/INS_task.c **** 
+ 135:Src/INS_task.c ****     AHRS_init(INS_quat, bmi088_real_data.accel, ist8310_real_data.mag);
+ 136:Src/INS_task.c **** 
+ 137:Src/INS_task.c **** 
+ 138:Src/INS_task.c ****     //get the handle of task
+ 139:Src/INS_task.c ****     //获取当前任务的任务句柄，
+ 140:Src/INS_task.c ****     INS_task_local_handler = xTaskGetHandle(pcTaskGetName(NULL));
+ 141:Src/INS_task.c **** 
+ 142:Src/INS_task.c ****     //set spi frequency
+ 143:Src/INS_task.c ****     hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+ 144:Src/INS_task.c ****     
+ARM GAS  /tmp/ccnvFXjJ.s 			page 4
+
+
+ 145:Src/INS_task.c ****     if (HAL_SPI_Init(&hspi1) != HAL_OK)
+ 146:Src/INS_task.c ****     {
+ 147:Src/INS_task.c ****         Error_Handler();
+ 148:Src/INS_task.c ****     }
+ 149:Src/INS_task.c **** 
+ 150:Src/INS_task.c **** 
+ 151:Src/INS_task.c ****     SPI1_DMA_init((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+ 152:Src/INS_task.c **** 
+ 153:Src/INS_task.c ****     imu_start_dma_flag = 1;
+ 154:Src/INS_task.c **** 
+ 155:Src/INS_task.c ****     while (1)
+ 156:Src/INS_task.c ****     {
+ 157:Src/INS_task.c ****         //wait spi DMA tansmit done
+ 158:Src/INS_task.c ****         //等待SPI DMA传输
+ 159:Src/INS_task.c ****         while (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != pdPASS)
+ 160:Src/INS_task.c ****         {
+ 161:Src/INS_task.c ****         }
+ 162:Src/INS_task.c **** 
+ 163:Src/INS_task.c **** 
+ 164:Src/INS_task.c ****         if(gyro_update_flag & (1 << IMU_NOTIFY_SHFITS))
+ 165:Src/INS_task.c ****         {
+ 166:Src/INS_task.c ****             gyro_update_flag &= ~(1 << IMU_NOTIFY_SHFITS);
+ 167:Src/INS_task.c ****             BMI088_gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET, bmi088_real_dat
+ 168:Src/INS_task.c ****         }
+ 169:Src/INS_task.c **** 
+ 170:Src/INS_task.c ****         if(accel_update_flag & (1 << IMU_UPDATE_SHFITS))
+ 171:Src/INS_task.c ****         {
+ 172:Src/INS_task.c ****             accel_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+ 173:Src/INS_task.c ****             BMI088_accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, bmi088_real_
+ 174:Src/INS_task.c ****         }
+ 175:Src/INS_task.c **** 
+ 176:Src/INS_task.c ****         if(accel_temp_update_flag & (1 << IMU_UPDATE_SHFITS))
+ 177:Src/INS_task.c ****         {
+ 178:Src/INS_task.c ****             accel_temp_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+ 179:Src/INS_task.c ****             BMI088_temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &
+ 180:Src/INS_task.c ****             imu_temp_control(bmi088_real_data.temp);
+ 181:Src/INS_task.c ****         }
+ 182:Src/INS_task.c **** 
+ 183:Src/INS_task.c **** 
+ 184:Src/INS_task.c ****         AHRS_update(INS_quat, 0.001f, bmi088_real_data.gyro, bmi088_real_data.accel, ist8310_real_d
+ 185:Src/INS_task.c ****         get_angle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSE
+ 186:Src/INS_task.c **** 
+ 187:Src/INS_task.c **** 
+ 188:Src/INS_task.c ****     }
+ 189:Src/INS_task.c **** }
+ 190:Src/INS_task.c **** 
+ 191:Src/INS_task.c **** void AHRS_init(fp32 quat[4], fp32 accel[3], fp32 mag[3])
+ 192:Src/INS_task.c **** {
+ 193:Src/INS_task.c ****     quat[0] = 1.0f;
+ 194:Src/INS_task.c ****     quat[1] = 0.0f;
+ 195:Src/INS_task.c ****     quat[2] = 0.0f;
+ 196:Src/INS_task.c ****     quat[3] = 0.0f;
+ 197:Src/INS_task.c **** 
+ 198:Src/INS_task.c **** }
+ 199:Src/INS_task.c **** 
+ 200:Src/INS_task.c **** void AHRS_update(fp32 quat[4], fp32 time, fp32 gyro[3], fp32 accel[3], fp32 mag[3])
+ 201:Src/INS_task.c **** {
+ARM GAS  /tmp/ccnvFXjJ.s 			page 5
+
+
+ 202:Src/INS_task.c ****     MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1],
+ 203:Src/INS_task.c **** }
+ 204:Src/INS_task.c **** void get_angle(fp32 q[4], fp32 *yaw, fp32 *pitch, fp32 *roll)
+ 205:Src/INS_task.c **** {
+ 206:Src/INS_task.c ****     *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f)*57.3;
+ 207:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 208:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 209:Src/INS_task.c **** }
+ 210:Src/INS_task.c **** 
+ 211:Src/INS_task.c **** /**
+ 212:Src/INS_task.c ****   * @brief          control the temperature of bmi088
+ 213:Src/INS_task.c ****   * @param[in]      temp: the temperature of bmi088
+ 214:Src/INS_task.c ****   * @retval         none
+ 215:Src/INS_task.c ****   */
+ 216:Src/INS_task.c **** /**
+ 217:Src/INS_task.c ****   * @brief          控制bmi088的温度
+ 218:Src/INS_task.c ****   * @param[in]      temp:bmi088的温度
+ 219:Src/INS_task.c ****   * @retval         none
+ 220:Src/INS_task.c ****   */
+ 221:Src/INS_task.c **** static void imu_temp_control(fp32 temp)
+ 222:Src/INS_task.c **** {
+  29              		.loc 1 222 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		.loc 1 222 1 is_stmt 0 view .LVU1
+  34 0000 10B5     		push	{r4, lr}
+  35              	.LCFI0:
+  36              		.cfi_def_cfa_offset 8
+  37              		.cfi_offset 4, -8
+  38              		.cfi_offset 14, -4
+ 223:Src/INS_task.c ****     uint16_t tempPWM;
+  39              		.loc 1 223 5 is_stmt 1 view .LVU2
+ 224:Src/INS_task.c ****     static uint8_t temp_constant_time = 0;
+  40              		.loc 1 224 5 view .LVU3
+ 225:Src/INS_task.c ****     if (first_temperate)
+  41              		.loc 1 225 5 view .LVU4
+  42              		.loc 1 225 9 is_stmt 0 view .LVU5
+  43 0002 1B4B     		ldr	r3, .L13
+  44 0004 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  45              		.loc 1 225 8 view .LVU6
+  46 0006 C3B9     		cbnz	r3, .L11
+ 226:Src/INS_task.c ****     {
+ 227:Src/INS_task.c ****         PID_calc(&imu_temp_pid, temp, 45.0f);
+ 228:Src/INS_task.c ****         if (imu_temp_pid.out < 0.0f)
+ 229:Src/INS_task.c ****         {
+ 230:Src/INS_task.c ****             imu_temp_pid.out = 0.0f;
+ 231:Src/INS_task.c ****         }
+ 232:Src/INS_task.c ****         tempPWM = (uint16_t)imu_temp_pid.out;
+ 233:Src/INS_task.c ****         IMU_temp_PWM(tempPWM);
+ 234:Src/INS_task.c ****     }
+ 235:Src/INS_task.c ****     else
+ 236:Src/INS_task.c ****     {
+ 237:Src/INS_task.c ****         //在没有达到设置的温度，一直最大功率加热
+ 238:Src/INS_task.c ****         //in beginning, max power
+ 239:Src/INS_task.c ****         if (temp > 45.0f)
+  47              		.loc 1 239 9 is_stmt 1 view .LVU7
+ARM GAS  /tmp/ccnvFXjJ.s 			page 6
+
+
+  48              		.loc 1 239 12 is_stmt 0 view .LVU8
+  49 0008 DFED1A7A 		vldr.32	s15, .L13+4
+  50 000c B4EEE70A 		vcmpe.f32	s0, s15
+  51 0010 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+  52 0014 0CDD     		ble	.L6
+ 240:Src/INS_task.c ****         {
+ 241:Src/INS_task.c ****             temp_constant_time++;
+  53              		.loc 1 241 13 is_stmt 1 view .LVU9
+  54              		.loc 1 241 31 is_stmt 0 view .LVU10
+  55 0016 184A     		ldr	r2, .L13+8
+  56 0018 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+  57 001a 0133     		adds	r3, r3, #1
+  58 001c DBB2     		uxtb	r3, r3
+  59 001e 1370     		strb	r3, [r2]
+ 242:Src/INS_task.c ****             if (temp_constant_time > 200)
+  60              		.loc 1 242 13 is_stmt 1 view .LVU11
+  61              		.loc 1 242 16 is_stmt 0 view .LVU12
+  62 0020 C82B     		cmp	r3, #200
+  63 0022 05D9     		bls	.L6
+ 243:Src/INS_task.c ****             {
+ 244:Src/INS_task.c ****                 //达到设置温度，将积分项设置为一半最大功率，加速收敛
+ 245:Src/INS_task.c ****                 //
+ 246:Src/INS_task.c ****                 first_temperate = 1;
+  64              		.loc 1 246 17 is_stmt 1 view .LVU13
+  65              		.loc 1 246 33 is_stmt 0 view .LVU14
+  66 0024 124B     		ldr	r3, .L13
+  67 0026 0122     		movs	r2, #1
+  68 0028 1A70     		strb	r2, [r3]
+ 247:Src/INS_task.c ****                 imu_temp_pid.Iout = MPU6500_TEMP_PWM_MAX / 2.0f;
+  69              		.loc 1 247 17 is_stmt 1 view .LVU15
+  70              		.loc 1 247 35 is_stmt 0 view .LVU16
+  71 002a 144B     		ldr	r3, .L13+12
+  72 002c 144A     		ldr	r2, .L13+16
+  73 002e 9A62     		str	r2, [r3, #40]	@ float
+  74              	.L6:
+ 248:Src/INS_task.c ****             }
+ 249:Src/INS_task.c ****         }
+ 250:Src/INS_task.c **** 
+ 251:Src/INS_task.c ****         IMU_temp_PWM(MPU6500_TEMP_PWM_MAX - 1);
+  75              		.loc 1 251 9 is_stmt 1 view .LVU17
+  76 0030 41F28730 		movw	r0, #4999
+  77 0034 FFF7FEFF 		bl	imu_pwm_set
+  78              	.LVL1:
+  79              	.L1:
+ 252:Src/INS_task.c ****     }
+ 253:Src/INS_task.c **** }
+  80              		.loc 1 253 1 is_stmt 0 view .LVU18
+  81 0038 10BD     		pop	{r4, pc}
+  82              	.LVL2:
+  83              	.L11:
+ 227:Src/INS_task.c ****         if (imu_temp_pid.out < 0.0f)
+  84              		.loc 1 227 9 is_stmt 1 view .LVU19
+  85 003a 104C     		ldr	r4, .L13+12
+  86 003c DFED0D0A 		vldr.32	s1, .L13+4
+  87 0040 2046     		mov	r0, r4
+  88 0042 FFF7FEFF 		bl	PID_calc
+  89              	.LVL3:
+ARM GAS  /tmp/ccnvFXjJ.s 			page 7
+
+
+ 228:Src/INS_task.c ****         {
+  90              		.loc 1 228 9 view .LVU20
+ 228:Src/INS_task.c ****         {
+  91              		.loc 1 228 25 is_stmt 0 view .LVU21
+  92 0046 D4ED087A 		vldr.32	s15, [r4, #32]
+ 228:Src/INS_task.c ****         {
+  93              		.loc 1 228 12 view .LVU22
+  94 004a F5EEC07A 		vcmpe.f32	s15, #0
+  95 004e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+  96 0052 0AD4     		bmi	.L12
+  97              	.L3:
+ 232:Src/INS_task.c ****         IMU_temp_PWM(tempPWM);
+  98              		.loc 1 232 9 is_stmt 1 view .LVU23
+ 232:Src/INS_task.c ****         IMU_temp_PWM(tempPWM);
+  99              		.loc 1 232 41 is_stmt 0 view .LVU24
+ 100 0054 094B     		ldr	r3, .L13+12
+ 101 0056 D3ED087A 		vldr.32	s15, [r3, #32]
+ 232:Src/INS_task.c ****         IMU_temp_PWM(tempPWM);
+ 102              		.loc 1 232 17 view .LVU25
+ 103 005a FCEEE77A 		vcvt.u32.f32	s15, s15
+ 104              	.LVL4:
+ 233:Src/INS_task.c ****     }
+ 105              		.loc 1 233 9 is_stmt 1 view .LVU26
+ 106 005e 17EE903A 		vmov	r3, s15	@ int
+ 107 0062 98B2     		uxth	r0, r3
+ 108 0064 FFF7FEFF 		bl	imu_pwm_set
+ 109              	.LVL5:
+ 233:Src/INS_task.c ****     }
+ 110              		.loc 1 233 9 is_stmt 0 view .LVU27
+ 111 0068 E6E7     		b	.L1
+ 112              	.L12:
+ 230:Src/INS_task.c ****         }
+ 113              		.loc 1 230 13 is_stmt 1 view .LVU28
+ 230:Src/INS_task.c ****         }
+ 114              		.loc 1 230 30 is_stmt 0 view .LVU29
+ 115 006a 0022     		movs	r2, #0
+ 116 006c 2262     		str	r2, [r4, #32]	@ float
+ 117 006e F1E7     		b	.L3
+ 118              	.L14:
+ 119              		.align	2
+ 120              	.L13:
+ 121 0070 00000000 		.word	.LANCHOR0
+ 122 0074 00003442 		.word	1110704128
+ 123 0078 00000000 		.word	.LANCHOR2
+ 124 007c 00000000 		.word	.LANCHOR1
+ 125 0080 00401C45 		.word	1159479296
+ 126              		.cfi_endproc
+ 127              	.LFE139:
+ 129              		.section	.text.imu_cmd_spi_dma,"ax",%progbits
+ 130              		.align	1
+ 131              		.syntax unified
+ 132              		.thumb
+ 133              		.thumb_func
+ 135              	imu_cmd_spi_dma:
+ 136              	.LFB141:
+ 254:Src/INS_task.c **** 
+ 255:Src/INS_task.c **** 
+ARM GAS  /tmp/ccnvFXjJ.s 			page 8
+
+
+ 256:Src/INS_task.c **** void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+ 257:Src/INS_task.c **** {
+ 258:Src/INS_task.c ****     if(GPIO_Pin == INT1_ACCEL_Pin)
+ 259:Src/INS_task.c ****     {
+ 260:Src/INS_task.c ****         accel_update_flag |= 1 << IMU_DR_SHFITS;
+ 261:Src/INS_task.c ****         accel_temp_update_flag |= 1 << IMU_DR_SHFITS;
+ 262:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 263:Src/INS_task.c ****         {
+ 264:Src/INS_task.c ****             imu_cmd_spi_dma();
+ 265:Src/INS_task.c ****         }
+ 266:Src/INS_task.c ****     }
+ 267:Src/INS_task.c ****     else if(GPIO_Pin == INT1_GYRO_Pin)
+ 268:Src/INS_task.c ****     {
+ 269:Src/INS_task.c ****         gyro_update_flag |= 1 << IMU_DR_SHFITS;
+ 270:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 271:Src/INS_task.c ****         {
+ 272:Src/INS_task.c ****             imu_cmd_spi_dma();
+ 273:Src/INS_task.c ****         }
+ 274:Src/INS_task.c ****     }
+ 275:Src/INS_task.c ****     else if(GPIO_Pin == DRDY_IST8310_Pin)
+ 276:Src/INS_task.c ****     {
+ 277:Src/INS_task.c ****         mag_update_flag |= 1 << IMU_DR_SHFITS;
+ 278:Src/INS_task.c **** 
+ 279:Src/INS_task.c ****         if(mag_update_flag &= 1 << IMU_DR_SHFITS)
+ 280:Src/INS_task.c ****         {
+ 281:Src/INS_task.c ****             mag_update_flag &= ~(1<< IMU_DR_SHFITS);
+ 282:Src/INS_task.c ****             mag_update_flag |= (1 << IMU_SPI_SHFITS);
+ 283:Src/INS_task.c **** 
+ 284:Src/INS_task.c ****             ist8310_read_mag(ist8310_real_data.mag);
+ 285:Src/INS_task.c ****         }
+ 286:Src/INS_task.c ****     }
+ 287:Src/INS_task.c ****     else if(GPIO_Pin == GPIO_PIN_0)
+ 288:Src/INS_task.c ****     {
+ 289:Src/INS_task.c ****         //wake up the task
+ 290:Src/INS_task.c ****         //唤醒任务
+ 291:Src/INS_task.c ****         if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+ 292:Src/INS_task.c ****         {
+ 293:Src/INS_task.c ****             static BaseType_t xHigherPriorityTaskWoken;
+ 294:Src/INS_task.c ****             vTaskNotifyGiveFromISR(INS_task_local_handler, &xHigherPriorityTaskWoken);
+ 295:Src/INS_task.c ****             portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+ 296:Src/INS_task.c ****         }
+ 297:Src/INS_task.c ****     }
+ 298:Src/INS_task.c **** 
+ 299:Src/INS_task.c **** 
+ 300:Src/INS_task.c **** }
+ 301:Src/INS_task.c **** 
+ 302:Src/INS_task.c **** /**
+ 303:Src/INS_task.c ****   * @brief          open the SPI DMA accord to the value of imu_update_flag
+ 304:Src/INS_task.c ****   * @param[in]      none
+ 305:Src/INS_task.c ****   * @retval         none
+ 306:Src/INS_task.c ****   */
+ 307:Src/INS_task.c **** /**
+ 308:Src/INS_task.c ****   * @brief          根据imu_update_flag的值开启SPI DMA
+ 309:Src/INS_task.c ****   * @param[in]      temp:bmi088的温度
+ 310:Src/INS_task.c ****   * @retval         none
+ 311:Src/INS_task.c ****   */
+ 312:Src/INS_task.c **** static void imu_cmd_spi_dma(void)
+ARM GAS  /tmp/ccnvFXjJ.s 			page 9
+
+
+ 313:Src/INS_task.c **** {
+ 137              		.loc 1 313 1 is_stmt 1 view -0
+ 138              		.cfi_startproc
+ 139              		@ args = 0, pretend = 0, frame = 0
+ 140              		@ frame_needed = 0, uses_anonymous_args = 0
+ 141 0000 10B5     		push	{r4, lr}
+ 142              	.LCFI1:
+ 143              		.cfi_def_cfa_offset 8
+ 144              		.cfi_offset 4, -8
+ 145              		.cfi_offset 14, -4
+ 314:Src/INS_task.c ****     UBaseType_t uxSavedInterruptStatus;
+ 146              		.loc 1 314 5 view .LVU31
+ 315:Src/INS_task.c ****     uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+ 147              		.loc 1 315 5 view .LVU32
+ 148              	.LBB12:
+ 149              	.LBI12:
+ 150              		.file 2 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
+   1:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*
+   2:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * FreeRTOS Kernel V10.0.1
+   3:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+   4:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+   5:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * Permission is hereby granted, free of charge, to any person obtaining a copy of
+   6:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * this software and associated documentation files (the "Software"), to deal in
+   7:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * the Software without restriction, including without limitation the rights to
+   8:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+   9:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * the Software, and to permit persons to whom the Software is furnished to do so,
+  10:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * subject to the following conditions:
+  11:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  12:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * The above copyright notice and this permission notice shall be included in all
+  13:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * copies or substantial portions of the Software.
+  14:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  15:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  16:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+  17:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  18:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+  19:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  20:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  21:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  22:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * http://www.FreeRTOS.org
+  23:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * http://aws.amazon.com/freertos
+  24:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  25:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * 1 tab == 4 spaces!
+  26:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  */
+  27:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  28:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  29:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifndef PORTMACRO_H
+  30:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define PORTMACRO_H
+  31:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  32:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifdef __cplusplus
+  33:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** extern "C" {
+  34:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+  35:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  36:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------
+  37:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * Port specific definitions.
+  38:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  39:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * The settings in this file configure FreeRTOS correctly for the
+  40:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * given hardware and compiler.
+ARM GAS  /tmp/ccnvFXjJ.s 			page 10
+
+
+  41:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *
+  42:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  * These settings should not be altered.
+  43:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  *-----------------------------------------------------------
+  44:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h ****  */
+  45:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  46:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Type definitions. */
+  47:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portCHAR		char
+  48:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portFLOAT		float
+  49:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portDOUBLE		double
+  50:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portLONG		long
+  51:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portSHORT		short
+  52:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portSTACK_TYPE	uint32_t
+  53:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portBASE_TYPE	long
+  54:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  55:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** typedef portSTACK_TYPE StackType_t;
+  56:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** typedef long BaseType_t;
+  57:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** typedef unsigned long UBaseType_t;
+  58:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  59:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #if( configUSE_16_BIT_TICKS == 1 )
+  60:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	typedef uint16_t TickType_t;
+  61:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portMAX_DELAY ( TickType_t ) 0xffff
+  62:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #else
+  63:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	typedef uint32_t TickType_t;
+  64:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portMAX_DELAY ( TickType_t ) 0xffffffffUL
+  65:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  66:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* 32-bit tick type on a 32-bit architecture, so reads of the tick count do
+  67:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	not need to be guarded with a critical section. */
+  68:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portTICK_TYPE_IS_ATOMIC 1
+  69:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+  70:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+  71:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  72:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Architecture specifics. */
+  73:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portSTACK_GROWTH			( -1 )
+  74:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portTICK_PERIOD_MS			( ( TickType_t ) 1000 / configTICK_RATE_HZ )
+  75:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portBYTE_ALIGNMENT			8
+  76:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+  77:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  78:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Scheduler utilities. */
+  79:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portYIELD() 															\
+  80:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {																				\
+  81:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Set a PendSV to request a context switch. */								\
+  82:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;								\
+  83:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 																				\
+  84:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Barriers are normally not required but do ensure the code is completely	\
+  85:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	within the specified behaviour for the architecture. */						\
+  86:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile( "dsb" ::: "memory" );										\
+  87:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile( "isb" );													\
+  88:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** }
+  89:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  90:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portNVIC_INT_CTRL_REG		( * ( ( volatile uint32_t * ) 0xe000ed04 ) )
+  91:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portNVIC_PENDSVSET_BIT		( 1UL << 28UL )
+  92:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portEND_SWITCHING_ISR( xSwitchRequired ) if( xSwitchRequired != pdFALSE ) portYIELD()
+  93:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portYIELD_FROM_ISR( x ) portEND_SWITCHING_ISR( x )
+  94:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+  95:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+  96:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Critical section management. */
+  97:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** extern void vPortEnterCritical( void );
+ARM GAS  /tmp/ccnvFXjJ.s 			page 11
+
+
+  98:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** extern void vPortExitCritical( void );
+  99:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portSET_INTERRUPT_MASK_FROM_ISR()		ulPortRaiseBASEPRI()
+ 100:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portCLEAR_INTERRUPT_MASK_FROM_ISR(x)	vPortSetBASEPRI(x)
+ 101:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portDISABLE_INTERRUPTS()				vPortRaiseBASEPRI()
+ 102:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portENABLE_INTERRUPTS()					vPortSetBASEPRI(0)
+ 103:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portENTER_CRITICAL()					vPortEnterCritical()
+ 104:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portEXIT_CRITICAL()						vPortExitCritical()
+ 105:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 106:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 107:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 108:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Task function macros as described on the FreeRTOS.org WEB site.  These are
+ 109:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** not necessary for to use this port.  They are defined so the common demo files
+ 110:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** (which build with all the ports) will build. */
+ 111:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
+ 112:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
+ 113:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 114:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 115:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Tickless idle/low power functionality. */
+ 116:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifndef portSUPPRESS_TICKS_AND_SLEEP
+ 117:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime );
+ 118:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portSUPPRESS_TICKS_AND_SLEEP( xExpectedIdleTime ) vPortSuppressTicksAndSleep( xExpectedIdl
+ 119:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+ 120:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 121:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 122:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* Architecture specific optimisations. */
+ 123:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifndef configUSE_PORT_OPTIMISED_TASK_SELECTION
+ 124:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
+ 125:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+ 126:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 127:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #if configUSE_PORT_OPTIMISED_TASK_SELECTION == 1
+ 128:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 129:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Generic helper function. */
+ 130:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__attribute__( ( always_inline ) ) static inline uint8_t ucPortCountLeadingZeros( uint32_t ulBitma
+ 131:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	{
+ 132:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	uint8_t ucReturn;
+ 133:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 134:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		__asm volatile ( "clz %0, %1" : "=r" ( ucReturn ) : "r" ( ulBitmap ) : "memory" );
+ 135:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		return ucReturn;
+ 136:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	}
+ 137:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 138:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Check the configuration. */
+ 139:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#if( configMAX_PRIORITIES > 32 )
+ 140:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		#error configUSE_PORT_OPTIMISED_TASK_SELECTION can only be set to 1 when configMAX_PRIORITIES is 
+ 141:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#endif
+ 142:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 143:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Store/clear the ready priorities in a bit map. */
+ 144:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portRECORD_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) |= ( 1UL 
+ 145:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portRESET_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) &= ~( 1UL 
+ 146:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 147:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/*-----------------------------------------------------------*/
+ 148:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 149:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities ) uxTopPriority = ( 31UL - ( ui
+ 150:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 151:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif /* configUSE_PORT_OPTIMISED_TASK_SELECTION */
+ 152:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 153:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 154:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ARM GAS  /tmp/ccnvFXjJ.s 			page 12
+
+
+ 155:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifdef configASSERT
+ 156:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	void vPortValidateInterruptPriority( void );
+ 157:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portASSERT_IF_INTERRUPT_PRIORITY_INVALID() 	vPortValidateInterruptPriority()
+ 158:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+ 159:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 160:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /* portNOP() is not required by this port. */
+ 161:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portNOP()
+ 162:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 163:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #define portINLINE	__inline
+ 164:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 165:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #ifndef portFORCE_INLINE
+ 166:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	#define portFORCE_INLINE inline __attribute__(( always_inline))
+ 167:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** #endif
+ 168:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 169:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** portFORCE_INLINE static BaseType_t xPortIsInsideInterrupt( void )
+ 170:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 171:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** uint32_t ulCurrentInterrupt;
+ 172:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** BaseType_t xReturn;
+ 173:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 174:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* Obtain the number of the currently executing interrupt. */
+ 175:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile( "mrs %0, ipsr" : "=r"( ulCurrentInterrupt ) :: "memory" );
+ 176:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 177:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	if( ulCurrentInterrupt == 0 )
+ 178:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	{
+ 179:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		xReturn = pdFALSE;
+ 180:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	}
+ 181:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	else
+ 182:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	{
+ 183:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		xReturn = pdTRUE;
+ 184:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	}
+ 185:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 186:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	return xReturn;
+ 187:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** }
+ 188:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 189:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 190:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 191:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** portFORCE_INLINE static void vPortRaiseBASEPRI( void )
+ 192:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 193:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** uint32_t ulNewBASEPRI;
+ 194:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 195:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile
+ 196:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	(
+ 197:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	mov %0, %1												\n"	\
+ 198:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	msr basepri, %0											\n" \
+ 199:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	isb														\n" \
+ 200:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	dsb														\n" \
+ 201:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		:"=r" (ulNewBASEPRI) : "i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY ) : "memory"
+ 202:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	);
+ 203:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** }
+ 204:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 205:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 206:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 207:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** portFORCE_INLINE static uint32_t ulPortRaiseBASEPRI( void )
+ 151              		.loc 2 207 34 view .LVU33
+ 152              	.LBB13:
+ 208:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 209:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** uint32_t ulOriginalBASEPRI, ulNewBASEPRI;
+ARM GAS  /tmp/ccnvFXjJ.s 			page 13
+
+
+ 153              		.loc 2 209 1 view .LVU34
+ 210:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 211:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile
+ 154              		.loc 2 211 2 view .LVU35
+ 155              		.syntax unified
+ 156              	@ 211 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h" 1
+ 157 0002 EFF31184 			mrs r4, basepri											
+ 158 0006 4FF05003 		mov r3, #80												
+ 159 000a 83F31188 		msr basepri, r3											
+ 160 000e BFF36F8F 		isb														
+ 161 0012 BFF34F8F 		dsb														
+ 162              	
+ 163              	@ 0 "" 2
+ 164              	.LVL6:
+ 212:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	(
+ 213:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	mrs %0, basepri											\n" \
+ 214:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	mov %1, %2												\n"	\
+ 215:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	msr basepri, %1											\n" \
+ 216:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	isb														\n" \
+ 217:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		"	dsb														\n" \
+ 218:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 		:"=r" (ulOriginalBASEPRI), "=r" (ulNewBASEPRI) : "i" ( configMAX_SYSCALL_INTERRUPT_PRIORITY ) : "
+ 219:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	);
+ 220:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 221:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	/* This return will not be reached but is necessary to prevent compiler
+ 222:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	warnings. */
+ 223:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	return ulOriginalBASEPRI;
+ 165              		.loc 2 223 2 view .LVU36
+ 166              		.loc 2 223 2 is_stmt 0 view .LVU37
+ 167              		.thumb
+ 168              		.syntax unified
+ 169              	.LBE13:
+ 170              	.LBE12:
+ 316:Src/INS_task.c **** 
+ 317:Src/INS_task.c ****     //开启陀螺仪的DMA传输
+ 318:Src/INS_task.c ****     if( (gyro_update_flag & (1 << IMU_DR_SHFITS) ) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &
+ 171              		.loc 1 318 5 is_stmt 1 view .LVU38
+ 172              		.loc 1 318 27 is_stmt 0 view .LVU39
+ 173 0016 4E4B     		ldr	r3, .L24
+ 174 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 175              		.loc 1 318 7 view .LVU40
+ 176 001a 13F0010F 		tst	r3, #1
+ 177 001e 17D0     		beq	.L16
+ 178              		.loc 1 318 62 discriminator 1 view .LVU41
+ 179 0020 4C4B     		ldr	r3, .L24+4
+ 180 0022 9B6C     		ldr	r3, [r3, #72]
+ 181              		.loc 1 318 69 discriminator 1 view .LVU42
+ 182 0024 1B68     		ldr	r3, [r3]
+ 183              		.loc 1 318 79 discriminator 1 view .LVU43
+ 184 0026 1B68     		ldr	r3, [r3]
+ 185              		.loc 1 318 52 discriminator 1 view .LVU44
+ 186 0028 13F0010F 		tst	r3, #1
+ 187 002c 10D1     		bne	.L16
+ 188              		.loc 1 318 109 discriminator 2 view .LVU45
+ 189 002e 494B     		ldr	r3, .L24+4
+ 190 0030 DB6C     		ldr	r3, [r3, #76]
+ 191              		.loc 1 318 116 discriminator 2 view .LVU46
+ 192 0032 1B68     		ldr	r3, [r3]
+ARM GAS  /tmp/ccnvFXjJ.s 			page 14
+
+
+ 193              		.loc 1 318 126 discriminator 2 view .LVU47
+ 194 0034 1B68     		ldr	r3, [r3]
+ 195              		.loc 1 318 99 discriminator 2 view .LVU48
+ 196 0036 13F0010F 		tst	r3, #1
+ 197 003a 09D1     		bne	.L16
+ 319:Src/INS_task.c ****     && !(accel_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHF
+ 198              		.loc 1 319 28 view .LVU49
+ 199 003c 464B     		ldr	r3, .L24+8
+ 200 003e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 201              		.loc 1 319 5 view .LVU50
+ 202 0040 13F0020F 		tst	r3, #2
+ 203 0044 04D1     		bne	.L16
+ 204              		.loc 1 319 81 discriminator 1 view .LVU51
+ 205 0046 454B     		ldr	r3, .L24+12
+ 206 0048 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 207              		.loc 1 319 53 discriminator 1 view .LVU52
+ 208 004a 13F0020F 		tst	r3, #2
+ 209 004e 3CD0     		beq	.L21
+ 210              	.L16:
+ 320:Src/INS_task.c ****     {
+ 321:Src/INS_task.c ****         gyro_update_flag &= ~(1 << IMU_DR_SHFITS);
+ 322:Src/INS_task.c ****         gyro_update_flag |= (1 << IMU_SPI_SHFITS);
+ 323:Src/INS_task.c **** 
+ 324:Src/INS_task.c ****         HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_RESET);
+ 325:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+ 326:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 327:Src/INS_task.c ****         return;
+ 328:Src/INS_task.c ****     }
+ 329:Src/INS_task.c ****     //开启加速度计的DMA传输
+ 330:Src/INS_task.c ****     if((accel_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_EN) &&
+ 211              		.loc 1 330 5 is_stmt 1 view .LVU53
+ 212              		.loc 1 330 27 is_stmt 0 view .LVU54
+ 213 0050 414B     		ldr	r3, .L24+8
+ 214 0052 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 215              		.loc 1 330 7 view .LVU55
+ 216 0054 13F0010F 		tst	r3, #1
+ 217 0058 17D0     		beq	.L18
+ 218              		.loc 1 330 61 discriminator 1 view .LVU56
+ 219 005a 3E4B     		ldr	r3, .L24+4
+ 220 005c 9B6C     		ldr	r3, [r3, #72]
+ 221              		.loc 1 330 68 discriminator 1 view .LVU57
+ 222 005e 1B68     		ldr	r3, [r3]
+ 223              		.loc 1 330 78 discriminator 1 view .LVU58
+ 224 0060 1B68     		ldr	r3, [r3]
+ 225              		.loc 1 330 51 discriminator 1 view .LVU59
+ 226 0062 13F0010F 		tst	r3, #1
+ 227 0066 10D1     		bne	.L18
+ 228              		.loc 1 330 108 discriminator 2 view .LVU60
+ 229 0068 3A4B     		ldr	r3, .L24+4
+ 230 006a DB6C     		ldr	r3, [r3, #76]
+ 231              		.loc 1 330 115 discriminator 2 view .LVU61
+ 232 006c 1B68     		ldr	r3, [r3]
+ 233              		.loc 1 330 125 discriminator 2 view .LVU62
+ 234 006e 1B68     		ldr	r3, [r3]
+ 235              		.loc 1 330 98 discriminator 2 view .LVU63
+ 236 0070 13F0010F 		tst	r3, #1
+ 237 0074 09D1     		bne	.L18
+ARM GAS  /tmp/ccnvFXjJ.s 			page 15
+
+
+ 331:Src/INS_task.c ****     && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_temp_update_flag & (1 << IMU_SPI_SHFI
+ 238              		.loc 1 331 27 view .LVU64
+ 239 0076 364B     		ldr	r3, .L24
+ 240 0078 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 241              		.loc 1 331 5 view .LVU65
+ 242 007a 13F0020F 		tst	r3, #2
+ 243 007e 04D1     		bne	.L18
+ 244              		.loc 1 331 80 discriminator 1 view .LVU66
+ 245 0080 364B     		ldr	r3, .L24+12
+ 246 0082 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 247              		.loc 1 331 52 discriminator 1 view .LVU67
+ 248 0084 13F0020F 		tst	r3, #2
+ 249 0088 35D0     		beq	.L22
+ 250              	.L18:
+ 332:Src/INS_task.c ****     {
+ 333:Src/INS_task.c ****         accel_update_flag &= ~(1 << IMU_DR_SHFITS);
+ 334:Src/INS_task.c ****         accel_update_flag |= (1 << IMU_SPI_SHFITS);
+ 335:Src/INS_task.c **** 
+ 336:Src/INS_task.c ****         HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
+ 337:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf, SPI_DMA_ACCEL_LENGH
+ 338:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 339:Src/INS_task.c ****         return;
+ 340:Src/INS_task.c ****     }
+ 341:Src/INS_task.c ****     
+ 342:Src/INS_task.c **** 
+ 343:Src/INS_task.c **** 
+ 344:Src/INS_task.c ****     
+ 345:Src/INS_task.c ****     if((accel_temp_update_flag & (1 << IMU_DR_SHFITS)) && !(hspi1.hdmatx->Instance->CR & DMA_SxCR_E
+ 251              		.loc 1 345 5 is_stmt 1 view .LVU68
+ 252              		.loc 1 345 32 is_stmt 0 view .LVU69
+ 253 008a 344B     		ldr	r3, .L24+12
+ 254 008c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 255              		.loc 1 345 7 view .LVU70
+ 256 008e 13F0010F 		tst	r3, #1
+ 257 0092 17D0     		beq	.L19
+ 258              		.loc 1 345 66 discriminator 1 view .LVU71
+ 259 0094 2F4B     		ldr	r3, .L24+4
+ 260 0096 9B6C     		ldr	r3, [r3, #72]
+ 261              		.loc 1 345 73 discriminator 1 view .LVU72
+ 262 0098 1B68     		ldr	r3, [r3]
+ 263              		.loc 1 345 83 discriminator 1 view .LVU73
+ 264 009a 1B68     		ldr	r3, [r3]
+ 265              		.loc 1 345 56 discriminator 1 view .LVU74
+ 266 009c 13F0010F 		tst	r3, #1
+ 267 00a0 10D1     		bne	.L19
+ 268              		.loc 1 345 113 discriminator 2 view .LVU75
+ 269 00a2 2C4B     		ldr	r3, .L24+4
+ 270 00a4 DB6C     		ldr	r3, [r3, #76]
+ 271              		.loc 1 345 120 discriminator 2 view .LVU76
+ 272 00a6 1B68     		ldr	r3, [r3]
+ 273              		.loc 1 345 130 discriminator 2 view .LVU77
+ 274 00a8 1B68     		ldr	r3, [r3]
+ 275              		.loc 1 345 103 discriminator 2 view .LVU78
+ 276 00aa 13F0010F 		tst	r3, #1
+ 277 00ae 09D1     		bne	.L19
+ 346:Src/INS_task.c ****     && !(gyro_update_flag & (1 << IMU_SPI_SHFITS)) && !(accel_update_flag & (1 << IMU_SPI_SHFITS)))
+ 278              		.loc 1 346 27 view .LVU79
+ARM GAS  /tmp/ccnvFXjJ.s 			page 16
+
+
+ 279 00b0 274B     		ldr	r3, .L24
+ 280 00b2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 281              		.loc 1 346 5 view .LVU80
+ 282 00b4 13F0020F 		tst	r3, #2
+ 283 00b8 04D1     		bne	.L19
+ 284              		.loc 1 346 75 discriminator 1 view .LVU81
+ 285 00ba 274B     		ldr	r3, .L24+8
+ 286 00bc 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 287              		.loc 1 346 52 discriminator 1 view .LVU82
+ 288 00be 13F0020F 		tst	r3, #2
+ 289 00c2 2ED0     		beq	.L23
+ 290              	.L19:
+ 347:Src/INS_task.c ****     {
+ 348:Src/INS_task.c ****         accel_temp_update_flag &= ~(1 << IMU_DR_SHFITS);
+ 349:Src/INS_task.c ****         accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
+ 350:Src/INS_task.c **** 
+ 351:Src/INS_task.c ****         HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_RESET);
+ 352:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)accel_temp_dma_tx_buf, (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_A
+ 353:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 354:Src/INS_task.c ****         return;
+ 355:Src/INS_task.c ****     }
+ 356:Src/INS_task.c ****     taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 291              		.loc 1 356 5 is_stmt 1 view .LVU83
+ 292              	.LVL7:
+ 293              	.LBB14:
+ 294              	.LBI14:
+ 224:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** }
+ 225:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** /*-----------------------------------------------------------*/
+ 226:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 
+ 227:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** portFORCE_INLINE static void vPortSetBASEPRI( uint32_t ulNewMaskValue )
+ 295              		.loc 2 227 30 view .LVU84
+ 296              	.LBB15:
+ 228:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 229:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** 	__asm volatile
+ 297              		.loc 2 229 2 view .LVU85
+ 298              		.syntax unified
+ 299              	@ 229 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h" 1
+ 300 00c4 84F31188 			msr basepri, r4	
+ 301              	@ 0 "" 2
+ 302              	.LVL8:
+ 303              		.thumb
+ 304              		.syntax unified
+ 305              	.L15:
+ 306              		.loc 2 229 2 is_stmt 0 view .LVU86
+ 307              	.LBE15:
+ 308              	.LBE14:
+ 357:Src/INS_task.c **** }
+ 309              		.loc 1 357 1 view .LVU87
+ 310 00c8 10BD     		pop	{r4, pc}
+ 311              	.LVL9:
+ 312              	.L21:
+ 321:Src/INS_task.c ****         gyro_update_flag |= (1 << IMU_SPI_SHFITS);
+ 313              		.loc 1 321 9 is_stmt 1 view .LVU88
+ 321:Src/INS_task.c ****         gyro_update_flag |= (1 << IMU_SPI_SHFITS);
+ 314              		.loc 1 321 26 is_stmt 0 view .LVU89
+ 315 00ca 214B     		ldr	r3, .L24
+ 316 00cc 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ARM GAS  /tmp/ccnvFXjJ.s 			page 17
+
+
+ 317 00ce 02F0FE02 		and	r2, r2, #254
+ 318 00d2 1A70     		strb	r2, [r3]
+ 322:Src/INS_task.c **** 
+ 319              		.loc 1 322 9 is_stmt 1 view .LVU90
+ 322:Src/INS_task.c **** 
+ 320              		.loc 1 322 26 is_stmt 0 view .LVU91
+ 321 00d4 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 322 00d6 42F00202 		orr	r2, r2, #2
+ 323 00da 1A70     		strb	r2, [r3]
+ 324:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)gyro_dma_tx_buf, (uint32_t)gyro_dma_rx_buf, SPI_DMA_GYRO_LENGHT);
+ 324              		.loc 1 324 9 is_stmt 1 view .LVU92
+ 325 00dc 0022     		movs	r2, #0
+ 326 00de 0121     		movs	r1, #1
+ 327 00e0 1F48     		ldr	r0, .L24+16
+ 328 00e2 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 329              	.LVL10:
+ 325:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 330              		.loc 1 325 9 view .LVU93
+ 331 00e6 0822     		movs	r2, #8
+ 332 00e8 1E49     		ldr	r1, .L24+20
+ 333 00ea 1F48     		ldr	r0, .L24+24
+ 334 00ec FFF7FEFF 		bl	SPI1_DMA_enable
+ 335              	.LVL11:
+ 326:Src/INS_task.c ****         return;
+ 336              		.loc 1 326 9 view .LVU94
+ 337              	.LBB16:
+ 338              	.LBI16:
+ 227:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 339              		.loc 2 227 30 view .LVU95
+ 340              	.LBB17:
+ 341              		.loc 2 229 2 view .LVU96
+ 342              		.syntax unified
+ 343              	@ 229 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h" 1
+ 344 00f0 84F31188 			msr basepri, r4	
+ 345              	@ 0 "" 2
+ 346              	.LVL12:
+ 347              		.loc 2 229 2 is_stmt 0 view .LVU97
+ 348              		.thumb
+ 349              		.syntax unified
+ 350              	.LBE17:
+ 351              	.LBE16:
+ 327:Src/INS_task.c ****     }
+ 352              		.loc 1 327 9 is_stmt 1 view .LVU98
+ 353 00f4 E8E7     		b	.L15
+ 354              	.L22:
+ 333:Src/INS_task.c ****         accel_update_flag |= (1 << IMU_SPI_SHFITS);
+ 355              		.loc 1 333 9 view .LVU99
+ 333:Src/INS_task.c ****         accel_update_flag |= (1 << IMU_SPI_SHFITS);
+ 356              		.loc 1 333 27 is_stmt 0 view .LVU100
+ 357 00f6 184B     		ldr	r3, .L24+8
+ 358 00f8 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 359 00fa 02F0FE02 		and	r2, r2, #254
+ 360 00fe 1A70     		strb	r2, [r3]
+ 334:Src/INS_task.c **** 
+ 361              		.loc 1 334 9 is_stmt 1 view .LVU101
+ 334:Src/INS_task.c **** 
+ 362              		.loc 1 334 27 is_stmt 0 view .LVU102
+ARM GAS  /tmp/ccnvFXjJ.s 			page 18
+
+
+ 363 0100 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 364 0102 42F00202 		orr	r2, r2, #2
+ 365 0106 1A70     		strb	r2, [r3]
+ 336:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)accel_dma_tx_buf, (uint32_t)accel_dma_rx_buf, SPI_DMA_ACCEL_LENGH
+ 366              		.loc 1 336 9 is_stmt 1 view .LVU103
+ 367 0108 0022     		movs	r2, #0
+ 368 010a 1021     		movs	r1, #16
+ 369 010c 1748     		ldr	r0, .L24+28
+ 370 010e FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 371              	.LVL13:
+ 337:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 372              		.loc 1 337 9 view .LVU104
+ 373 0112 0922     		movs	r2, #9
+ 374 0114 1649     		ldr	r1, .L24+32
+ 375 0116 1748     		ldr	r0, .L24+36
+ 376 0118 FFF7FEFF 		bl	SPI1_DMA_enable
+ 377              	.LVL14:
+ 338:Src/INS_task.c ****         return;
+ 378              		.loc 1 338 9 view .LVU105
+ 379              	.LBB18:
+ 380              	.LBI18:
+ 227:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 381              		.loc 2 227 30 view .LVU106
+ 382              	.LBB19:
+ 383              		.loc 2 229 2 view .LVU107
+ 384              		.syntax unified
+ 385              	@ 229 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h" 1
+ 386 011c 84F31188 			msr basepri, r4	
+ 387              	@ 0 "" 2
+ 388              	.LVL15:
+ 389              		.loc 2 229 2 is_stmt 0 view .LVU108
+ 390              		.thumb
+ 391              		.syntax unified
+ 392              	.LBE19:
+ 393              	.LBE18:
+ 339:Src/INS_task.c ****     }
+ 394              		.loc 1 339 9 is_stmt 1 view .LVU109
+ 395 0120 D2E7     		b	.L15
+ 396              	.L23:
+ 348:Src/INS_task.c ****         accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
+ 397              		.loc 1 348 9 view .LVU110
+ 348:Src/INS_task.c ****         accel_temp_update_flag |= (1 << IMU_SPI_SHFITS);
+ 398              		.loc 1 348 32 is_stmt 0 view .LVU111
+ 399 0122 0E4B     		ldr	r3, .L24+12
+ 400 0124 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 401 0126 02F0FE02 		and	r2, r2, #254
+ 402 012a 1A70     		strb	r2, [r3]
+ 349:Src/INS_task.c **** 
+ 403              		.loc 1 349 9 is_stmt 1 view .LVU112
+ 349:Src/INS_task.c **** 
+ 404              		.loc 1 349 32 is_stmt 0 view .LVU113
+ 405 012c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 406 012e 42F00202 		orr	r2, r2, #2
+ 407 0132 1A70     		strb	r2, [r3]
+ 351:Src/INS_task.c ****         SPI1_DMA_enable((uint32_t)accel_temp_dma_tx_buf, (uint32_t)accel_temp_dma_rx_buf, SPI_DMA_A
+ 408              		.loc 1 351 9 is_stmt 1 view .LVU114
+ 409 0134 0022     		movs	r2, #0
+ARM GAS  /tmp/ccnvFXjJ.s 			page 19
+
+
+ 410 0136 1021     		movs	r1, #16
+ 411 0138 0C48     		ldr	r0, .L24+28
+ 412 013a FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 413              	.LVL16:
+ 352:Src/INS_task.c ****         taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+ 414              		.loc 1 352 9 view .LVU115
+ 415 013e 0422     		movs	r2, #4
+ 416 0140 0D49     		ldr	r1, .L24+40
+ 417 0142 0E48     		ldr	r0, .L24+44
+ 418 0144 FFF7FEFF 		bl	SPI1_DMA_enable
+ 419              	.LVL17:
+ 353:Src/INS_task.c ****         return;
+ 420              		.loc 1 353 9 view .LVU116
+ 421              	.LBB20:
+ 422              	.LBI20:
+ 227:Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h **** {
+ 423              		.loc 2 227 30 view .LVU117
+ 424              	.LBB21:
+ 425              		.loc 2 229 2 view .LVU118
+ 426              		.syntax unified
+ 427              	@ 229 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h" 1
+ 428 0148 84F31188 			msr basepri, r4	
+ 429              	@ 0 "" 2
+ 430              	.LVL18:
+ 431              		.loc 2 229 2 is_stmt 0 view .LVU119
+ 432              		.thumb
+ 433              		.syntax unified
+ 434              	.LBE21:
+ 435              	.LBE20:
+ 354:Src/INS_task.c ****     }
+ 436              		.loc 1 354 9 is_stmt 1 view .LVU120
+ 437 014c BCE7     		b	.L15
+ 438              	.L25:
+ 439 014e 00BF     		.align	2
+ 440              	.L24:
+ 441 0150 00000000 		.word	.LANCHOR3
+ 442 0154 00000000 		.word	hspi1
+ 443 0158 00000000 		.word	.LANCHOR4
+ 444 015c 00000000 		.word	.LANCHOR5
+ 445 0160 00040240 		.word	1073873920
+ 446 0164 00000000 		.word	.LANCHOR6
+ 447 0168 00000000 		.word	.LANCHOR7
+ 448 016c 00000240 		.word	1073872896
+ 449 0170 00000000 		.word	.LANCHOR8
+ 450 0174 00000000 		.word	.LANCHOR9
+ 451 0178 00000000 		.word	.LANCHOR10
+ 452 017c 00000000 		.word	.LANCHOR11
+ 453              		.cfi_endproc
+ 454              	.LFE141:
+ 456              		.section	.text.AHRS_init,"ax",%progbits
+ 457              		.align	1
+ 458              		.global	AHRS_init
+ 459              		.syntax unified
+ 460              		.thumb
+ 461              		.thumb_func
+ 463              	AHRS_init:
+ 464              	.LVL19:
+ARM GAS  /tmp/ccnvFXjJ.s 			page 20
+
+
+ 465              	.LFB136:
+ 192:Src/INS_task.c ****     quat[0] = 1.0f;
+ 466              		.loc 1 192 1 view -0
+ 467              		.cfi_startproc
+ 468              		@ args = 0, pretend = 0, frame = 0
+ 469              		@ frame_needed = 0, uses_anonymous_args = 0
+ 470              		@ link register save eliminated.
+ 193:Src/INS_task.c ****     quat[1] = 0.0f;
+ 471              		.loc 1 193 5 view .LVU122
+ 193:Src/INS_task.c ****     quat[1] = 0.0f;
+ 472              		.loc 1 193 13 is_stmt 0 view .LVU123
+ 473 0000 4FF07E53 		mov	r3, #1065353216
+ 474 0004 0360     		str	r3, [r0]	@ float
+ 194:Src/INS_task.c ****     quat[2] = 0.0f;
+ 475              		.loc 1 194 5 is_stmt 1 view .LVU124
+ 194:Src/INS_task.c ****     quat[2] = 0.0f;
+ 476              		.loc 1 194 13 is_stmt 0 view .LVU125
+ 477 0006 0023     		movs	r3, #0
+ 478 0008 4360     		str	r3, [r0, #4]	@ float
+ 195:Src/INS_task.c ****     quat[3] = 0.0f;
+ 479              		.loc 1 195 5 is_stmt 1 view .LVU126
+ 195:Src/INS_task.c ****     quat[3] = 0.0f;
+ 480              		.loc 1 195 13 is_stmt 0 view .LVU127
+ 481 000a 8360     		str	r3, [r0, #8]	@ float
+ 196:Src/INS_task.c **** 
+ 482              		.loc 1 196 5 is_stmt 1 view .LVU128
+ 196:Src/INS_task.c **** 
+ 483              		.loc 1 196 13 is_stmt 0 view .LVU129
+ 484 000c C360     		str	r3, [r0, #12]	@ float
+ 198:Src/INS_task.c **** 
+ 485              		.loc 1 198 1 view .LVU130
+ 486 000e 7047     		bx	lr
+ 487              		.cfi_endproc
+ 488              	.LFE136:
+ 490              		.section	.text.AHRS_update,"ax",%progbits
+ 491              		.align	1
+ 492              		.global	AHRS_update
+ 493              		.syntax unified
+ 494              		.thumb
+ 495              		.thumb_func
+ 497              	AHRS_update:
+ 498              	.LVL20:
+ 499              	.LFB137:
+ 201:Src/INS_task.c ****     MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1],
+ 500              		.loc 1 201 1 is_stmt 1 view -0
+ 501              		.cfi_startproc
+ 502              		@ args = 0, pretend = 0, frame = 0
+ 503              		@ frame_needed = 0, uses_anonymous_args = 0
+ 201:Src/INS_task.c ****     MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2], accel[0], accel[1], accel[2], mag[0], mag[1],
+ 504              		.loc 1 201 1 is_stmt 0 view .LVU132
+ 505 0000 08B5     		push	{r3, lr}
+ 506              	.LCFI2:
+ 507              		.cfi_def_cfa_offset 8
+ 508              		.cfi_offset 3, -8
+ 509              		.cfi_offset 14, -4
+ 202:Src/INS_task.c **** }
+ 510              		.loc 1 202 5 is_stmt 1 view .LVU133
+ARM GAS  /tmp/ccnvFXjJ.s 			page 21
+
+
+ 511 0002 93ED024A 		vldr.32	s8, [r3, #8]
+ 512 0006 D3ED013A 		vldr.32	s7, [r3, #4]
+ 513 000a 93ED003A 		vldr.32	s6, [r3]
+ 514 000e D2ED022A 		vldr.32	s5, [r2, #8]
+ 515 0012 92ED012A 		vldr.32	s4, [r2, #4]
+ 516 0016 D2ED001A 		vldr.32	s3, [r2]
+ 517 001a 91ED021A 		vldr.32	s2, [r1, #8]
+ 518 001e D1ED010A 		vldr.32	s1, [r1, #4]
+ 519 0022 91ED000A 		vldr.32	s0, [r1]
+ 520              	.LVL21:
+ 202:Src/INS_task.c **** }
+ 521              		.loc 1 202 5 is_stmt 0 view .LVU134
+ 522 0026 FFF7FEFF 		bl	MahonyAHRSupdate
+ 523              	.LVL22:
+ 203:Src/INS_task.c **** void get_angle(fp32 q[4], fp32 *yaw, fp32 *pitch, fp32 *roll)
+ 524              		.loc 1 203 1 view .LVU135
+ 525 002a 08BD     		pop	{r3, pc}
+ 526              		.cfi_endproc
+ 527              	.LFE137:
+ 529              		.global	__aeabi_f2d
+ 530              		.global	__aeabi_dmul
+ 531              		.global	__aeabi_d2f
+ 532              		.section	.text.get_angle,"ax",%progbits
+ 533              		.align	1
+ 534              		.global	get_angle
+ 535              		.syntax unified
+ 536              		.thumb
+ 537              		.thumb_func
+ 539              	get_angle:
+ 540              	.LVL23:
+ 541              	.LFB138:
+ 205:Src/INS_task.c ****     *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f)*57.3;
+ 542              		.loc 1 205 1 is_stmt 1 view -0
+ 543              		.cfi_startproc
+ 544              		@ args = 0, pretend = 0, frame = 0
+ 545              		@ frame_needed = 0, uses_anonymous_args = 0
+ 205:Src/INS_task.c ****     *yaw = atan2f(2.0f*(q[0]*q[3]+q[1]*q[2]), 2.0f*(q[0]*q[0]+q[1]*q[1])-1.0f)*57.3;
+ 546              		.loc 1 205 1 is_stmt 0 view .LVU137
+ 547 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 548              	.LCFI3:
+ 549              		.cfi_def_cfa_offset 24
+ 550              		.cfi_offset 3, -24
+ 551              		.cfi_offset 4, -20
+ 552              		.cfi_offset 5, -16
+ 553              		.cfi_offset 6, -12
+ 554              		.cfi_offset 7, -8
+ 555              		.cfi_offset 14, -4
+ 556 0002 2DED028B 		vpush.64	{d8}
+ 557              	.LCFI4:
+ 558              		.cfi_def_cfa_offset 32
+ 559              		.cfi_offset 80, -32
+ 560              		.cfi_offset 81, -28
+ 561 0006 0446     		mov	r4, r0
+ 562 0008 0F46     		mov	r7, r1
+ 563 000a 1646     		mov	r6, r2
+ 564 000c 1D46     		mov	r5, r3
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ARM GAS  /tmp/ccnvFXjJ.s 			page 22
+
+
+ 565              		.loc 1 206 5 is_stmt 1 view .LVU138
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 566              		.loc 1 206 26 is_stmt 0 view .LVU139
+ 567 000e D0ED000A 		vldr.32	s1, [r0]
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 568              		.loc 1 206 31 view .LVU140
+ 569 0012 90ED030A 		vldr.32	s0, [r0, #12]
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 570              		.loc 1 206 29 view .LVU141
+ 571 0016 20EE800A 		vmul.f32	s0, s1, s0
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 572              		.loc 1 206 36 view .LVU142
+ 573 001a D0ED017A 		vldr.32	s15, [r0, #4]
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 574              		.loc 1 206 41 view .LVU143
+ 575 001e 90ED027A 		vldr.32	s14, [r0, #8]
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 576              		.loc 1 206 39 view .LVU144
+ 577 0022 27EE877A 		vmul.f32	s14, s15, s14
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 578              		.loc 1 206 34 view .LVU145
+ 579 0026 30EE070A 		vadd.f32	s0, s0, s14
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 580              		.loc 1 206 57 view .LVU146
+ 581 002a 60EEA00A 		vmul.f32	s1, s1, s1
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 582              		.loc 1 206 67 view .LVU147
+ 583 002e 67EEA77A 		vmul.f32	s15, s15, s15
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 584              		.loc 1 206 62 view .LVU148
+ 585 0032 70EEA70A 		vadd.f32	s1, s1, s15
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 586              		.loc 1 206 51 view .LVU149
+ 587 0036 70EEA00A 		vadd.f32	s1, s1, s1
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 588              		.loc 1 206 12 view .LVU150
+ 589 003a B7EE008A 		vmov.f32	s16, #1.0e+0
+ 590 003e 70EEC80A 		vsub.f32	s1, s1, s16
+ 591 0042 30EE000A 		vadd.f32	s0, s0, s0
+ 592 0046 FFF7FEFF 		bl	atan2f
+ 593              	.LVL24:
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 594              		.loc 1 206 12 view .LVU151
+ 595 004a 10EE100A 		vmov	r0, s0
+ 596 004e FFF7FEFF 		bl	__aeabi_f2d
+ 597              	.LVL25:
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 598              		.loc 1 206 79 view .LVU152
+ 599 0052 29A3     		adr	r3, .L31
+ 600 0054 D3E90023 		ldrd	r2, [r3]
+ 601 0058 FFF7FEFF 		bl	__aeabi_dmul
+ 602              	.LVL26:
+ 603 005c FFF7FEFF 		bl	__aeabi_d2f
+ 604              	.LVL27:
+ 206:Src/INS_task.c ****     *pitch = asinf(-2.0f*(q[1]*q[3]-q[0]*q[2]))*57.3;
+ 605              		.loc 1 206 10 view .LVU153
+ 606 0060 3860     		str	r0, [r7]	@ float
+ARM GAS  /tmp/ccnvFXjJ.s 			page 23
+
+
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 607              		.loc 1 207 5 is_stmt 1 view .LVU154
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 608              		.loc 1 207 28 is_stmt 0 view .LVU155
+ 609 0062 D4ED017A 		vldr.32	s15, [r4, #4]
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 610              		.loc 1 207 33 view .LVU156
+ 611 0066 94ED030A 		vldr.32	s0, [r4, #12]
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 612              		.loc 1 207 31 view .LVU157
+ 613 006a 67EE807A 		vmul.f32	s15, s15, s0
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 614              		.loc 1 207 38 view .LVU158
+ 615 006e 94ED000A 		vldr.32	s0, [r4]
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 616              		.loc 1 207 43 view .LVU159
+ 617 0072 94ED027A 		vldr.32	s14, [r4, #8]
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 618              		.loc 1 207 41 view .LVU160
+ 619 0076 20EE070A 		vmul.f32	s0, s0, s14
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 620              		.loc 1 207 36 view .LVU161
+ 621 007a 77EEC07A 		vsub.f32	s15, s15, s0
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 622              		.loc 1 207 14 view .LVU162
+ 623 007e B8EE000A 		vmov.f32	s0, #-2.0e+0
+ 624 0082 27EE800A 		vmul.f32	s0, s15, s0
+ 625 0086 FFF7FEFF 		bl	asinf
+ 626              	.LVL28:
+ 627 008a 10EE100A 		vmov	r0, s0
+ 628 008e FFF7FEFF 		bl	__aeabi_f2d
+ 629              	.LVL29:
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 630              		.loc 1 207 48 view .LVU163
+ 631 0092 19A3     		adr	r3, .L31
+ 632 0094 D3E90023 		ldrd	r2, [r3]
+ 633 0098 FFF7FEFF 		bl	__aeabi_dmul
+ 634              	.LVL30:
+ 635 009c FFF7FEFF 		bl	__aeabi_d2f
+ 636              	.LVL31:
+ 207:Src/INS_task.c ****     *roll = atan2f(2.0f*(q[0]*q[1]+q[2]*q[3]),2.0f*(q[0]*q[0]+q[3]*q[3])-1.0f)*57.3;
+ 637              		.loc 1 207 12 view .LVU164
+ 638 00a0 3060     		str	r0, [r6]	@ float
+ 208:Src/INS_task.c **** }
+ 639              		.loc 1 208 5 is_stmt 1 view .LVU165
+ 208:Src/INS_task.c **** }
+ 640              		.loc 1 208 27 is_stmt 0 view .LVU166
+ 641 00a2 D4ED000A 		vldr.32	s1, [r4]
+ 208:Src/INS_task.c **** }
+ 642              		.loc 1 208 32 view .LVU167
+ 643 00a6 94ED010A 		vldr.32	s0, [r4, #4]
+ 208:Src/INS_task.c **** }
+ 644              		.loc 1 208 30 view .LVU168
+ 645 00aa 20EE800A 		vmul.f32	s0, s1, s0
+ 208:Src/INS_task.c **** }
+ 646              		.loc 1 208 37 view .LVU169
+ 647 00ae 94ED027A 		vldr.32	s14, [r4, #8]
+ARM GAS  /tmp/ccnvFXjJ.s 			page 24
+
+
+ 208:Src/INS_task.c **** }
+ 648              		.loc 1 208 42 view .LVU170
+ 649 00b2 D4ED037A 		vldr.32	s15, [r4, #12]
+ 208:Src/INS_task.c **** }
+ 650              		.loc 1 208 40 view .LVU171
+ 651 00b6 27EE277A 		vmul.f32	s14, s14, s15
+ 208:Src/INS_task.c **** }
+ 652              		.loc 1 208 35 view .LVU172
+ 653 00ba 30EE070A 		vadd.f32	s0, s0, s14
+ 208:Src/INS_task.c **** }
+ 654              		.loc 1 208 57 view .LVU173
+ 655 00be 60EEA00A 		vmul.f32	s1, s1, s1
+ 208:Src/INS_task.c **** }
+ 656              		.loc 1 208 67 view .LVU174
+ 657 00c2 67EEA77A 		vmul.f32	s15, s15, s15
+ 208:Src/INS_task.c **** }
+ 658              		.loc 1 208 62 view .LVU175
+ 659 00c6 70EEA70A 		vadd.f32	s1, s1, s15
+ 208:Src/INS_task.c **** }
+ 660              		.loc 1 208 51 view .LVU176
+ 661 00ca 70EEA00A 		vadd.f32	s1, s1, s1
+ 208:Src/INS_task.c **** }
+ 662              		.loc 1 208 13 view .LVU177
+ 663 00ce 70EEC80A 		vsub.f32	s1, s1, s16
+ 664 00d2 30EE000A 		vadd.f32	s0, s0, s0
+ 665 00d6 FFF7FEFF 		bl	atan2f
+ 666              	.LVL32:
+ 667 00da 10EE100A 		vmov	r0, s0
+ 668 00de FFF7FEFF 		bl	__aeabi_f2d
+ 669              	.LVL33:
+ 208:Src/INS_task.c **** }
+ 670              		.loc 1 208 79 view .LVU178
+ 671 00e2 05A3     		adr	r3, .L31
+ 672 00e4 D3E90023 		ldrd	r2, [r3]
+ 673 00e8 FFF7FEFF 		bl	__aeabi_dmul
+ 674              	.LVL34:
+ 675 00ec FFF7FEFF 		bl	__aeabi_d2f
+ 676              	.LVL35:
+ 208:Src/INS_task.c **** }
+ 677              		.loc 1 208 11 view .LVU179
+ 678 00f0 2860     		str	r0, [r5]	@ float
+ 209:Src/INS_task.c **** 
+ 679              		.loc 1 209 1 view .LVU180
+ 680 00f2 BDEC028B 		vldm	sp!, {d8}
+ 681              	.LCFI5:
+ 682              		.cfi_restore 80
+ 683              		.cfi_restore 81
+ 684              		.cfi_def_cfa_offset 24
+ 685 00f6 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 686              	.LVL36:
+ 687              	.L32:
+ 209:Src/INS_task.c **** 
+ 688              		.loc 1 209 1 view .LVU181
+ 689              		.align	3
+ 690              	.L31:
+ 691 00f8 66666666 		.word	1717986918
+ 692 00fc 66A64C40 		.word	1078765158
+ARM GAS  /tmp/ccnvFXjJ.s 			page 25
+
+
+ 693              		.cfi_endproc
+ 694              	.LFE138:
+ 696              		.section	.text.INS_task,"ax",%progbits
+ 697              		.align	1
+ 698              		.global	INS_task
+ 699              		.syntax unified
+ 700              		.thumb
+ 701              		.thumb_func
+ 703              	INS_task:
+ 704              	.LVL37:
+ 705              	.LFB135:
+ 119:Src/INS_task.c ****     //wait a time
+ 706              		.loc 1 119 1 is_stmt 1 view -0
+ 707              		.cfi_startproc
+ 708              		@ Volatile: function does not return.
+ 709              		@ args = 0, pretend = 0, frame = 0
+ 710              		@ frame_needed = 0, uses_anonymous_args = 0
+ 119:Src/INS_task.c ****     //wait a time
+ 711              		.loc 1 119 1 is_stmt 0 view .LVU183
+ 712 0000 08B5     		push	{r3, lr}
+ 713              	.LCFI6:
+ 714              		.cfi_def_cfa_offset 8
+ 715              		.cfi_offset 3, -8
+ 716              		.cfi_offset 14, -4
+ 121:Src/INS_task.c ****     while(BMI088_init())
+ 717              		.loc 1 121 5 is_stmt 1 view .LVU184
+ 718 0002 0720     		movs	r0, #7
+ 719              	.LVL38:
+ 121:Src/INS_task.c ****     while(BMI088_init())
+ 720              		.loc 1 121 5 is_stmt 0 view .LVU185
+ 721 0004 FFF7FEFF 		bl	osDelay
+ 722              	.LVL39:
+ 122:Src/INS_task.c ****     {
+ 723              		.loc 1 122 5 is_stmt 1 view .LVU186
+ 122:Src/INS_task.c ****     {
+ 724              		.loc 1 122 10 is_stmt 0 view .LVU187
+ 725 0008 02E0     		b	.L34
+ 726              	.L35:
+ 124:Src/INS_task.c ****     }
+ 727              		.loc 1 124 9 is_stmt 1 view .LVU188
+ 728 000a 6420     		movs	r0, #100
+ 729 000c FFF7FEFF 		bl	osDelay
+ 730              	.LVL40:
+ 731              	.L34:
+ 122:Src/INS_task.c ****     {
+ 732              		.loc 1 122 10 view .LVU189
+ 122:Src/INS_task.c ****     {
+ 733              		.loc 1 122 11 is_stmt 0 view .LVU190
+ 734 0010 FFF7FEFF 		bl	BMI088_init
+ 735              	.LVL41:
+ 122:Src/INS_task.c ****     {
+ 736              		.loc 1 122 10 view .LVU191
+ 737 0014 0028     		cmp	r0, #0
+ 738 0016 F8D1     		bne	.L35
+ 739 0018 02E0     		b	.L36
+ 740              	.L37:
+ 128:Src/INS_task.c ****     }
+ARM GAS  /tmp/ccnvFXjJ.s 			page 26
+
+
+ 741              		.loc 1 128 9 is_stmt 1 view .LVU192
+ 742 001a 6420     		movs	r0, #100
+ 743 001c FFF7FEFF 		bl	osDelay
+ 744              	.LVL42:
+ 745              	.L36:
+ 126:Src/INS_task.c ****     {
+ 746              		.loc 1 126 10 view .LVU193
+ 126:Src/INS_task.c ****     {
+ 747              		.loc 1 126 11 is_stmt 0 view .LVU194
+ 748 0020 FFF7FEFF 		bl	ist8310_init
+ 749              	.LVL43:
+ 126:Src/INS_task.c ****     {
+ 750              		.loc 1 126 10 view .LVU195
+ 751 0024 0028     		cmp	r0, #0
+ 752 0026 F8D1     		bne	.L37
+ 131:Src/INS_task.c **** 
+ 753              		.loc 1 131 5 is_stmt 1 view .LVU196
+ 754 0028 3E48     		ldr	r0, .L48
+ 755 002a 041D     		adds	r4, r0, #4
+ 756 002c 00F11002 		add	r2, r0, #16
+ 757 0030 2146     		mov	r1, r4
+ 758 0032 1430     		adds	r0, r0, #20
+ 759 0034 FFF7FEFF 		bl	BMI088_read
+ 760              	.LVL44:
+ 133:Src/INS_task.c **** 
+ 761              		.loc 1 133 5 view .LVU197
+ 762 0038 DFED3B0A 		vldr.32	s1, .L48+4
+ 763 003c 9FED3B0A 		vldr.32	s0, .L48+8
+ 764 0040 3B4A     		ldr	r2, .L48+12
+ 765 0042 0021     		movs	r1, #0
+ 766 0044 3B48     		ldr	r0, .L48+16
+ 767 0046 FFF7FEFF 		bl	PID_init
+ 768              	.LVL45:
+ 135:Src/INS_task.c **** 
+ 769              		.loc 1 135 5 view .LVU198
+ 770 004a 3B4A     		ldr	r2, .L48+20
+ 771 004c 2146     		mov	r1, r4
+ 772 004e 3B48     		ldr	r0, .L48+24
+ 773 0050 FFF7FEFF 		bl	AHRS_init
+ 774              	.LVL46:
+ 140:Src/INS_task.c **** 
+ 775              		.loc 1 140 5 view .LVU199
+ 140:Src/INS_task.c **** 
+ 776              		.loc 1 140 45 is_stmt 0 view .LVU200
+ 777 0054 0020     		movs	r0, #0
+ 778 0056 FFF7FEFF 		bl	pcTaskGetName
+ 779              	.LVL47:
+ 140:Src/INS_task.c **** 
+ 780              		.loc 1 140 30 view .LVU201
+ 781 005a FFF7FEFF 		bl	xTaskGetHandle
+ 782              	.LVL48:
+ 140:Src/INS_task.c **** 
+ 783              		.loc 1 140 28 view .LVU202
+ 784 005e 384B     		ldr	r3, .L48+28
+ 785 0060 1860     		str	r0, [r3]
+ 143:Src/INS_task.c ****     
+ 786              		.loc 1 143 5 is_stmt 1 view .LVU203
+ARM GAS  /tmp/ccnvFXjJ.s 			page 27
+
+
+ 143:Src/INS_task.c ****     
+ 787              		.loc 1 143 34 is_stmt 0 view .LVU204
+ 788 0062 3848     		ldr	r0, .L48+32
+ 789 0064 1023     		movs	r3, #16
+ 790 0066 C361     		str	r3, [r0, #28]
+ 145:Src/INS_task.c ****     {
+ 791              		.loc 1 145 5 is_stmt 1 view .LVU205
+ 145:Src/INS_task.c ****     {
+ 792              		.loc 1 145 9 is_stmt 0 view .LVU206
+ 793 0068 FFF7FEFF 		bl	HAL_SPI_Init
+ 794              	.LVL49:
+ 145:Src/INS_task.c ****     {
+ 795              		.loc 1 145 8 view .LVU207
+ 796 006c 40B9     		cbnz	r0, .L45
+ 797              	.L38:
+ 151:Src/INS_task.c **** 
+ 798              		.loc 1 151 5 is_stmt 1 view .LVU208
+ 799 006e 0822     		movs	r2, #8
+ 800 0070 3549     		ldr	r1, .L48+36
+ 801 0072 3648     		ldr	r0, .L48+40
+ 802 0074 FFF7FEFF 		bl	SPI1_DMA_init
+ 803              	.LVL50:
+ 153:Src/INS_task.c **** 
+ 804              		.loc 1 153 5 view .LVU209
+ 153:Src/INS_task.c **** 
+ 805              		.loc 1 153 24 is_stmt 0 view .LVU210
+ 806 0078 354B     		ldr	r3, .L48+44
+ 807 007a 0122     		movs	r2, #1
+ 808 007c 1A70     		strb	r2, [r3]
+ 809 007e 2AE0     		b	.L39
+ 810              	.L45:
+ 147:Src/INS_task.c ****     }
+ 811              		.loc 1 147 9 is_stmt 1 view .LVU211
+ 812 0080 FFF7FEFF 		bl	Error_Handler
+ 813              	.LVL51:
+ 814 0084 F3E7     		b	.L38
+ 815              	.L46:
+ 166:Src/INS_task.c ****             BMI088_gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET, bmi088_real_dat
+ 816              		.loc 1 166 13 view .LVU212
+ 166:Src/INS_task.c ****             BMI088_gyro_read_over(gyro_dma_rx_buf + BMI088_GYRO_RX_BUF_DATA_OFFSET, bmi088_real_dat
+ 817              		.loc 1 166 30 is_stmt 0 view .LVU213
+ 818 0086 334A     		ldr	r2, .L48+48
+ 819 0088 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 820 008a 03F0F703 		and	r3, r3, #247
+ 821 008e 1370     		strb	r3, [r2]
+ 167:Src/INS_task.c ****         }
+ 822              		.loc 1 167 13 is_stmt 1 view .LVU214
+ 823 0090 3149     		ldr	r1, .L48+52
+ 824 0092 3248     		ldr	r0, .L48+56
+ 825 0094 FFF7FEFF 		bl	BMI088_gyro_read_over
+ 826              	.LVL52:
+ 827 0098 29E0     		b	.L40
+ 828              	.L47:
+ 172:Src/INS_task.c ****             BMI088_accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, bmi088_real_
+ 829              		.loc 1 172 13 view .LVU215
+ 172:Src/INS_task.c ****             BMI088_accel_read_over(accel_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, bmi088_real_
+ 830              		.loc 1 172 31 is_stmt 0 view .LVU216
+ARM GAS  /tmp/ccnvFXjJ.s 			page 28
+
+
+ 831 009a 314A     		ldr	r2, .L48+60
+ 832 009c 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 833 009e 03F0FB03 		and	r3, r3, #251
+ 834 00a2 1370     		strb	r3, [r2]
+ 173:Src/INS_task.c ****         }
+ 835              		.loc 1 173 13 is_stmt 1 view .LVU217
+ 836 00a4 1F49     		ldr	r1, .L48
+ 837 00a6 01F12002 		add	r2, r1, #32
+ 838 00aa 0431     		adds	r1, r1, #4
+ 839 00ac 2D48     		ldr	r0, .L48+64
+ 840 00ae FFF7FEFF 		bl	BMI088_accel_read_over
+ 841              	.LVL53:
+ 842 00b2 21E0     		b	.L41
+ 843              	.L42:
+ 184:Src/INS_task.c ****         get_angle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSE
+ 844              		.loc 1 184 9 view .LVU218
+ 845 00b4 1B49     		ldr	r1, .L48
+ 846 00b6 214C     		ldr	r4, .L48+24
+ 847 00b8 1F4B     		ldr	r3, .L48+20
+ 848 00ba 0A1D     		adds	r2, r1, #4
+ 849 00bc 1431     		adds	r1, r1, #20
+ 850 00be 9FED2A0A 		vldr.32	s0, .L48+68
+ 851 00c2 2046     		mov	r0, r4
+ 852 00c4 FFF7FEFF 		bl	AHRS_update
+ 853              	.LVL54:
+ 185:Src/INS_task.c **** 
+ 854              		.loc 1 185 9 view .LVU219
+ 855 00c8 2849     		ldr	r1, .L48+72
+ 856 00ca 01F10803 		add	r3, r1, #8
+ 857 00ce 0A1D     		adds	r2, r1, #4
+ 858 00d0 2046     		mov	r0, r4
+ 859 00d2 FFF7FEFF 		bl	get_angle
+ 860              	.LVL55:
+ 155:Src/INS_task.c ****     {
+ 861              		.loc 1 155 11 view .LVU220
+ 862              	.L39:
+ 161:Src/INS_task.c **** 
+ 863              		.loc 1 161 9 discriminator 1 view .LVU221
+ 159:Src/INS_task.c ****         {
+ 864              		.loc 1 159 15 discriminator 1 view .LVU222
+ 159:Src/INS_task.c ****         {
+ 865              		.loc 1 159 16 is_stmt 0 discriminator 1 view .LVU223
+ 866 00d6 4FF0FF31 		mov	r1, #-1
+ 867 00da 0120     		movs	r0, #1
+ 868 00dc FFF7FEFF 		bl	ulTaskNotifyTake
+ 869              	.LVL56:
+ 159:Src/INS_task.c ****         {
+ 870              		.loc 1 159 15 discriminator 1 view .LVU224
+ 871 00e0 0128     		cmp	r0, #1
+ 872 00e2 F8D1     		bne	.L39
+ 164:Src/INS_task.c ****         {
+ 873              		.loc 1 164 9 is_stmt 1 view .LVU225
+ 164:Src/INS_task.c ****         {
+ 874              		.loc 1 164 29 is_stmt 0 view .LVU226
+ 875 00e4 1B4B     		ldr	r3, .L48+48
+ 876 00e6 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 164:Src/INS_task.c ****         {
+ARM GAS  /tmp/ccnvFXjJ.s 			page 29
+
+
+ 877              		.loc 1 164 11 view .LVU227
+ 878 00e8 13F0080F 		tst	r3, #8
+ 879 00ec CBD1     		bne	.L46
+ 880              	.L40:
+ 170:Src/INS_task.c ****         {
+ 881              		.loc 1 170 9 is_stmt 1 view .LVU228
+ 170:Src/INS_task.c ****         {
+ 882              		.loc 1 170 30 is_stmt 0 view .LVU229
+ 883 00ee 1C4B     		ldr	r3, .L48+60
+ 884 00f0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 170:Src/INS_task.c ****         {
+ 885              		.loc 1 170 11 view .LVU230
+ 886 00f2 13F0040F 		tst	r3, #4
+ 887 00f6 D0D1     		bne	.L47
+ 888              	.L41:
+ 176:Src/INS_task.c ****         {
+ 889              		.loc 1 176 9 is_stmt 1 view .LVU231
+ 176:Src/INS_task.c ****         {
+ 890              		.loc 1 176 35 is_stmt 0 view .LVU232
+ 891 00f8 1D4B     		ldr	r3, .L48+76
+ 892 00fa 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 176:Src/INS_task.c ****         {
+ 893              		.loc 1 176 11 view .LVU233
+ 894 00fc 13F0040F 		tst	r3, #4
+ 895 0100 D8D0     		beq	.L42
+ 178:Src/INS_task.c ****             BMI088_temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &
+ 896              		.loc 1 178 13 is_stmt 1 view .LVU234
+ 178:Src/INS_task.c ****             BMI088_temperature_read_over(accel_temp_dma_rx_buf + BMI088_ACCEL_RX_BUF_DATA_OFFSET, &
+ 897              		.loc 1 178 36 is_stmt 0 view .LVU235
+ 898 0102 1B4A     		ldr	r2, .L48+76
+ 899 0104 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 900 0106 03F0FB03 		and	r3, r3, #251
+ 901 010a 1370     		strb	r3, [r2]
+ 179:Src/INS_task.c ****             imu_temp_control(bmi088_real_data.temp);
+ 902              		.loc 1 179 13 is_stmt 1 view .LVU236
+ 903 010c 054C     		ldr	r4, .L48
+ 904 010e 04F11001 		add	r1, r4, #16
+ 905 0112 1848     		ldr	r0, .L48+80
+ 906 0114 FFF7FEFF 		bl	BMI088_temperature_read_over
+ 907              	.LVL57:
+ 180:Src/INS_task.c ****         }
+ 908              		.loc 1 180 13 view .LVU237
+ 909 0118 94ED040A 		vldr.32	s0, [r4, #16]
+ 910 011c FFF7FEFF 		bl	imu_temp_control
+ 911              	.LVL58:
+ 912 0120 C8E7     		b	.L42
+ 913              	.L49:
+ 914 0122 00BF     		.align	2
+ 915              	.L48:
+ 916 0124 00000000 		.word	.LANCHOR12
+ 917 0128 00808945 		.word	1166639104
+ 918 012c 00A08C45 		.word	1166843904
+ 919 0130 00000000 		.word	.LANCHOR13
+ 920 0134 00000000 		.word	.LANCHOR1
+ 921 0138 04000000 		.word	.LANCHOR14+4
+ 922 013c 00000000 		.word	.LANCHOR15
+ 923 0140 00000000 		.word	.LANCHOR16
+ARM GAS  /tmp/ccnvFXjJ.s 			page 30
+
+
+ 924 0144 00000000 		.word	hspi1
+ 925 0148 00000000 		.word	.LANCHOR6
+ 926 014c 00000000 		.word	.LANCHOR7
+ 927 0150 00000000 		.word	.LANCHOR17
+ 928 0154 00000000 		.word	.LANCHOR3
+ 929 0158 14000000 		.word	.LANCHOR12+20
+ 930 015c 01000000 		.word	.LANCHOR6+1
+ 931 0160 00000000 		.word	.LANCHOR4
+ 932 0164 02000000 		.word	.LANCHOR8+2
+ 933 0168 6F12833A 		.word	981668463
+ 934 016c 00000000 		.word	.LANCHOR18
+ 935 0170 00000000 		.word	.LANCHOR5
+ 936 0174 02000000 		.word	.LANCHOR10+2
+ 937              		.cfi_endproc
+ 938              	.LFE135:
+ 940              		.section	.text.HAL_GPIO_EXTI_Callback,"ax",%progbits
+ 941              		.align	1
+ 942              		.global	HAL_GPIO_EXTI_Callback
+ 943              		.syntax unified
+ 944              		.thumb
+ 945              		.thumb_func
+ 947              	HAL_GPIO_EXTI_Callback:
+ 948              	.LVL59:
+ 949              	.LFB140:
+ 257:Src/INS_task.c ****     if(GPIO_Pin == INT1_ACCEL_Pin)
+ 950              		.loc 1 257 1 view -0
+ 951              		.cfi_startproc
+ 952              		@ args = 0, pretend = 0, frame = 0
+ 953              		@ frame_needed = 0, uses_anonymous_args = 0
+ 257:Src/INS_task.c ****     if(GPIO_Pin == INT1_ACCEL_Pin)
+ 954              		.loc 1 257 1 is_stmt 0 view .LVU239
+ 955 0000 10B5     		push	{r4, lr}
+ 956              	.LCFI7:
+ 957              		.cfi_def_cfa_offset 8
+ 958              		.cfi_offset 4, -8
+ 959              		.cfi_offset 14, -4
+ 258:Src/INS_task.c ****     {
+ 960              		.loc 1 258 5 is_stmt 1 view .LVU240
+ 258:Src/INS_task.c ****     {
+ 961              		.loc 1 258 7 is_stmt 0 view .LVU241
+ 962 0002 1028     		cmp	r0, #16
+ 963 0004 06D0     		beq	.L56
+ 267:Src/INS_task.c ****     {
+ 964              		.loc 1 267 10 is_stmt 1 view .LVU242
+ 267:Src/INS_task.c ****     {
+ 965              		.loc 1 267 12 is_stmt 0 view .LVU243
+ 966 0006 2028     		cmp	r0, #32
+ 967 0008 15D0     		beq	.L57
+ 275:Src/INS_task.c ****     {
+ 968              		.loc 1 275 10 is_stmt 1 view .LVU244
+ 275:Src/INS_task.c ****     {
+ 969              		.loc 1 275 12 is_stmt 0 view .LVU245
+ 970 000a 0828     		cmp	r0, #8
+ 971 000c 1FD0     		beq	.L58
+ 287:Src/INS_task.c ****     {
+ 972              		.loc 1 287 10 is_stmt 1 view .LVU246
+ 287:Src/INS_task.c ****     {
+ARM GAS  /tmp/ccnvFXjJ.s 			page 31
+
+
+ 973              		.loc 1 287 12 is_stmt 0 view .LVU247
+ 974 000e 0128     		cmp	r0, #1
+ 975 0010 35D0     		beq	.L59
+ 976              	.LVL60:
+ 977              	.L50:
+ 300:Src/INS_task.c **** 
+ 978              		.loc 1 300 1 view .LVU248
+ 979 0012 10BD     		pop	{r4, pc}
+ 980              	.LVL61:
+ 981              	.L56:
+ 260:Src/INS_task.c ****         accel_temp_update_flag |= 1 << IMU_DR_SHFITS;
+ 982              		.loc 1 260 9 is_stmt 1 view .LVU249
+ 260:Src/INS_task.c ****         accel_temp_update_flag |= 1 << IMU_DR_SHFITS;
+ 983              		.loc 1 260 27 is_stmt 0 view .LVU250
+ 984 0014 264A     		ldr	r2, .L60
+ 985 0016 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 986 0018 43F00103 		orr	r3, r3, #1
+ 987 001c 1370     		strb	r3, [r2]
+ 261:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 988              		.loc 1 261 9 is_stmt 1 view .LVU251
+ 261:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 989              		.loc 1 261 32 is_stmt 0 view .LVU252
+ 990 001e 254A     		ldr	r2, .L60+4
+ 991 0020 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 992 0022 43F00103 		orr	r3, r3, #1
+ 993 0026 1370     		strb	r3, [r2]
+ 262:Src/INS_task.c ****         {
+ 994              		.loc 1 262 9 is_stmt 1 view .LVU253
+ 262:Src/INS_task.c ****         {
+ 995              		.loc 1 262 12 is_stmt 0 view .LVU254
+ 996 0028 234B     		ldr	r3, .L60+8
+ 997 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 262:Src/INS_task.c ****         {
+ 998              		.loc 1 262 11 view .LVU255
+ 999 002c 002B     		cmp	r3, #0
+ 1000 002e F0D0     		beq	.L50
+ 264:Src/INS_task.c ****         }
+ 1001              		.loc 1 264 13 is_stmt 1 view .LVU256
+ 1002 0030 FFF7FEFF 		bl	imu_cmd_spi_dma
+ 1003              	.LVL62:
+ 264:Src/INS_task.c ****         }
+ 1004              		.loc 1 264 13 is_stmt 0 view .LVU257
+ 1005 0034 EDE7     		b	.L50
+ 1006              	.LVL63:
+ 1007              	.L57:
+ 269:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 1008              		.loc 1 269 9 is_stmt 1 view .LVU258
+ 269:Src/INS_task.c ****         if(imu_start_dma_flag)
+ 1009              		.loc 1 269 26 is_stmt 0 view .LVU259
+ 1010 0036 214A     		ldr	r2, .L60+12
+ 1011 0038 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 1012 003a 43F00103 		orr	r3, r3, #1
+ 1013 003e 1370     		strb	r3, [r2]
+ 270:Src/INS_task.c ****         {
+ 1014              		.loc 1 270 9 is_stmt 1 view .LVU260
+ 270:Src/INS_task.c ****         {
+ 1015              		.loc 1 270 12 is_stmt 0 view .LVU261
+ARM GAS  /tmp/ccnvFXjJ.s 			page 32
+
+
+ 1016 0040 1D4B     		ldr	r3, .L60+8
+ 1017 0042 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 270:Src/INS_task.c ****         {
+ 1018              		.loc 1 270 11 view .LVU262
+ 1019 0044 002B     		cmp	r3, #0
+ 1020 0046 E4D0     		beq	.L50
+ 272:Src/INS_task.c ****         }
+ 1021              		.loc 1 272 13 is_stmt 1 view .LVU263
+ 1022 0048 FFF7FEFF 		bl	imu_cmd_spi_dma
+ 1023              	.LVL64:
+ 272:Src/INS_task.c ****         }
+ 1024              		.loc 1 272 13 is_stmt 0 view .LVU264
+ 1025 004c E1E7     		b	.L50
+ 1026              	.LVL65:
+ 1027              	.L58:
+ 277:Src/INS_task.c **** 
+ 1028              		.loc 1 277 9 is_stmt 1 view .LVU265
+ 277:Src/INS_task.c **** 
+ 1029              		.loc 1 277 25 is_stmt 0 view .LVU266
+ 1030 004e 1C4A     		ldr	r2, .L60+16
+ 1031 0050 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 1032 0052 43F00103 		orr	r3, r3, #1
+ 1033 0056 1370     		strb	r3, [r2]
+ 279:Src/INS_task.c ****         {
+ 1034              		.loc 1 279 9 is_stmt 1 view .LVU267
+ 279:Src/INS_task.c ****         {
+ 1035              		.loc 1 279 28 is_stmt 0 view .LVU268
+ 1036 0058 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 1037 005a 03F00103 		and	r3, r3, #1
+ 1038 005e 1370     		strb	r3, [r2]
+ 279:Src/INS_task.c ****         {
+ 1039              		.loc 1 279 11 view .LVU269
+ 1040 0060 002B     		cmp	r3, #0
+ 1041 0062 D6D0     		beq	.L50
+ 281:Src/INS_task.c ****             mag_update_flag |= (1 << IMU_SPI_SHFITS);
+ 1042              		.loc 1 281 13 is_stmt 1 view .LVU270
+ 281:Src/INS_task.c ****             mag_update_flag |= (1 << IMU_SPI_SHFITS);
+ 1043              		.loc 1 281 29 is_stmt 0 view .LVU271
+ 1044 0064 1346     		mov	r3, r2
+ 1045 0066 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 1046 0068 02F0FE02 		and	r2, r2, #254
+ 1047 006c 1A70     		strb	r2, [r3]
+ 282:Src/INS_task.c **** 
+ 1048              		.loc 1 282 13 is_stmt 1 view .LVU272
+ 282:Src/INS_task.c **** 
+ 1049              		.loc 1 282 29 is_stmt 0 view .LVU273
+ 1050 006e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1051 0070 42F00202 		orr	r2, r2, #2
+ 1052 0074 1A70     		strb	r2, [r3]
+ 284:Src/INS_task.c ****         }
+ 1053              		.loc 1 284 13 is_stmt 1 view .LVU274
+ 1054 0076 1348     		ldr	r0, .L60+20
+ 1055              	.LVL66:
+ 284:Src/INS_task.c ****         }
+ 1056              		.loc 1 284 13 is_stmt 0 view .LVU275
+ 1057 0078 FFF7FEFF 		bl	ist8310_read_mag
+ 1058              	.LVL67:
+ARM GAS  /tmp/ccnvFXjJ.s 			page 33
+
+
+ 1059 007c C9E7     		b	.L50
+ 1060              	.LVL68:
+ 1061              	.L59:
+ 291:Src/INS_task.c ****         {
+ 1062              		.loc 1 291 9 is_stmt 1 view .LVU276
+ 291:Src/INS_task.c ****         {
+ 1063              		.loc 1 291 13 is_stmt 0 view .LVU277
+ 1064 007e FFF7FEFF 		bl	xTaskGetSchedulerState
+ 1065              	.LVL69:
+ 291:Src/INS_task.c ****         {
+ 1066              		.loc 1 291 12 view .LVU278
+ 1067 0082 0128     		cmp	r0, #1
+ 1068 0084 C5D0     		beq	.L50
+ 1069              	.LBB22:
+ 293:Src/INS_task.c ****             vTaskNotifyGiveFromISR(INS_task_local_handler, &xHigherPriorityTaskWoken);
+ 1070              		.loc 1 293 13 is_stmt 1 view .LVU279
+ 294:Src/INS_task.c ****             portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+ 1071              		.loc 1 294 13 view .LVU280
+ 1072 0086 104C     		ldr	r4, .L60+24
+ 1073 0088 2146     		mov	r1, r4
+ 1074 008a 104B     		ldr	r3, .L60+28
+ 1075 008c 1868     		ldr	r0, [r3]
+ 1076 008e FFF7FEFF 		bl	vTaskNotifyGiveFromISR
+ 1077              	.LVL70:
+ 295:Src/INS_task.c ****         }
+ 1078              		.loc 1 295 13 view .LVU281
+ 1079 0092 2368     		ldr	r3, [r4]
+ 1080 0094 002B     		cmp	r3, #0
+ 1081 0096 BCD0     		beq	.L50
+ 295:Src/INS_task.c ****         }
+ 1082              		.loc 1 295 13 discriminator 1 view .LVU282
+ 1083 0098 4FF0E023 		mov	r3, #-536813568
+ 1084 009c 4FF08052 		mov	r2, #268435456
+ 1085 00a0 C3F8042D 		str	r2, [r3, #3332]
+ 295:Src/INS_task.c ****         }
+ 1086              		.loc 1 295 13 discriminator 1 view .LVU283
+ 1087              		.syntax unified
+ 1088              	@ 295 "Src/INS_task.c" 1
+ 1089 00a4 BFF34F8F 		dsb
+ 1090              	@ 0 "" 2
+ 295:Src/INS_task.c ****         }
+ 1091              		.loc 1 295 13 discriminator 1 view .LVU284
+ 1092              	@ 295 "Src/INS_task.c" 1
+ 1093 00a8 BFF36F8F 		isb
+ 1094              	@ 0 "" 2
+ 295:Src/INS_task.c ****         }
+ 1095              		.loc 1 295 57 discriminator 1 view .LVU285
+ 1096              		.thumb
+ 1097              		.syntax unified
+ 1098              	.LBE22:
+ 300:Src/INS_task.c **** 
+ 1099              		.loc 1 300 1 is_stmt 0 discriminator 1 view .LVU286
+ 1100 00ac B1E7     		b	.L50
+ 1101              	.L61:
+ 1102 00ae 00BF     		.align	2
+ 1103              	.L60:
+ 1104 00b0 00000000 		.word	.LANCHOR4
+ARM GAS  /tmp/ccnvFXjJ.s 			page 34
+
+
+ 1105 00b4 00000000 		.word	.LANCHOR5
+ 1106 00b8 00000000 		.word	.LANCHOR17
+ 1107 00bc 00000000 		.word	.LANCHOR3
+ 1108 00c0 00000000 		.word	.LANCHOR19
+ 1109 00c4 04000000 		.word	.LANCHOR14+4
+ 1110 00c8 00000000 		.word	.LANCHOR20
+ 1111 00cc 00000000 		.word	.LANCHOR16
+ 1112              		.cfi_endproc
+ 1113              	.LFE140:
+ 1115              		.section	.text.DMA2_Stream2_IRQHandler,"ax",%progbits
+ 1116              		.align	1
+ 1117              		.global	DMA2_Stream2_IRQHandler
+ 1118              		.syntax unified
+ 1119              		.thumb
+ 1120              		.thumb_func
+ 1122              	DMA2_Stream2_IRQHandler:
+ 1123              	.LFB142:
+ 358:Src/INS_task.c **** 
+ 359:Src/INS_task.c **** 
+ 360:Src/INS_task.c **** void DMA2_Stream2_IRQHandler(void)
+ 361:Src/INS_task.c **** {
+ 1124              		.loc 1 361 1 is_stmt 1 view -0
+ 1125              		.cfi_startproc
+ 1126              		@ args = 0, pretend = 0, frame = 0
+ 1127              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1128 0000 08B5     		push	{r3, lr}
+ 1129              	.LCFI8:
+ 1130              		.cfi_def_cfa_offset 8
+ 1131              		.cfi_offset 3, -8
+ 1132              		.cfi_offset 14, -4
+ 362:Src/INS_task.c **** 
+ 363:Src/INS_task.c ****     if(__HAL_DMA_GET_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx)) != RESET)
+ 1133              		.loc 1 363 5 view .LVU288
+ 1134              		.loc 1 363 8 is_stmt 0 view .LVU289
+ 1135 0002 AD4B     		ldr	r3, .L191
+ 1136 0004 DB6C     		ldr	r3, [r3, #76]
+ 1137 0006 1B68     		ldr	r3, [r3]
+ 1138              		.loc 1 363 84 view .LVU290
+ 1139 0008 AC4A     		ldr	r2, .L191+4
+ 1140 000a 9342     		cmp	r3, r2
+ 1141 000c 40F29D80 		bls	.L63
+ 1142              		.loc 1 363 8 discriminator 1 view .LVU291
+ 1143 0010 583A     		subs	r2, r2, #88
+ 1144 0012 5268     		ldr	r2, [r2, #4]
+ 1145 0014 AA49     		ldr	r1, .L191+8
+ 1146 0016 8B42     		cmp	r3, r1
+ 1147 0018 31D0     		beq	.L83
+ 1148              		.loc 1 363 8 discriminator 3 view .LVU292
+ 1149 001a 01F58061 		add	r1, r1, #1024
+ 1150 001e 8B42     		cmp	r3, r1
+ 1151 0020 78D0     		beq	.L84
+ 1152              		.loc 1 363 8 discriminator 5 view .LVU293
+ 1153 0022 A1F56871 		sub	r1, r1, #928
+ 1154 0026 8B42     		cmp	r3, r1
+ 1155 0028 76D0     		beq	.L85
+ 1156              		.loc 1 363 8 discriminator 7 view .LVU294
+ 1157 002a 01F58061 		add	r1, r1, #1024
+ARM GAS  /tmp/ccnvFXjJ.s 			page 35
+
+
+ 1158 002e 8B42     		cmp	r3, r1
+ 1159 0030 74D0     		beq	.L86
+ 1160              		.loc 1 363 8 discriminator 9 view .LVU295
+ 1161 0032 A1F58961 		sub	r1, r1, #1096
+ 1162 0036 8B42     		cmp	r3, r1
+ 1163 0038 72D0     		beq	.L87
+ 1164              		.loc 1 363 8 discriminator 11 view .LVU296
+ 1165 003a 01F58061 		add	r1, r1, #1024
+ 1166 003e 8B42     		cmp	r3, r1
+ 1167 0040 71D0     		beq	.L88
+ 1168              		.loc 1 363 8 discriminator 13 view .LVU297
+ 1169 0042 A1F56871 		sub	r1, r1, #928
+ 1170 0046 8B42     		cmp	r3, r1
+ 1171 0048 70D0     		beq	.L89
+ 1172              		.loc 1 363 8 discriminator 15 view .LVU298
+ 1173 004a 01F58061 		add	r1, r1, #1024
+ 1174 004e 8B42     		cmp	r3, r1
+ 1175 0050 6FD0     		beq	.L90
+ 1176              		.loc 1 363 8 discriminator 17 view .LVU299
+ 1177 0052 A1F58961 		sub	r1, r1, #1096
+ 1178 0056 8B42     		cmp	r3, r1
+ 1179 0058 6ED0     		beq	.L91
+ 1180              		.loc 1 363 8 discriminator 19 view .LVU300
+ 1181 005a 01F58061 		add	r1, r1, #1024
+ 1182 005e 8B42     		cmp	r3, r1
+ 1183 0060 6DD0     		beq	.L92
+ 1184              		.loc 1 363 8 discriminator 21 view .LVU301
+ 1185 0062 A1F56871 		sub	r1, r1, #928
+ 1186 0066 8B42     		cmp	r3, r1
+ 1187 0068 6CD0     		beq	.L93
+ 1188              		.loc 1 363 8 discriminator 23 view .LVU302
+ 1189 006a 01F58061 		add	r1, r1, #1024
+ 1190 006e 8B42     		cmp	r3, r1
+ 1191 0070 02D0     		beq	.L180
+ 1192              		.loc 1 363 8 view .LVU303
+ 1193 0072 4FF00061 		mov	r1, #134217728
+ 1194 0076 03E0     		b	.L64
+ 1195              	.L180:
+ 1196 0078 4FF40011 		mov	r1, #2097152
+ 1197 007c 00E0     		b	.L64
+ 1198              	.L83:
+ 1199 007e 2021     		movs	r1, #32
+ 1200              	.L64:
+ 1201              		.loc 1 363 84 discriminator 50 view .LVU304
+ 1202 0080 0A42     		tst	r2, r1
+ 1203 0082 14BF     		ite	ne
+ 1204 0084 0122     		movne	r2, #1
+ 1205 0086 0022     		moveq	r2, #0
+ 1206              	.L65:
+ 1207              		.loc 1 363 7 discriminator 204 view .LVU305
+ 1208 0088 002A     		cmp	r2, #0
+ 1209 008a 00F0A481 		beq	.L62
+ 364:Src/INS_task.c ****     {
+ 365:Src/INS_task.c ****         __HAL_DMA_CLEAR_FLAG(hspi1.hdmarx, __HAL_DMA_GET_TC_FLAG_INDEX(hspi1.hdmarx));
+ 1210              		.loc 1 365 9 is_stmt 1 view .LVU306
+ 1211 008e 8B4A     		ldr	r2, .L191+4
+ 1212 0090 9342     		cmp	r3, r2
+ARM GAS  /tmp/ccnvFXjJ.s 			page 36
+
+
+ 1213 0092 40F2BC81 		bls	.L72
+ 1214              		.loc 1 365 9 is_stmt 0 discriminator 1 view .LVU307
+ 1215 0096 A2F58962 		sub	r2, r2, #1096
+ 1216 009a 9342     		cmp	r3, r2
+ 1217 009c 00F07181 		beq	.L131
+ 1218              		.loc 1 365 9 discriminator 3 view .LVU308
+ 1219 00a0 02F58062 		add	r2, r2, #1024
+ 1220 00a4 9342     		cmp	r3, r2
+ 1221 00a6 00F09781 		beq	.L132
+ 1222              		.loc 1 365 9 discriminator 5 view .LVU309
+ 1223 00aa A2F56872 		sub	r2, r2, #928
+ 1224 00ae 9342     		cmp	r3, r2
+ 1225 00b0 00F09481 		beq	.L133
+ 1226              		.loc 1 365 9 discriminator 7 view .LVU310
+ 1227 00b4 02F58062 		add	r2, r2, #1024
+ 1228 00b8 9342     		cmp	r3, r2
+ 1229 00ba 00F09181 		beq	.L134
+ 1230              		.loc 1 365 9 discriminator 9 view .LVU311
+ 1231 00be A2F58962 		sub	r2, r2, #1096
+ 1232 00c2 9342     		cmp	r3, r2
+ 1233 00c4 00F08E81 		beq	.L135
+ 1234              		.loc 1 365 9 discriminator 11 view .LVU312
+ 1235 00c8 02F58062 		add	r2, r2, #1024
+ 1236 00cc 9342     		cmp	r3, r2
+ 1237 00ce 00F08C81 		beq	.L136
+ 1238              		.loc 1 365 9 discriminator 13 view .LVU313
+ 1239 00d2 A2F56872 		sub	r2, r2, #928
+ 1240 00d6 9342     		cmp	r3, r2
+ 1241 00d8 00F08A81 		beq	.L137
+ 1242              		.loc 1 365 9 discriminator 15 view .LVU314
+ 1243 00dc 02F58062 		add	r2, r2, #1024
+ 1244 00e0 9342     		cmp	r3, r2
+ 1245 00e2 00F08881 		beq	.L138
+ 1246              		.loc 1 365 9 discriminator 17 view .LVU315
+ 1247 00e6 A2F58962 		sub	r2, r2, #1096
+ 1248 00ea 9342     		cmp	r3, r2
+ 1249 00ec 00F08681 		beq	.L139
+ 1250              		.loc 1 365 9 discriminator 19 view .LVU316
+ 1251 00f0 02F58062 		add	r2, r2, #1024
+ 1252 00f4 9342     		cmp	r3, r2
+ 1253 00f6 00F08481 		beq	.L140
+ 1254              		.loc 1 365 9 discriminator 21 view .LVU317
+ 1255 00fa A2F56872 		sub	r2, r2, #928
+ 1256 00fe 9342     		cmp	r3, r2
+ 1257 0100 00F08281 		beq	.L141
+ 1258              		.loc 1 365 9 discriminator 23 view .LVU318
+ 1259 0104 02F58062 		add	r2, r2, #1024
+ 1260 0108 9342     		cmp	r3, r2
+ 1261 010a 00F03781 		beq	.L181
+ 1262              		.loc 1 365 9 view .LVU319
+ 1263 010e 4FF00062 		mov	r2, #134217728
+ 1264 0112 37E1     		b	.L73
+ 1265              	.L84:
+ 363:Src/INS_task.c ****     {
+ 1266              		.loc 1 363 8 view .LVU320
+ 1267 0114 2021     		movs	r1, #32
+ 1268 0116 B3E7     		b	.L64
+ARM GAS  /tmp/ccnvFXjJ.s 			page 37
+
+
+ 1269              	.L85:
+ 1270 0118 2021     		movs	r1, #32
+ 1271 011a B1E7     		b	.L64
+ 1272              	.L86:
+ 1273 011c 2021     		movs	r1, #32
+ 1274 011e AFE7     		b	.L64
+ 1275              	.L87:
+ 1276 0120 4FF40061 		mov	r1, #2048
+ 1277 0124 ACE7     		b	.L64
+ 1278              	.L88:
+ 1279 0126 4FF40061 		mov	r1, #2048
+ 1280 012a A9E7     		b	.L64
+ 1281              	.L89:
+ 1282 012c 4FF40061 		mov	r1, #2048
+ 1283 0130 A6E7     		b	.L64
+ 1284              	.L90:
+ 1285 0132 4FF40061 		mov	r1, #2048
+ 1286 0136 A3E7     		b	.L64
+ 1287              	.L91:
+ 1288 0138 4FF40011 		mov	r1, #2097152
+ 1289 013c A0E7     		b	.L64
+ 1290              	.L92:
+ 1291 013e 4FF40011 		mov	r1, #2097152
+ 1292 0142 9DE7     		b	.L64
+ 1293              	.L93:
+ 1294 0144 4FF40011 		mov	r1, #2097152
+ 1295 0148 9AE7     		b	.L64
+ 1296              	.L63:
+ 363:Src/INS_task.c ****     {
+ 1297              		.loc 1 363 84 discriminator 2 view .LVU321
+ 1298 014a 5E4A     		ldr	r2, .L191+12
+ 1299 014c 9342     		cmp	r3, r2
+ 1300 014e 58D9     		bls	.L66
+ 363:Src/INS_task.c ****     {
+ 1301              		.loc 1 363 8 discriminator 52 view .LVU322
+ 1302 0150 02F55272 		add	r2, r2, #840
+ 1303 0154 1268     		ldr	r2, [r2]
+ 1304 0156 5A49     		ldr	r1, .L191+8
+ 1305 0158 8B42     		cmp	r3, r1
+ 1306 015a 31D0     		beq	.L95
+ 363:Src/INS_task.c ****     {
+ 1307              		.loc 1 363 8 discriminator 54 view .LVU323
+ 1308 015c 01F58061 		add	r1, r1, #1024
+ 1309 0160 8B42     		cmp	r3, r1
+ 1310 0162 33D0     		beq	.L96
+ 363:Src/INS_task.c ****     {
+ 1311              		.loc 1 363 8 discriminator 56 view .LVU324
+ 1312 0164 A1F56871 		sub	r1, r1, #928
+ 1313 0168 8B42     		cmp	r3, r1
+ 1314 016a 31D0     		beq	.L97
+ 363:Src/INS_task.c ****     {
+ 1315              		.loc 1 363 8 discriminator 58 view .LVU325
+ 1316 016c 01F58061 		add	r1, r1, #1024
+ 1317 0170 8B42     		cmp	r3, r1
+ 1318 0172 2FD0     		beq	.L98
+ 363:Src/INS_task.c ****     {
+ 1319              		.loc 1 363 8 discriminator 60 view .LVU326
+ARM GAS  /tmp/ccnvFXjJ.s 			page 38
+
+
+ 1320 0174 A1F58961 		sub	r1, r1, #1096
+ 1321 0178 8B42     		cmp	r3, r1
+ 1322 017a 2DD0     		beq	.L99
+ 363:Src/INS_task.c ****     {
+ 1323              		.loc 1 363 8 discriminator 62 view .LVU327
+ 1324 017c 01F58061 		add	r1, r1, #1024
+ 1325 0180 8B42     		cmp	r3, r1
+ 1326 0182 2CD0     		beq	.L100
+ 363:Src/INS_task.c ****     {
+ 1327              		.loc 1 363 8 discriminator 64 view .LVU328
+ 1328 0184 A1F56871 		sub	r1, r1, #928
+ 1329 0188 8B42     		cmp	r3, r1
+ 1330 018a 2BD0     		beq	.L101
+ 363:Src/INS_task.c ****     {
+ 1331              		.loc 1 363 8 discriminator 66 view .LVU329
+ 1332 018c 01F58061 		add	r1, r1, #1024
+ 1333 0190 8B42     		cmp	r3, r1
+ 1334 0192 2AD0     		beq	.L102
+ 363:Src/INS_task.c ****     {
+ 1335              		.loc 1 363 8 discriminator 68 view .LVU330
+ 1336 0194 A1F58961 		sub	r1, r1, #1096
+ 1337 0198 8B42     		cmp	r3, r1
+ 1338 019a 29D0     		beq	.L103
+ 363:Src/INS_task.c ****     {
+ 1339              		.loc 1 363 8 discriminator 70 view .LVU331
+ 1340 019c 01F58061 		add	r1, r1, #1024
+ 1341 01a0 8B42     		cmp	r3, r1
+ 1342 01a2 28D0     		beq	.L104
+ 363:Src/INS_task.c ****     {
+ 1343              		.loc 1 363 8 discriminator 72 view .LVU332
+ 1344 01a4 A1F56871 		sub	r1, r1, #928
+ 1345 01a8 8B42     		cmp	r3, r1
+ 1346 01aa 27D0     		beq	.L105
+ 363:Src/INS_task.c ****     {
+ 1347              		.loc 1 363 8 discriminator 74 view .LVU333
+ 1348 01ac 01F58061 		add	r1, r1, #1024
+ 1349 01b0 8B42     		cmp	r3, r1
+ 1350 01b2 02D0     		beq	.L182
+ 363:Src/INS_task.c ****     {
+ 1351              		.loc 1 363 8 view .LVU334
+ 1352 01b4 4FF00061 		mov	r1, #134217728
+ 1353 01b8 03E0     		b	.L67
+ 1354              	.L182:
+ 1355 01ba 4FF40011 		mov	r1, #2097152
+ 1356 01be 00E0     		b	.L67
+ 1357              	.L95:
+ 1358 01c0 2021     		movs	r1, #32
+ 1359              	.L67:
+ 363:Src/INS_task.c ****     {
+ 1360              		.loc 1 363 84 discriminator 101 view .LVU335
+ 1361 01c2 0A42     		tst	r2, r1
+ 1362 01c4 14BF     		ite	ne
+ 1363 01c6 0122     		movne	r2, #1
+ 1364 01c8 0022     		moveq	r2, #0
+ 1365 01ca 5DE7     		b	.L65
+ 1366              	.L96:
+ 363:Src/INS_task.c ****     {
+ARM GAS  /tmp/ccnvFXjJ.s 			page 39
+
+
+ 1367              		.loc 1 363 8 view .LVU336
+ 1368 01cc 2021     		movs	r1, #32
+ 1369 01ce F8E7     		b	.L67
+ 1370              	.L97:
+ 1371 01d0 2021     		movs	r1, #32
+ 1372 01d2 F6E7     		b	.L67
+ 1373              	.L98:
+ 1374 01d4 2021     		movs	r1, #32
+ 1375 01d6 F4E7     		b	.L67
+ 1376              	.L99:
+ 1377 01d8 4FF40061 		mov	r1, #2048
+ 1378 01dc F1E7     		b	.L67
+ 1379              	.L100:
+ 1380 01de 4FF40061 		mov	r1, #2048
+ 1381 01e2 EEE7     		b	.L67
+ 1382              	.L101:
+ 1383 01e4 4FF40061 		mov	r1, #2048
+ 1384 01e8 EBE7     		b	.L67
+ 1385              	.L102:
+ 1386 01ea 4FF40061 		mov	r1, #2048
+ 1387 01ee E8E7     		b	.L67
+ 1388              	.L103:
+ 1389 01f0 4FF40011 		mov	r1, #2097152
+ 1390 01f4 E5E7     		b	.L67
+ 1391              	.L104:
+ 1392 01f6 4FF40011 		mov	r1, #2097152
+ 1393 01fa E2E7     		b	.L67
+ 1394              	.L105:
+ 1395 01fc 4FF40011 		mov	r1, #2097152
+ 1396 0200 DFE7     		b	.L67
+ 1397              	.L66:
+ 363:Src/INS_task.c ****     {
+ 1398              		.loc 1 363 84 discriminator 53 view .LVU337
+ 1399 0202 314A     		ldr	r2, .L191+16
+ 1400 0204 9342     		cmp	r3, r2
+ 1401 0206 61D9     		bls	.L68
+ 363:Src/INS_task.c ****     {
+ 1402              		.loc 1 363 8 discriminator 103 view .LVU338
+ 1403 0208 583A     		subs	r2, r2, #88
+ 1404 020a 5268     		ldr	r2, [r2, #4]
+ 1405 020c 2C49     		ldr	r1, .L191+8
+ 1406 020e 8B42     		cmp	r3, r1
+ 1407 0210 31D0     		beq	.L107
+ 363:Src/INS_task.c ****     {
+ 1408              		.loc 1 363 8 discriminator 105 view .LVU339
+ 1409 0212 01F58061 		add	r1, r1, #1024
+ 1410 0216 8B42     		cmp	r3, r1
+ 1411 0218 33D0     		beq	.L108
+ 363:Src/INS_task.c ****     {
+ 1412              		.loc 1 363 8 discriminator 107 view .LVU340
+ 1413 021a A1F56871 		sub	r1, r1, #928
+ 1414 021e 8B42     		cmp	r3, r1
+ 1415 0220 31D0     		beq	.L109
+ 363:Src/INS_task.c ****     {
+ 1416              		.loc 1 363 8 discriminator 109 view .LVU341
+ 1417 0222 01F58061 		add	r1, r1, #1024
+ 1418 0226 8B42     		cmp	r3, r1
+ARM GAS  /tmp/ccnvFXjJ.s 			page 40
+
+
+ 1419 0228 2FD0     		beq	.L110
+ 363:Src/INS_task.c ****     {
+ 1420              		.loc 1 363 8 discriminator 111 view .LVU342
+ 1421 022a A1F58961 		sub	r1, r1, #1096
+ 1422 022e 8B42     		cmp	r3, r1
+ 1423 0230 2DD0     		beq	.L111
+ 363:Src/INS_task.c ****     {
+ 1424              		.loc 1 363 8 discriminator 113 view .LVU343
+ 1425 0232 01F58061 		add	r1, r1, #1024
+ 1426 0236 8B42     		cmp	r3, r1
+ 1427 0238 2CD0     		beq	.L112
+ 363:Src/INS_task.c ****     {
+ 1428              		.loc 1 363 8 discriminator 115 view .LVU344
+ 1429 023a A1F56871 		sub	r1, r1, #928
+ 1430 023e 8B42     		cmp	r3, r1
+ 1431 0240 2BD0     		beq	.L113
+ 363:Src/INS_task.c ****     {
+ 1432              		.loc 1 363 8 discriminator 117 view .LVU345
+ 1433 0242 01F58061 		add	r1, r1, #1024
+ 1434 0246 8B42     		cmp	r3, r1
+ 1435 0248 2AD0     		beq	.L114
+ 363:Src/INS_task.c ****     {
+ 1436              		.loc 1 363 8 discriminator 119 view .LVU346
+ 1437 024a A1F58961 		sub	r1, r1, #1096
+ 1438 024e 8B42     		cmp	r3, r1
+ 1439 0250 29D0     		beq	.L115
+ 363:Src/INS_task.c ****     {
+ 1440              		.loc 1 363 8 discriminator 121 view .LVU347
+ 1441 0252 01F58061 		add	r1, r1, #1024
+ 1442 0256 8B42     		cmp	r3, r1
+ 1443 0258 28D0     		beq	.L116
+ 363:Src/INS_task.c ****     {
+ 1444              		.loc 1 363 8 discriminator 123 view .LVU348
+ 1445 025a A1F56871 		sub	r1, r1, #928
+ 1446 025e 8B42     		cmp	r3, r1
+ 1447 0260 27D0     		beq	.L117
+ 363:Src/INS_task.c ****     {
+ 1448              		.loc 1 363 8 discriminator 125 view .LVU349
+ 1449 0262 01F58061 		add	r1, r1, #1024
+ 1450 0266 8B42     		cmp	r3, r1
+ 1451 0268 02D0     		beq	.L183
+ 363:Src/INS_task.c ****     {
+ 1452              		.loc 1 363 8 view .LVU350
+ 1453 026a 4FF00061 		mov	r1, #134217728
+ 1454 026e 03E0     		b	.L69
+ 1455              	.L183:
+ 1456 0270 4FF40011 		mov	r1, #2097152
+ 1457 0274 00E0     		b	.L69
+ 1458              	.L107:
+ 1459 0276 2021     		movs	r1, #32
+ 1460              	.L69:
+ 363:Src/INS_task.c ****     {
+ 1461              		.loc 1 363 84 discriminator 152 view .LVU351
+ 1462 0278 0A42     		tst	r2, r1
+ 1463 027a 14BF     		ite	ne
+ 1464 027c 0122     		movne	r2, #1
+ 1465 027e 0022     		moveq	r2, #0
+ARM GAS  /tmp/ccnvFXjJ.s 			page 41
+
+
+ 1466 0280 02E7     		b	.L65
+ 1467              	.L108:
+ 363:Src/INS_task.c ****     {
+ 1468              		.loc 1 363 8 view .LVU352
+ 1469 0282 2021     		movs	r1, #32
+ 1470 0284 F8E7     		b	.L69
+ 1471              	.L109:
+ 1472 0286 2021     		movs	r1, #32
+ 1473 0288 F6E7     		b	.L69
+ 1474              	.L110:
+ 1475 028a 2021     		movs	r1, #32
+ 1476 028c F4E7     		b	.L69
+ 1477              	.L111:
+ 1478 028e 4FF40061 		mov	r1, #2048
+ 1479 0292 F1E7     		b	.L69
+ 1480              	.L112:
+ 1481 0294 4FF40061 		mov	r1, #2048
+ 1482 0298 EEE7     		b	.L69
+ 1483              	.L113:
+ 1484 029a 4FF40061 		mov	r1, #2048
+ 1485 029e EBE7     		b	.L69
+ 1486              	.L114:
+ 1487 02a0 4FF40061 		mov	r1, #2048
+ 1488 02a4 E8E7     		b	.L69
+ 1489              	.L115:
+ 1490 02a6 4FF40011 		mov	r1, #2097152
+ 1491 02aa E5E7     		b	.L69
+ 1492              	.L116:
+ 1493 02ac 4FF40011 		mov	r1, #2097152
+ 1494 02b0 E2E7     		b	.L69
+ 1495              	.L117:
+ 1496 02b2 4FF40011 		mov	r1, #2097152
+ 1497 02b6 DFE7     		b	.L69
+ 1498              	.L192:
+ 1499              		.align	2
+ 1500              	.L191:
+ 1501 02b8 00000000 		.word	hspi1
+ 1502 02bc 58640240 		.word	1073898584
+ 1503 02c0 10600240 		.word	1073897488
+ 1504 02c4 B8600240 		.word	1073897656
+ 1505 02c8 58600240 		.word	1073897560
+ 1506              	.L68:
+ 363:Src/INS_task.c ****     {
+ 1507              		.loc 1 363 8 discriminator 104 view .LVU353
+ 1508 02cc A74A     		ldr	r2, .L193
+ 1509 02ce 1268     		ldr	r2, [r2]
+ 1510 02d0 A749     		ldr	r1, .L193+4
+ 1511 02d2 8B42     		cmp	r3, r1
+ 1512 02d4 31D0     		beq	.L119
+ 363:Src/INS_task.c ****     {
+ 1513              		.loc 1 363 8 discriminator 154 view .LVU354
+ 1514 02d6 01F58061 		add	r1, r1, #1024
+ 1515 02da 8B42     		cmp	r3, r1
+ 1516 02dc 33D0     		beq	.L120
+ 363:Src/INS_task.c ****     {
+ 1517              		.loc 1 363 8 discriminator 156 view .LVU355
+ 1518 02de A1F56871 		sub	r1, r1, #928
+ARM GAS  /tmp/ccnvFXjJ.s 			page 42
+
+
+ 1519 02e2 8B42     		cmp	r3, r1
+ 1520 02e4 31D0     		beq	.L121
+ 363:Src/INS_task.c ****     {
+ 1521              		.loc 1 363 8 discriminator 158 view .LVU356
+ 1522 02e6 01F58061 		add	r1, r1, #1024
+ 1523 02ea 8B42     		cmp	r3, r1
+ 1524 02ec 2FD0     		beq	.L122
+ 363:Src/INS_task.c ****     {
+ 1525              		.loc 1 363 8 discriminator 160 view .LVU357
+ 1526 02ee A1F58961 		sub	r1, r1, #1096
+ 1527 02f2 8B42     		cmp	r3, r1
+ 1528 02f4 2DD0     		beq	.L123
+ 363:Src/INS_task.c ****     {
+ 1529              		.loc 1 363 8 discriminator 162 view .LVU358
+ 1530 02f6 01F58061 		add	r1, r1, #1024
+ 1531 02fa 8B42     		cmp	r3, r1
+ 1532 02fc 2CD0     		beq	.L124
+ 363:Src/INS_task.c ****     {
+ 1533              		.loc 1 363 8 discriminator 164 view .LVU359
+ 1534 02fe A1F56871 		sub	r1, r1, #928
+ 1535 0302 8B42     		cmp	r3, r1
+ 1536 0304 2BD0     		beq	.L125
+ 363:Src/INS_task.c ****     {
+ 1537              		.loc 1 363 8 discriminator 166 view .LVU360
+ 1538 0306 01F58061 		add	r1, r1, #1024
+ 1539 030a 8B42     		cmp	r3, r1
+ 1540 030c 2AD0     		beq	.L126
+ 363:Src/INS_task.c ****     {
+ 1541              		.loc 1 363 8 discriminator 168 view .LVU361
+ 1542 030e A1F58961 		sub	r1, r1, #1096
+ 1543 0312 8B42     		cmp	r3, r1
+ 1544 0314 29D0     		beq	.L127
+ 363:Src/INS_task.c ****     {
+ 1545              		.loc 1 363 8 discriminator 170 view .LVU362
+ 1546 0316 01F58061 		add	r1, r1, #1024
+ 1547 031a 8B42     		cmp	r3, r1
+ 1548 031c 28D0     		beq	.L128
+ 363:Src/INS_task.c ****     {
+ 1549              		.loc 1 363 8 discriminator 172 view .LVU363
+ 1550 031e A1F56871 		sub	r1, r1, #928
+ 1551 0322 8B42     		cmp	r3, r1
+ 1552 0324 27D0     		beq	.L129
+ 363:Src/INS_task.c ****     {
+ 1553              		.loc 1 363 8 discriminator 174 view .LVU364
+ 1554 0326 01F58061 		add	r1, r1, #1024
+ 1555 032a 8B42     		cmp	r3, r1
+ 1556 032c 02D0     		beq	.L184
+ 363:Src/INS_task.c ****     {
+ 1557              		.loc 1 363 8 view .LVU365
+ 1558 032e 4FF00061 		mov	r1, #134217728
+ 1559 0332 03E0     		b	.L70
+ 1560              	.L184:
+ 1561 0334 4FF40011 		mov	r1, #2097152
+ 1562 0338 00E0     		b	.L70
+ 1563              	.L119:
+ 1564 033a 2021     		movs	r1, #32
+ 1565              	.L70:
+ARM GAS  /tmp/ccnvFXjJ.s 			page 43
+
+
+ 363:Src/INS_task.c ****     {
+ 1566              		.loc 1 363 84 discriminator 201 view .LVU366
+ 1567 033c 0A42     		tst	r2, r1
+ 1568 033e 14BF     		ite	ne
+ 1569 0340 0122     		movne	r2, #1
+ 1570 0342 0022     		moveq	r2, #0
+ 1571 0344 A0E6     		b	.L65
+ 1572              	.L120:
+ 363:Src/INS_task.c ****     {
+ 1573              		.loc 1 363 8 view .LVU367
+ 1574 0346 2021     		movs	r1, #32
+ 1575 0348 F8E7     		b	.L70
+ 1576              	.L121:
+ 1577 034a 2021     		movs	r1, #32
+ 1578 034c F6E7     		b	.L70
+ 1579              	.L122:
+ 1580 034e 2021     		movs	r1, #32
+ 1581 0350 F4E7     		b	.L70
+ 1582              	.L123:
+ 1583 0352 4FF40061 		mov	r1, #2048
+ 1584 0356 F1E7     		b	.L70
+ 1585              	.L124:
+ 1586 0358 4FF40061 		mov	r1, #2048
+ 1587 035c EEE7     		b	.L70
+ 1588              	.L125:
+ 1589 035e 4FF40061 		mov	r1, #2048
+ 1590 0362 EBE7     		b	.L70
+ 1591              	.L126:
+ 1592 0364 4FF40061 		mov	r1, #2048
+ 1593 0368 E8E7     		b	.L70
+ 1594              	.L127:
+ 1595 036a 4FF40011 		mov	r1, #2097152
+ 1596 036e E5E7     		b	.L70
+ 1597              	.L128:
+ 1598 0370 4FF40011 		mov	r1, #2097152
+ 1599 0374 E2E7     		b	.L70
+ 1600              	.L129:
+ 1601 0376 4FF40011 		mov	r1, #2097152
+ 1602 037a DFE7     		b	.L70
+ 1603              	.L181:
+ 1604              		.loc 1 365 9 view .LVU368
+ 1605 037c 4FF40012 		mov	r2, #2097152
+ 1606 0380 00E0     		b	.L73
+ 1607              	.L131:
+ 1608 0382 2022     		movs	r2, #32
+ 1609              	.L73:
+ 1610              		.loc 1 365 9 discriminator 50 view .LVU369
+ 1611 0384 7B4B     		ldr	r3, .L193+8
+ 1612 0386 DA60     		str	r2, [r3, #12]
+ 1613              	.L74:
+ 366:Src/INS_task.c **** 
+ 367:Src/INS_task.c ****         //gyro read over
+ 368:Src/INS_task.c ****         //陀螺仪读取完毕
+ 369:Src/INS_task.c ****         if(gyro_update_flag & (1 << IMU_SPI_SHFITS))
+ 1614              		.loc 1 369 9 is_stmt 1 view .LVU370
+ 1615              		.loc 1 369 29 is_stmt 0 view .LVU371
+ 1616 0388 7B4B     		ldr	r3, .L193+12
+ARM GAS  /tmp/ccnvFXjJ.s 			page 44
+
+
+ 1617 038a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1618              		.loc 1 369 11 view .LVU372
+ 1619 038c 13F0020F 		tst	r3, #2
+ 1620 0390 40F05281 		bne	.L185
+ 1621              	.L80:
+ 370:Src/INS_task.c ****         {
+ 371:Src/INS_task.c ****             gyro_update_flag &= ~(1 << IMU_SPI_SHFITS);
+ 372:Src/INS_task.c ****             gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 373:Src/INS_task.c **** 
+ 374:Src/INS_task.c ****             HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);
+ 375:Src/INS_task.c ****             
+ 376:Src/INS_task.c ****         }
+ 377:Src/INS_task.c **** 
+ 378:Src/INS_task.c ****         //accel read over
+ 379:Src/INS_task.c ****         //加速度计读取完毕
+ 380:Src/INS_task.c ****         if(accel_update_flag & (1 << IMU_SPI_SHFITS))
+ 1622              		.loc 1 380 9 is_stmt 1 view .LVU373
+ 1623              		.loc 1 380 30 is_stmt 0 view .LVU374
+ 1624 0394 794B     		ldr	r3, .L193+16
+ 1625 0396 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1626              		.loc 1 380 11 view .LVU375
+ 1627 0398 13F0020F 		tst	r3, #2
+ 1628 039c 40F05B81 		bne	.L186
+ 1629              	.L81:
+ 381:Src/INS_task.c ****         {
+ 382:Src/INS_task.c ****             accel_update_flag &= ~(1 << IMU_SPI_SHFITS);
+ 383:Src/INS_task.c ****             accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 384:Src/INS_task.c **** 
+ 385:Src/INS_task.c ****             HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
+ 386:Src/INS_task.c ****         }
+ 387:Src/INS_task.c ****         //temperature read over
+ 388:Src/INS_task.c ****         //温度读取完毕
+ 389:Src/INS_task.c ****         if(accel_temp_update_flag & (1 << IMU_SPI_SHFITS))
+ 1630              		.loc 1 389 9 is_stmt 1 view .LVU376
+ 1631              		.loc 1 389 35 is_stmt 0 view .LVU377
+ 1632 03a0 774B     		ldr	r3, .L193+20
+ 1633 03a2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1634              		.loc 1 389 11 view .LVU378
+ 1635 03a4 13F0020F 		tst	r3, #2
+ 1636 03a8 40F06481 		bne	.L187
+ 1637              	.L82:
+ 390:Src/INS_task.c ****         {
+ 391:Src/INS_task.c ****             accel_temp_update_flag &= ~(1 << IMU_SPI_SHFITS);
+ 392:Src/INS_task.c ****             accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 393:Src/INS_task.c **** 
+ 394:Src/INS_task.c ****             HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);
+ 395:Src/INS_task.c ****         }
+ 396:Src/INS_task.c **** 
+ 397:Src/INS_task.c ****         imu_cmd_spi_dma();
+ 1638              		.loc 1 397 9 is_stmt 1 view .LVU379
+ 1639 03ac FFF7FEFF 		bl	imu_cmd_spi_dma
+ 1640              	.LVL71:
+ 398:Src/INS_task.c **** 
+ 399:Src/INS_task.c ****         if(gyro_update_flag & (1 << IMU_UPDATE_SHFITS))
+ 1641              		.loc 1 399 9 view .LVU380
+ 1642              		.loc 1 399 29 is_stmt 0 view .LVU381
+ 1643 03b0 714B     		ldr	r3, .L193+12
+ARM GAS  /tmp/ccnvFXjJ.s 			page 45
+
+
+ 1644 03b2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1645              		.loc 1 399 11 view .LVU382
+ 1646 03b4 13F0040F 		tst	r3, #4
+ 1647 03b8 0DD0     		beq	.L62
+ 400:Src/INS_task.c ****         {
+ 401:Src/INS_task.c ****             gyro_update_flag &= ~(1 << IMU_UPDATE_SHFITS);
+ 1648              		.loc 1 401 13 is_stmt 1 view .LVU383
+ 1649              		.loc 1 401 30 is_stmt 0 view .LVU384
+ 1650 03ba 6F4B     		ldr	r3, .L193+12
+ 1651 03bc 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1652 03be 02F0FB02 		and	r2, r2, #251
+ 1653 03c2 1A70     		strb	r2, [r3]
+ 402:Src/INS_task.c ****             gyro_update_flag |= (1 << IMU_NOTIFY_SHFITS);
+ 1654              		.loc 1 402 13 is_stmt 1 view .LVU385
+ 1655              		.loc 1 402 30 is_stmt 0 view .LVU386
+ 1656 03c4 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1657 03c6 42F00802 		orr	r2, r2, #8
+ 1658 03ca 1A70     		strb	r2, [r3]
+ 403:Src/INS_task.c ****             __HAL_GPIO_EXTI_GENERATE_SWIT(GPIO_PIN_0);
+ 1659              		.loc 1 403 13 is_stmt 1 view .LVU387
+ 1660 03cc 6D4A     		ldr	r2, .L193+24
+ 1661 03ce 1369     		ldr	r3, [r2, #16]
+ 1662 03d0 43F00103 		orr	r3, r3, #1
+ 1663 03d4 1361     		str	r3, [r2, #16]
+ 1664              	.L62:
+ 404:Src/INS_task.c ****         }
+ 405:Src/INS_task.c ****     }
+ 406:Src/INS_task.c **** }
+ 1665              		.loc 1 406 1 is_stmt 0 view .LVU388
+ 1666 03d6 08BD     		pop	{r3, pc}
+ 1667              	.L132:
+ 365:Src/INS_task.c **** 
+ 1668              		.loc 1 365 9 view .LVU389
+ 1669 03d8 2022     		movs	r2, #32
+ 1670 03da D3E7     		b	.L73
+ 1671              	.L133:
+ 1672 03dc 2022     		movs	r2, #32
+ 1673 03de D1E7     		b	.L73
+ 1674              	.L134:
+ 1675 03e0 2022     		movs	r2, #32
+ 1676 03e2 CFE7     		b	.L73
+ 1677              	.L135:
+ 1678 03e4 4FF40062 		mov	r2, #2048
+ 1679 03e8 CCE7     		b	.L73
+ 1680              	.L136:
+ 1681 03ea 4FF40062 		mov	r2, #2048
+ 1682 03ee C9E7     		b	.L73
+ 1683              	.L137:
+ 1684 03f0 4FF40062 		mov	r2, #2048
+ 1685 03f4 C6E7     		b	.L73
+ 1686              	.L138:
+ 1687 03f6 4FF40062 		mov	r2, #2048
+ 1688 03fa C3E7     		b	.L73
+ 1689              	.L139:
+ 1690 03fc 4FF40012 		mov	r2, #2097152
+ 1691 0400 C0E7     		b	.L73
+ 1692              	.L140:
+ARM GAS  /tmp/ccnvFXjJ.s 			page 46
+
+
+ 1693 0402 4FF40012 		mov	r2, #2097152
+ 1694 0406 BDE7     		b	.L73
+ 1695              	.L141:
+ 1696 0408 4FF40012 		mov	r2, #2097152
+ 1697 040c BAE7     		b	.L73
+ 1698              	.L72:
+ 365:Src/INS_task.c **** 
+ 1699              		.loc 1 365 9 discriminator 2 view .LVU390
+ 1700 040e 5E4A     		ldr	r2, .L193+28
+ 1701 0410 9342     		cmp	r3, r2
+ 1702 0412 53D9     		bls	.L75
+ 365:Src/INS_task.c **** 
+ 1703              		.loc 1 365 9 discriminator 51 view .LVU391
+ 1704 0414 A83A     		subs	r2, r2, #168
+ 1705 0416 9342     		cmp	r3, r2
+ 1706 0418 31D0     		beq	.L143
+ 365:Src/INS_task.c **** 
+ 1707              		.loc 1 365 9 discriminator 53 view .LVU392
+ 1708 041a 02F58062 		add	r2, r2, #1024
+ 1709 041e 9342     		cmp	r3, r2
+ 1710 0420 31D0     		beq	.L144
+ 365:Src/INS_task.c **** 
+ 1711              		.loc 1 365 9 discriminator 55 view .LVU393
+ 1712 0422 A2F56872 		sub	r2, r2, #928
+ 1713 0426 9342     		cmp	r3, r2
+ 1714 0428 2FD0     		beq	.L145
+ 365:Src/INS_task.c **** 
+ 1715              		.loc 1 365 9 discriminator 57 view .LVU394
+ 1716 042a 02F58062 		add	r2, r2, #1024
+ 1717 042e 9342     		cmp	r3, r2
+ 1718 0430 2DD0     		beq	.L146
+ 365:Src/INS_task.c **** 
+ 1719              		.loc 1 365 9 discriminator 59 view .LVU395
+ 1720 0432 A2F58962 		sub	r2, r2, #1096
+ 1721 0436 9342     		cmp	r3, r2
+ 1722 0438 2BD0     		beq	.L147
+ 365:Src/INS_task.c **** 
+ 1723              		.loc 1 365 9 discriminator 61 view .LVU396
+ 1724 043a 02F58062 		add	r2, r2, #1024
+ 1725 043e 9342     		cmp	r3, r2
+ 1726 0440 2AD0     		beq	.L148
+ 365:Src/INS_task.c **** 
+ 1727              		.loc 1 365 9 discriminator 63 view .LVU397
+ 1728 0442 A2F56872 		sub	r2, r2, #928
+ 1729 0446 9342     		cmp	r3, r2
+ 1730 0448 29D0     		beq	.L149
+ 365:Src/INS_task.c **** 
+ 1731              		.loc 1 365 9 discriminator 65 view .LVU398
+ 1732 044a 02F58062 		add	r2, r2, #1024
+ 1733 044e 9342     		cmp	r3, r2
+ 1734 0450 28D0     		beq	.L150
+ 365:Src/INS_task.c **** 
+ 1735              		.loc 1 365 9 discriminator 67 view .LVU399
+ 1736 0452 A2F58962 		sub	r2, r2, #1096
+ 1737 0456 9342     		cmp	r3, r2
+ 1738 0458 27D0     		beq	.L151
+ 365:Src/INS_task.c **** 
+ARM GAS  /tmp/ccnvFXjJ.s 			page 47
+
+
+ 1739              		.loc 1 365 9 discriminator 69 view .LVU400
+ 1740 045a 02F58062 		add	r2, r2, #1024
+ 1741 045e 9342     		cmp	r3, r2
+ 1742 0460 26D0     		beq	.L152
+ 365:Src/INS_task.c **** 
+ 1743              		.loc 1 365 9 discriminator 71 view .LVU401
+ 1744 0462 A2F56872 		sub	r2, r2, #928
+ 1745 0466 9342     		cmp	r3, r2
+ 1746 0468 25D0     		beq	.L153
+ 365:Src/INS_task.c **** 
+ 1747              		.loc 1 365 9 discriminator 73 view .LVU402
+ 1748 046a 02F58062 		add	r2, r2, #1024
+ 1749 046e 9342     		cmp	r3, r2
+ 1750 0470 02D0     		beq	.L188
+ 365:Src/INS_task.c **** 
+ 1751              		.loc 1 365 9 view .LVU403
+ 1752 0472 4FF00062 		mov	r2, #134217728
+ 1753 0476 03E0     		b	.L76
+ 1754              	.L188:
+ 1755 0478 4FF40012 		mov	r2, #2097152
+ 1756 047c 00E0     		b	.L76
+ 1757              	.L143:
+ 1758 047e 2022     		movs	r2, #32
+ 1759              	.L76:
+ 365:Src/INS_task.c **** 
+ 1760              		.loc 1 365 9 discriminator 100 view .LVU404
+ 1761 0480 3C4B     		ldr	r3, .L193+8
+ 1762 0482 9A60     		str	r2, [r3, #8]
+ 1763 0484 80E7     		b	.L74
+ 1764              	.L144:
+ 365:Src/INS_task.c **** 
+ 1765              		.loc 1 365 9 view .LVU405
+ 1766 0486 2022     		movs	r2, #32
+ 1767 0488 FAE7     		b	.L76
+ 1768              	.L145:
+ 1769 048a 2022     		movs	r2, #32
+ 1770 048c F8E7     		b	.L76
+ 1771              	.L146:
+ 1772 048e 2022     		movs	r2, #32
+ 1773 0490 F6E7     		b	.L76
+ 1774              	.L147:
+ 1775 0492 4FF40062 		mov	r2, #2048
+ 1776 0496 F3E7     		b	.L76
+ 1777              	.L148:
+ 1778 0498 4FF40062 		mov	r2, #2048
+ 1779 049c F0E7     		b	.L76
+ 1780              	.L149:
+ 1781 049e 4FF40062 		mov	r2, #2048
+ 1782 04a2 EDE7     		b	.L76
+ 1783              	.L150:
+ 1784 04a4 4FF40062 		mov	r2, #2048
+ 1785 04a8 EAE7     		b	.L76
+ 1786              	.L151:
+ 1787 04aa 4FF40012 		mov	r2, #2097152
+ 1788 04ae E7E7     		b	.L76
+ 1789              	.L152:
+ 1790 04b0 4FF40012 		mov	r2, #2097152
+ARM GAS  /tmp/ccnvFXjJ.s 			page 48
+
+
+ 1791 04b4 E4E7     		b	.L76
+ 1792              	.L153:
+ 1793 04b6 4FF40012 		mov	r2, #2097152
+ 1794 04ba E1E7     		b	.L76
+ 1795              	.L75:
+ 365:Src/INS_task.c **** 
+ 1796              		.loc 1 365 9 discriminator 52 view .LVU406
+ 1797 04bc 334A     		ldr	r2, .L193+32
+ 1798 04be 9342     		cmp	r3, r2
+ 1799 04c0 66D9     		bls	.L77
+ 365:Src/INS_task.c **** 
+ 1800              		.loc 1 365 9 discriminator 102 view .LVU407
+ 1801 04c2 483A     		subs	r2, r2, #72
+ 1802 04c4 9342     		cmp	r3, r2
+ 1803 04c6 31D0     		beq	.L155
+ 365:Src/INS_task.c **** 
+ 1804              		.loc 1 365 9 discriminator 104 view .LVU408
+ 1805 04c8 02F58062 		add	r2, r2, #1024
+ 1806 04cc 9342     		cmp	r3, r2
+ 1807 04ce 31D0     		beq	.L156
+ 365:Src/INS_task.c **** 
+ 1808              		.loc 1 365 9 discriminator 106 view .LVU409
+ 1809 04d0 A2F56872 		sub	r2, r2, #928
+ 1810 04d4 9342     		cmp	r3, r2
+ 1811 04d6 2FD0     		beq	.L157
+ 365:Src/INS_task.c **** 
+ 1812              		.loc 1 365 9 discriminator 108 view .LVU410
+ 1813 04d8 02F58062 		add	r2, r2, #1024
+ 1814 04dc 9342     		cmp	r3, r2
+ 1815 04de 2DD0     		beq	.L158
+ 365:Src/INS_task.c **** 
+ 1816              		.loc 1 365 9 discriminator 110 view .LVU411
+ 1817 04e0 A2F58962 		sub	r2, r2, #1096
+ 1818 04e4 9342     		cmp	r3, r2
+ 1819 04e6 2BD0     		beq	.L159
+ 365:Src/INS_task.c **** 
+ 1820              		.loc 1 365 9 discriminator 112 view .LVU412
+ 1821 04e8 02F58062 		add	r2, r2, #1024
+ 1822 04ec 9342     		cmp	r3, r2
+ 1823 04ee 2AD0     		beq	.L160
+ 365:Src/INS_task.c **** 
+ 1824              		.loc 1 365 9 discriminator 114 view .LVU413
+ 1825 04f0 A2F56872 		sub	r2, r2, #928
+ 1826 04f4 9342     		cmp	r3, r2
+ 1827 04f6 29D0     		beq	.L161
+ 365:Src/INS_task.c **** 
+ 1828              		.loc 1 365 9 discriminator 116 view .LVU414
+ 1829 04f8 02F58062 		add	r2, r2, #1024
+ 1830 04fc 9342     		cmp	r3, r2
+ 1831 04fe 28D0     		beq	.L162
+ 365:Src/INS_task.c **** 
+ 1832              		.loc 1 365 9 discriminator 118 view .LVU415
+ 1833 0500 A2F58962 		sub	r2, r2, #1096
+ 1834 0504 9342     		cmp	r3, r2
+ 1835 0506 27D0     		beq	.L163
+ 365:Src/INS_task.c **** 
+ 1836              		.loc 1 365 9 discriminator 120 view .LVU416
+ARM GAS  /tmp/ccnvFXjJ.s 			page 49
+
+
+ 1837 0508 02F58062 		add	r2, r2, #1024
+ 1838 050c 9342     		cmp	r3, r2
+ 1839 050e 26D0     		beq	.L164
+ 365:Src/INS_task.c **** 
+ 1840              		.loc 1 365 9 discriminator 122 view .LVU417
+ 1841 0510 A2F56872 		sub	r2, r2, #928
+ 1842 0514 9342     		cmp	r3, r2
+ 1843 0516 25D0     		beq	.L165
+ 365:Src/INS_task.c **** 
+ 1844              		.loc 1 365 9 discriminator 124 view .LVU418
+ 1845 0518 02F58062 		add	r2, r2, #1024
+ 1846 051c 9342     		cmp	r3, r2
+ 1847 051e 02D0     		beq	.L189
+ 365:Src/INS_task.c **** 
+ 1848              		.loc 1 365 9 view .LVU419
+ 1849 0520 4FF00062 		mov	r2, #134217728
+ 1850 0524 03E0     		b	.L78
+ 1851              	.L189:
+ 1852 0526 4FF40012 		mov	r2, #2097152
+ 1853 052a 00E0     		b	.L78
+ 1854              	.L155:
+ 1855 052c 2022     		movs	r2, #32
+ 1856              	.L78:
+ 365:Src/INS_task.c **** 
+ 1857              		.loc 1 365 9 discriminator 151 view .LVU420
+ 1858 052e 0F4B     		ldr	r3, .L193
+ 1859 0530 DA60     		str	r2, [r3, #12]
+ 1860 0532 29E7     		b	.L74
+ 1861              	.L156:
+ 365:Src/INS_task.c **** 
+ 1862              		.loc 1 365 9 view .LVU421
+ 1863 0534 2022     		movs	r2, #32
+ 1864 0536 FAE7     		b	.L78
+ 1865              	.L157:
+ 1866 0538 2022     		movs	r2, #32
+ 1867 053a F8E7     		b	.L78
+ 1868              	.L158:
+ 1869 053c 2022     		movs	r2, #32
+ 1870 053e F6E7     		b	.L78
+ 1871              	.L159:
+ 1872 0540 4FF40062 		mov	r2, #2048
+ 1873 0544 F3E7     		b	.L78
+ 1874              	.L160:
+ 1875 0546 4FF40062 		mov	r2, #2048
+ 1876 054a F0E7     		b	.L78
+ 1877              	.L161:
+ 1878 054c 4FF40062 		mov	r2, #2048
+ 1879 0550 EDE7     		b	.L78
+ 1880              	.L162:
+ 1881 0552 4FF40062 		mov	r2, #2048
+ 1882 0556 EAE7     		b	.L78
+ 1883              	.L163:
+ 1884 0558 4FF40012 		mov	r2, #2097152
+ 1885 055c E7E7     		b	.L78
+ 1886              	.L164:
+ 1887 055e 4FF40012 		mov	r2, #2097152
+ 1888 0562 E4E7     		b	.L78
+ARM GAS  /tmp/ccnvFXjJ.s 			page 50
+
+
+ 1889              	.L165:
+ 1890 0564 4FF40012 		mov	r2, #2097152
+ 1891 0568 E1E7     		b	.L78
+ 1892              	.L194:
+ 1893 056a 00BF     		.align	2
+ 1894              	.L193:
+ 1895 056c 00600240 		.word	1073897472
+ 1896 0570 10600240 		.word	1073897488
+ 1897 0574 00640240 		.word	1073898496
+ 1898 0578 00000000 		.word	.LANCHOR3
+ 1899 057c 00000000 		.word	.LANCHOR4
+ 1900 0580 00000000 		.word	.LANCHOR5
+ 1901 0584 003C0140 		.word	1073822720
+ 1902 0588 B8600240 		.word	1073897656
+ 1903 058c 58600240 		.word	1073897560
+ 1904              	.L77:
+ 365:Src/INS_task.c **** 
+ 1905              		.loc 1 365 9 discriminator 103 view .LVU422
+ 1906 0590 404A     		ldr	r2, .L195
+ 1907 0592 9342     		cmp	r3, r2
+ 1908 0594 31D0     		beq	.L167
+ 365:Src/INS_task.c **** 
+ 1909              		.loc 1 365 9 discriminator 153 view .LVU423
+ 1910 0596 02F58062 		add	r2, r2, #1024
+ 1911 059a 9342     		cmp	r3, r2
+ 1912 059c 31D0     		beq	.L168
+ 365:Src/INS_task.c **** 
+ 1913              		.loc 1 365 9 discriminator 155 view .LVU424
+ 1914 059e A2F56872 		sub	r2, r2, #928
+ 1915 05a2 9342     		cmp	r3, r2
+ 1916 05a4 2FD0     		beq	.L169
+ 365:Src/INS_task.c **** 
+ 1917              		.loc 1 365 9 discriminator 157 view .LVU425
+ 1918 05a6 02F58062 		add	r2, r2, #1024
+ 1919 05aa 9342     		cmp	r3, r2
+ 1920 05ac 2DD0     		beq	.L170
+ 365:Src/INS_task.c **** 
+ 1921              		.loc 1 365 9 discriminator 159 view .LVU426
+ 1922 05ae A2F58962 		sub	r2, r2, #1096
+ 1923 05b2 9342     		cmp	r3, r2
+ 1924 05b4 2BD0     		beq	.L171
+ 365:Src/INS_task.c **** 
+ 1925              		.loc 1 365 9 discriminator 161 view .LVU427
+ 1926 05b6 02F58062 		add	r2, r2, #1024
+ 1927 05ba 9342     		cmp	r3, r2
+ 1928 05bc 2AD0     		beq	.L172
+ 365:Src/INS_task.c **** 
+ 1929              		.loc 1 365 9 discriminator 163 view .LVU428
+ 1930 05be A2F56872 		sub	r2, r2, #928
+ 1931 05c2 9342     		cmp	r3, r2
+ 1932 05c4 29D0     		beq	.L173
+ 365:Src/INS_task.c **** 
+ 1933              		.loc 1 365 9 discriminator 165 view .LVU429
+ 1934 05c6 02F58062 		add	r2, r2, #1024
+ 1935 05ca 9342     		cmp	r3, r2
+ 1936 05cc 28D0     		beq	.L174
+ 365:Src/INS_task.c **** 
+ARM GAS  /tmp/ccnvFXjJ.s 			page 51
+
+
+ 1937              		.loc 1 365 9 discriminator 167 view .LVU430
+ 1938 05ce A2F58962 		sub	r2, r2, #1096
+ 1939 05d2 9342     		cmp	r3, r2
+ 1940 05d4 27D0     		beq	.L175
+ 365:Src/INS_task.c **** 
+ 1941              		.loc 1 365 9 discriminator 169 view .LVU431
+ 1942 05d6 02F58062 		add	r2, r2, #1024
+ 1943 05da 9342     		cmp	r3, r2
+ 1944 05dc 26D0     		beq	.L176
+ 365:Src/INS_task.c **** 
+ 1945              		.loc 1 365 9 discriminator 171 view .LVU432
+ 1946 05de A2F56872 		sub	r2, r2, #928
+ 1947 05e2 9342     		cmp	r3, r2
+ 1948 05e4 25D0     		beq	.L177
+ 365:Src/INS_task.c **** 
+ 1949              		.loc 1 365 9 discriminator 173 view .LVU433
+ 1950 05e6 02F58062 		add	r2, r2, #1024
+ 1951 05ea 9342     		cmp	r3, r2
+ 1952 05ec 02D0     		beq	.L190
+ 365:Src/INS_task.c **** 
+ 1953              		.loc 1 365 9 view .LVU434
+ 1954 05ee 4FF00062 		mov	r2, #134217728
+ 1955 05f2 03E0     		b	.L79
+ 1956              	.L190:
+ 1957 05f4 4FF40012 		mov	r2, #2097152
+ 1958 05f8 00E0     		b	.L79
+ 1959              	.L167:
+ 1960 05fa 2022     		movs	r2, #32
+ 1961              	.L79:
+ 365:Src/INS_task.c **** 
+ 1962              		.loc 1 365 9 discriminator 200 view .LVU435
+ 1963 05fc 264B     		ldr	r3, .L195+4
+ 1964 05fe 9A60     		str	r2, [r3, #8]
+ 1965 0600 C2E6     		b	.L74
+ 1966              	.L168:
+ 365:Src/INS_task.c **** 
+ 1967              		.loc 1 365 9 view .LVU436
+ 1968 0602 2022     		movs	r2, #32
+ 1969 0604 FAE7     		b	.L79
+ 1970              	.L169:
+ 1971 0606 2022     		movs	r2, #32
+ 1972 0608 F8E7     		b	.L79
+ 1973              	.L170:
+ 1974 060a 2022     		movs	r2, #32
+ 1975 060c F6E7     		b	.L79
+ 1976              	.L171:
+ 1977 060e 4FF40062 		mov	r2, #2048
+ 1978 0612 F3E7     		b	.L79
+ 1979              	.L172:
+ 1980 0614 4FF40062 		mov	r2, #2048
+ 1981 0618 F0E7     		b	.L79
+ 1982              	.L173:
+ 1983 061a 4FF40062 		mov	r2, #2048
+ 1984 061e EDE7     		b	.L79
+ 1985              	.L174:
+ 1986 0620 4FF40062 		mov	r2, #2048
+ 1987 0624 EAE7     		b	.L79
+ARM GAS  /tmp/ccnvFXjJ.s 			page 52
+
+
+ 1988              	.L175:
+ 1989 0626 4FF40012 		mov	r2, #2097152
+ 1990 062a E7E7     		b	.L79
+ 1991              	.L176:
+ 1992 062c 4FF40012 		mov	r2, #2097152
+ 1993 0630 E4E7     		b	.L79
+ 1994              	.L177:
+ 1995 0632 4FF40012 		mov	r2, #2097152
+ 1996 0636 E1E7     		b	.L79
+ 1997              	.L185:
+ 371:Src/INS_task.c ****             gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 1998              		.loc 1 371 13 is_stmt 1 view .LVU437
+ 371:Src/INS_task.c ****             gyro_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 1999              		.loc 1 371 30 is_stmt 0 view .LVU438
+ 2000 0638 184B     		ldr	r3, .L195+8
+ 2001 063a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2002 063c 02F0FD02 		and	r2, r2, #253
+ 2003 0640 1A70     		strb	r2, [r3]
+ 372:Src/INS_task.c **** 
+ 2004              		.loc 1 372 13 is_stmt 1 view .LVU439
+ 372:Src/INS_task.c **** 
+ 2005              		.loc 1 372 30 is_stmt 0 view .LVU440
+ 2006 0642 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2007 0644 42F00402 		orr	r2, r2, #4
+ 2008 0648 1A70     		strb	r2, [r3]
+ 374:Src/INS_task.c ****             
+ 2009              		.loc 1 374 13 is_stmt 1 view .LVU441
+ 2010 064a 0122     		movs	r2, #1
+ 2011 064c 1146     		mov	r1, r2
+ 2012 064e 1448     		ldr	r0, .L195+12
+ 2013 0650 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 2014              	.LVL72:
+ 2015 0654 9EE6     		b	.L80
+ 2016              	.L186:
+ 382:Src/INS_task.c ****             accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 2017              		.loc 1 382 13 view .LVU442
+ 382:Src/INS_task.c ****             accel_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 2018              		.loc 1 382 31 is_stmt 0 view .LVU443
+ 2019 0656 134B     		ldr	r3, .L195+16
+ 2020 0658 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2021 065a 02F0FD02 		and	r2, r2, #253
+ 2022 065e 1A70     		strb	r2, [r3]
+ 383:Src/INS_task.c **** 
+ 2023              		.loc 1 383 13 is_stmt 1 view .LVU444
+ 383:Src/INS_task.c **** 
+ 2024              		.loc 1 383 31 is_stmt 0 view .LVU445
+ 2025 0660 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2026 0662 42F00402 		orr	r2, r2, #4
+ 2027 0666 1A70     		strb	r2, [r3]
+ 385:Src/INS_task.c ****         }
+ 2028              		.loc 1 385 13 is_stmt 1 view .LVU446
+ 2029 0668 0122     		movs	r2, #1
+ 2030 066a 1021     		movs	r1, #16
+ 2031 066c 0E48     		ldr	r0, .L195+20
+ 2032 066e FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 2033              	.LVL73:
+ 2034 0672 95E6     		b	.L81
+ARM GAS  /tmp/ccnvFXjJ.s 			page 53
+
+
+ 2035              	.L187:
+ 391:Src/INS_task.c ****             accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 2036              		.loc 1 391 13 view .LVU447
+ 391:Src/INS_task.c ****             accel_temp_update_flag |= (1 << IMU_UPDATE_SHFITS);
+ 2037              		.loc 1 391 36 is_stmt 0 view .LVU448
+ 2038 0674 0D4B     		ldr	r3, .L195+24
+ 2039 0676 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2040 0678 02F0FD02 		and	r2, r2, #253
+ 2041 067c 1A70     		strb	r2, [r3]
+ 392:Src/INS_task.c **** 
+ 2042              		.loc 1 392 13 is_stmt 1 view .LVU449
+ 392:Src/INS_task.c **** 
+ 2043              		.loc 1 392 36 is_stmt 0 view .LVU450
+ 2044 067e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 2045 0680 42F00402 		orr	r2, r2, #4
+ 2046 0684 1A70     		strb	r2, [r3]
+ 394:Src/INS_task.c ****         }
+ 2047              		.loc 1 394 13 is_stmt 1 view .LVU451
+ 2048 0686 0122     		movs	r2, #1
+ 2049 0688 1021     		movs	r1, #16
+ 2050 068a 0748     		ldr	r0, .L195+20
+ 2051 068c FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 2052              	.LVL74:
+ 2053 0690 8CE6     		b	.L82
+ 2054              	.L196:
+ 2055 0692 00BF     		.align	2
+ 2056              	.L195:
+ 2057 0694 10600240 		.word	1073897488
+ 2058 0698 00600240 		.word	1073897472
+ 2059 069c 00000000 		.word	.LANCHOR3
+ 2060 06a0 00040240 		.word	1073873920
+ 2061 06a4 00000000 		.word	.LANCHOR4
+ 2062 06a8 00000240 		.word	1073872896
+ 2063 06ac 00000000 		.word	.LANCHOR5
+ 2064              		.cfi_endproc
+ 2065              	.LFE142:
+ 2067              		.global	INS_angle
+ 2068              		.global	INS_quat
+ 2069              		.global	ist8310_real_data
+ 2070              		.global	bmi088_real_data
+ 2071              		.global	imu_start_dma_flag
+ 2072              		.global	mag_update_flag
+ 2073              		.global	accel_temp_update_flag
+ 2074              		.global	accel_update_flag
+ 2075              		.global	gyro_update_flag
+ 2076              		.global	accel_temp_dma_tx_buf
+ 2077              		.global	accel_temp_dma_rx_buf
+ 2078              		.global	accel_dma_tx_buf
+ 2079              		.global	accel_dma_rx_buf
+ 2080              		.global	gyro_dma_tx_buf
+ 2081              		.global	gyro_dma_rx_buf
+ 2082              		.section	.bss.INS_angle,"aw",%nobits
+ 2083              		.align	2
+ 2084              		.set	.LANCHOR18,. + 0
+ 2087              	INS_angle:
+ 2088 0000 00000000 		.space	12
+ 2088      00000000 
+ARM GAS  /tmp/ccnvFXjJ.s 			page 54
+
+
+ 2088      00000000 
+ 2089              		.section	.bss.INS_quat,"aw",%nobits
+ 2090              		.align	2
+ 2091              		.set	.LANCHOR15,. + 0
+ 2094              	INS_quat:
+ 2095 0000 00000000 		.space	16
+ 2095      00000000 
+ 2095      00000000 
+ 2095      00000000 
+ 2096              		.section	.bss.INS_task_local_handler,"aw",%nobits
+ 2097              		.align	2
+ 2098              		.set	.LANCHOR16,. + 0
+ 2101              	INS_task_local_handler:
+ 2102 0000 00000000 		.space	4
+ 2103              		.section	.bss.accel_dma_rx_buf,"aw",%nobits
+ 2104              		.align	2
+ 2105              		.set	.LANCHOR8,. + 0
+ 2108              	accel_dma_rx_buf:
+ 2109 0000 00000000 		.space	9
+ 2109      00000000 
+ 2109      00
+ 2110              		.section	.bss.accel_temp_dma_rx_buf,"aw",%nobits
+ 2111              		.align	2
+ 2112              		.set	.LANCHOR10,. + 0
+ 2115              	accel_temp_dma_rx_buf:
+ 2116 0000 00000000 		.space	4
+ 2117              		.section	.bss.accel_temp_update_flag,"aw",%nobits
+ 2118              		.set	.LANCHOR5,. + 0
+ 2121              	accel_temp_update_flag:
+ 2122 0000 00       		.space	1
+ 2123              		.section	.bss.accel_update_flag,"aw",%nobits
+ 2124              		.set	.LANCHOR4,. + 0
+ 2127              	accel_update_flag:
+ 2128 0000 00       		.space	1
+ 2129              		.section	.bss.bmi088_real_data,"aw",%nobits
+ 2130              		.align	2
+ 2131              		.set	.LANCHOR12,. + 0
+ 2134              	bmi088_real_data:
+ 2135 0000 00000000 		.space	36
+ 2135      00000000 
+ 2135      00000000 
+ 2135      00000000 
+ 2135      00000000 
+ 2136              		.section	.bss.first_temperate,"aw",%nobits
+ 2137              		.set	.LANCHOR0,. + 0
+ 2140              	first_temperate:
+ 2141 0000 00       		.space	1
+ 2142              		.section	.bss.gyro_dma_rx_buf,"aw",%nobits
+ 2143              		.align	2
+ 2144              		.set	.LANCHOR6,. + 0
+ 2147              	gyro_dma_rx_buf:
+ 2148 0000 00000000 		.space	8
+ 2148      00000000 
+ 2149              		.section	.bss.gyro_update_flag,"aw",%nobits
+ 2150              		.set	.LANCHOR3,. + 0
+ 2153              	gyro_update_flag:
+ 2154 0000 00       		.space	1
+ARM GAS  /tmp/ccnvFXjJ.s 			page 55
+
+
+ 2155              		.section	.bss.imu_start_dma_flag,"aw",%nobits
+ 2156              		.set	.LANCHOR17,. + 0
+ 2159              	imu_start_dma_flag:
+ 2160 0000 00       		.space	1
+ 2161              		.section	.bss.imu_temp_pid,"aw",%nobits
+ 2162              		.align	2
+ 2163              		.set	.LANCHOR1,. + 0
+ 2166              	imu_temp_pid:
+ 2167 0000 00000000 		.space	72
+ 2167      00000000 
+ 2167      00000000 
+ 2167      00000000 
+ 2167      00000000 
+ 2168              		.section	.bss.ist8310_real_data,"aw",%nobits
+ 2169              		.align	2
+ 2170              		.set	.LANCHOR14,. + 0
+ 2173              	ist8310_real_data:
+ 2174 0000 00000000 		.space	16
+ 2174      00000000 
+ 2174      00000000 
+ 2174      00000000 
+ 2175              		.section	.bss.mag_update_flag,"aw",%nobits
+ 2176              		.set	.LANCHOR19,. + 0
+ 2179              	mag_update_flag:
+ 2180 0000 00       		.space	1
+ 2181              		.section	.bss.temp_constant_time.1,"aw",%nobits
+ 2182              		.set	.LANCHOR2,. + 0
+ 2185              	temp_constant_time.1:
+ 2186 0000 00       		.space	1
+ 2187              		.section	.bss.xHigherPriorityTaskWoken.0,"aw",%nobits
+ 2188              		.align	2
+ 2189              		.set	.LANCHOR20,. + 0
+ 2192              	xHigherPriorityTaskWoken.0:
+ 2193 0000 00000000 		.space	4
+ 2194              		.section	.data.accel_dma_tx_buf,"aw"
+ 2195              		.align	2
+ 2196              		.set	.LANCHOR9,. + 0
+ 2199              	accel_dma_tx_buf:
+ 2200 0000 92FFFFFF 		.ascii	"\222\377\377\377\377\377\377\377\377"
+ 2200      FFFFFFFF 
+ 2200      FF
+ 2201              		.section	.data.accel_temp_dma_tx_buf,"aw"
+ 2202              		.align	2
+ 2203              		.set	.LANCHOR11,. + 0
+ 2206              	accel_temp_dma_tx_buf:
+ 2207 0000 A2FFFFFF 		.ascii	"\242\377\377\377"
+ 2208              		.section	.data.gyro_dma_tx_buf,"aw"
+ 2209              		.align	2
+ 2210              		.set	.LANCHOR7,. + 0
+ 2213              	gyro_dma_tx_buf:
+ 2214 0000 82FFFFFF 		.ascii	"\202\377\377\377\377\377\377\377"
+ 2214      FFFFFFFF 
+ 2215              		.section	.rodata.imu_temp_PID,"a"
+ 2216              		.align	2
+ 2217              		.set	.LANCHOR13,. + 0
+ 2220              	imu_temp_PID:
+ 2221 0000 0000C844 		.word	1153957888
+ARM GAS  /tmp/ccnvFXjJ.s 			page 56
+
+
+ 2222 0004 CDCC4C3E 		.word	1045220557
+ 2223 0008 00000000 		.word	0
+ 2224              		.text
+ 2225              	.Letext0:
+ 2226              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 2227              		.file 4 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 2228              		.file 5 "Inc/struct_typedef.h"
+ 2229              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 2230              		.file 7 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 2231              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 2232              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
+ 2233              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 2234              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h"
+ 2235              		.file 12 "Middlewares/Third_Party/FreeRTOS/Source/include/task.h"
+ 2236              		.file 13 "IMU/BMI088driver.h"
+ 2237              		.file 14 "IMU/ist8310driver.h"
+ 2238              		.file 15 "IMU/pid.h"
+ 2239              		.file 16 "IMU/bsp_spi.h"
+ 2240              		.file 17 "IMU/bsp_imu_pwm.h"
+ 2241              		.file 18 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/math.h"
+ 2242              		.file 19 "IMU/MahonyAHRS.h"
+ 2243              		.file 20 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h"
+ 2244              		.file 21 "Inc/main.h"
+ARM GAS  /tmp/ccnvFXjJ.s 			page 57
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 INS_task.c
+     /tmp/ccnvFXjJ.s:20     .text.imu_temp_control:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:25     .text.imu_temp_control:0000000000000000 imu_temp_control
+     /tmp/ccnvFXjJ.s:121    .text.imu_temp_control:0000000000000070 $d
+     /tmp/ccnvFXjJ.s:130    .text.imu_cmd_spi_dma:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:135    .text.imu_cmd_spi_dma:0000000000000000 imu_cmd_spi_dma
+     /tmp/ccnvFXjJ.s:441    .text.imu_cmd_spi_dma:0000000000000150 $d
+     /tmp/ccnvFXjJ.s:457    .text.AHRS_init:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:463    .text.AHRS_init:0000000000000000 AHRS_init
+     /tmp/ccnvFXjJ.s:491    .text.AHRS_update:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:497    .text.AHRS_update:0000000000000000 AHRS_update
+     /tmp/ccnvFXjJ.s:533    .text.get_angle:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:539    .text.get_angle:0000000000000000 get_angle
+     /tmp/ccnvFXjJ.s:691    .text.get_angle:00000000000000f8 $d
+     /tmp/ccnvFXjJ.s:697    .text.INS_task:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:703    .text.INS_task:0000000000000000 INS_task
+     /tmp/ccnvFXjJ.s:916    .text.INS_task:0000000000000124 $d
+     /tmp/ccnvFXjJ.s:941    .text.HAL_GPIO_EXTI_Callback:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:947    .text.HAL_GPIO_EXTI_Callback:0000000000000000 HAL_GPIO_EXTI_Callback
+     /tmp/ccnvFXjJ.s:1104   .text.HAL_GPIO_EXTI_Callback:00000000000000b0 $d
+     /tmp/ccnvFXjJ.s:1116   .text.DMA2_Stream2_IRQHandler:0000000000000000 $t
+     /tmp/ccnvFXjJ.s:1122   .text.DMA2_Stream2_IRQHandler:0000000000000000 DMA2_Stream2_IRQHandler
+     /tmp/ccnvFXjJ.s:1501   .text.DMA2_Stream2_IRQHandler:00000000000002b8 $d
+     /tmp/ccnvFXjJ.s:1508   .text.DMA2_Stream2_IRQHandler:00000000000002cc $t
+     /tmp/ccnvFXjJ.s:1895   .text.DMA2_Stream2_IRQHandler:000000000000056c $d
+     /tmp/ccnvFXjJ.s:1906   .text.DMA2_Stream2_IRQHandler:0000000000000590 $t
+     /tmp/ccnvFXjJ.s:2057   .text.DMA2_Stream2_IRQHandler:0000000000000694 $d
+     /tmp/ccnvFXjJ.s:2087   .bss.INS_angle:0000000000000000 INS_angle
+     /tmp/ccnvFXjJ.s:2094   .bss.INS_quat:0000000000000000 INS_quat
+     /tmp/ccnvFXjJ.s:2173   .bss.ist8310_real_data:0000000000000000 ist8310_real_data
+     /tmp/ccnvFXjJ.s:2134   .bss.bmi088_real_data:0000000000000000 bmi088_real_data
+     /tmp/ccnvFXjJ.s:2159   .bss.imu_start_dma_flag:0000000000000000 imu_start_dma_flag
+     /tmp/ccnvFXjJ.s:2179   .bss.mag_update_flag:0000000000000000 mag_update_flag
+     /tmp/ccnvFXjJ.s:2121   .bss.accel_temp_update_flag:0000000000000000 accel_temp_update_flag
+     /tmp/ccnvFXjJ.s:2127   .bss.accel_update_flag:0000000000000000 accel_update_flag
+     /tmp/ccnvFXjJ.s:2153   .bss.gyro_update_flag:0000000000000000 gyro_update_flag
+     /tmp/ccnvFXjJ.s:2206   .data.accel_temp_dma_tx_buf:0000000000000000 accel_temp_dma_tx_buf
+     /tmp/ccnvFXjJ.s:2115   .bss.accel_temp_dma_rx_buf:0000000000000000 accel_temp_dma_rx_buf
+     /tmp/ccnvFXjJ.s:2199   .data.accel_dma_tx_buf:0000000000000000 accel_dma_tx_buf
+     /tmp/ccnvFXjJ.s:2108   .bss.accel_dma_rx_buf:0000000000000000 accel_dma_rx_buf
+     /tmp/ccnvFXjJ.s:2213   .data.gyro_dma_tx_buf:0000000000000000 gyro_dma_tx_buf
+     /tmp/ccnvFXjJ.s:2147   .bss.gyro_dma_rx_buf:0000000000000000 gyro_dma_rx_buf
+     /tmp/ccnvFXjJ.s:2083   .bss.INS_angle:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2090   .bss.INS_quat:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2097   .bss.INS_task_local_handler:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2101   .bss.INS_task_local_handler:0000000000000000 INS_task_local_handler
+     /tmp/ccnvFXjJ.s:2104   .bss.accel_dma_rx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2111   .bss.accel_temp_dma_rx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2122   .bss.accel_temp_update_flag:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2128   .bss.accel_update_flag:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2130   .bss.bmi088_real_data:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2140   .bss.first_temperate:0000000000000000 first_temperate
+     /tmp/ccnvFXjJ.s:2141   .bss.first_temperate:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2143   .bss.gyro_dma_rx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2154   .bss.gyro_update_flag:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2160   .bss.imu_start_dma_flag:0000000000000000 $d
+ARM GAS  /tmp/ccnvFXjJ.s 			page 58
+
+
+     /tmp/ccnvFXjJ.s:2162   .bss.imu_temp_pid:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2166   .bss.imu_temp_pid:0000000000000000 imu_temp_pid
+     /tmp/ccnvFXjJ.s:2169   .bss.ist8310_real_data:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2180   .bss.mag_update_flag:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2185   .bss.temp_constant_time.1:0000000000000000 temp_constant_time.1
+     /tmp/ccnvFXjJ.s:2186   .bss.temp_constant_time.1:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2188   .bss.xHigherPriorityTaskWoken.0:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2192   .bss.xHigherPriorityTaskWoken.0:0000000000000000 xHigherPriorityTaskWoken.0
+     /tmp/ccnvFXjJ.s:2195   .data.accel_dma_tx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2202   .data.accel_temp_dma_tx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2209   .data.gyro_dma_tx_buf:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2216   .rodata.imu_temp_PID:0000000000000000 $d
+     /tmp/ccnvFXjJ.s:2220   .rodata.imu_temp_PID:0000000000000000 imu_temp_PID
+
+UNDEFINED SYMBOLS
+imu_pwm_set
+PID_calc
+HAL_GPIO_WritePin
+SPI1_DMA_enable
+hspi1
+MahonyAHRSupdate
+__aeabi_f2d
+__aeabi_dmul
+__aeabi_d2f
+atan2f
+asinf
+osDelay
+BMI088_init
+ist8310_init
+BMI088_read
+PID_init
+pcTaskGetName
+xTaskGetHandle
+HAL_SPI_Init
+SPI1_DMA_init
+Error_Handler
+BMI088_gyro_read_over
+BMI088_accel_read_over
+ulTaskNotifyTake
+BMI088_temperature_read_over
+ist8310_read_mag
+xTaskGetSchedulerState
+vTaskNotifyGiveFromISR

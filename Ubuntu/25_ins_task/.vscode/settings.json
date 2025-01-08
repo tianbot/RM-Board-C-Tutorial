@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "user_lib.h": "c",
+        "ist8310driver_middleware.h": "c",
+        "struct_typedef.h": "c",
+        "pid.h": "c",
+        "led_flow_task.h": "c"
+    }
+}

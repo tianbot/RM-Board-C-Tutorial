@@ -1,0 +1,1881 @@
+ARM GAS  /tmp/ccp5XL8h.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"MahonyAHRS.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.invSqrt,"ax",%progbits
+  20              		.align	1
+  21              		.global	invSqrt
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	invSqrt:
+  27              	.LVL0:
+  28              	.LFB2:
+  29              		.file 1 "IMU/MahonyAHRS.c"
+   1:IMU/MahonyAHRS.c **** //=================================================================================================
+   2:IMU/MahonyAHRS.c **** // MahonyAHRS.c
+   3:IMU/MahonyAHRS.c **** //=================================================================================================
+   4:IMU/MahonyAHRS.c **** //
+   5:IMU/MahonyAHRS.c **** // Madgwick's implementation of Mayhony's AHRS algorithm.
+   6:IMU/MahonyAHRS.c **** // See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+   7:IMU/MahonyAHRS.c **** //
+   8:IMU/MahonyAHRS.c **** // Date			Author			Notes
+   9:IMU/MahonyAHRS.c **** // 29/09/2011	SOH Madgwick    Initial release
+  10:IMU/MahonyAHRS.c **** // 02/10/2011	SOH Madgwick	Optimised for reduced CPU load
+  11:IMU/MahonyAHRS.c **** //
+  12:IMU/MahonyAHRS.c **** //=================================================================================================
+  13:IMU/MahonyAHRS.c **** 
+  14:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+  15:IMU/MahonyAHRS.c **** // Header files
+  16:IMU/MahonyAHRS.c **** 
+  17:IMU/MahonyAHRS.c **** #include "MahonyAHRS.h"
+  18:IMU/MahonyAHRS.c **** #include <math.h>
+  19:IMU/MahonyAHRS.c **** 
+  20:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+  21:IMU/MahonyAHRS.c **** // Definitions
+  22:IMU/MahonyAHRS.c **** 
+  23:IMU/MahonyAHRS.c **** #define sampleFreq	1000.0f			// sample frequency in Hz
+  24:IMU/MahonyAHRS.c **** #define twoKpDef	(2.0f * 0.5f)	// 2 * proportional gain
+  25:IMU/MahonyAHRS.c **** #define twoKiDef	(2.0f * 0.0f)	// 2 * integral gain
+  26:IMU/MahonyAHRS.c **** 
+  27:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+  28:IMU/MahonyAHRS.c **** // Variable definitions
+  29:IMU/MahonyAHRS.c **** 
+ARM GAS  /tmp/ccp5XL8h.s 			page 2
+
+
+  30:IMU/MahonyAHRS.c **** volatile float twoKp = twoKpDef;											// 2 * proportional gain (Kp)
+  31:IMU/MahonyAHRS.c **** volatile float twoKi = twoKiDef;											// 2 * integral gain (Ki)
+  32:IMU/MahonyAHRS.c **** //volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;					// quaternion of sensor frame rela
+  33:IMU/MahonyAHRS.c **** volatile float integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;	// integral error terms
+  34:IMU/MahonyAHRS.c **** 
+  35:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+  36:IMU/MahonyAHRS.c **** // Function declarations
+  37:IMU/MahonyAHRS.c **** 
+  38:IMU/MahonyAHRS.c **** float invSqrt(float x);
+  39:IMU/MahonyAHRS.c **** 
+  40:IMU/MahonyAHRS.c **** //=================================================================================================
+  41:IMU/MahonyAHRS.c **** // Functions
+  42:IMU/MahonyAHRS.c **** 
+  43:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+  44:IMU/MahonyAHRS.c **** // AHRS algorithm update
+  45:IMU/MahonyAHRS.c **** 
+  46:IMU/MahonyAHRS.c **** void MahonyAHRSupdate(float q[4], float gx, float gy, float gz, float ax, float ay, float az, float
+  47:IMU/MahonyAHRS.c **** 	float recipNorm;
+  48:IMU/MahonyAHRS.c ****     float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
+  49:IMU/MahonyAHRS.c **** 	float hx, hy, bx, bz;
+  50:IMU/MahonyAHRS.c **** 	float halfvx, halfvy, halfvz, halfwx, halfwy, halfwz;
+  51:IMU/MahonyAHRS.c **** 	float halfex, halfey, halfez;
+  52:IMU/MahonyAHRS.c **** 	float qa, qb, qc;
+  53:IMU/MahonyAHRS.c **** 
+  54:IMU/MahonyAHRS.c **** 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation
+  55:IMU/MahonyAHRS.c **** 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
+  56:IMU/MahonyAHRS.c **** 		MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
+  57:IMU/MahonyAHRS.c **** 		return;
+  58:IMU/MahonyAHRS.c **** 	}
+  59:IMU/MahonyAHRS.c **** 
+  60:IMU/MahonyAHRS.c **** 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisa
+  61:IMU/MahonyAHRS.c **** 	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
+  62:IMU/MahonyAHRS.c **** 
+  63:IMU/MahonyAHRS.c **** 		// Normalise accelerometer measurement
+  64:IMU/MahonyAHRS.c **** 		recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+  65:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+  66:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+  67:IMU/MahonyAHRS.c **** 		az *= recipNorm;     
+  68:IMU/MahonyAHRS.c **** 
+  69:IMU/MahonyAHRS.c **** 		// Normalise magnetometer measurement
+  70:IMU/MahonyAHRS.c **** 		recipNorm = invSqrt(mx * mx + my * my + mz * mz);
+  71:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+  72:IMU/MahonyAHRS.c **** 		my *= recipNorm;
+  73:IMU/MahonyAHRS.c **** 		mz *= recipNorm;   
+  74:IMU/MahonyAHRS.c **** 
+  75:IMU/MahonyAHRS.c ****         // Auxiliary variables to avoid repeated arithmetic
+  76:IMU/MahonyAHRS.c ****         q0q0 = q[0] * q[0];
+  77:IMU/MahonyAHRS.c ****         q0q1 = q[0] * q[1];
+  78:IMU/MahonyAHRS.c ****         q0q2 = q[0] * q[2];
+  79:IMU/MahonyAHRS.c ****         q0q3 = q[0] * q[3];
+  80:IMU/MahonyAHRS.c ****         q1q1 = q[1] * q[1];
+  81:IMU/MahonyAHRS.c ****         q1q2 = q[1] * q[2];
+  82:IMU/MahonyAHRS.c ****         q1q3 = q[1] * q[3];
+  83:IMU/MahonyAHRS.c ****         q2q2 = q[2] * q[2];
+  84:IMU/MahonyAHRS.c ****         q2q3 = q[2] * q[3];
+  85:IMU/MahonyAHRS.c ****         q3q3 = q[3] * q[3];   
+  86:IMU/MahonyAHRS.c **** 
+ARM GAS  /tmp/ccp5XL8h.s 			page 3
+
+
+  87:IMU/MahonyAHRS.c ****         // Reference direction of Earth's magnetic field
+  88:IMU/MahonyAHRS.c ****         hx = 2.0f * (mx * (0.5f - q2q2 - q3q3) + my * (q1q2 - q0q3) + mz * (q1q3 + q0q2));
+  89:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+  90:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+  91:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+  92:IMU/MahonyAHRS.c **** 
+  93:IMU/MahonyAHRS.c **** 		// Estimated direction of gravity and magnetic field
+  94:IMU/MahonyAHRS.c **** 		halfvx = q1q3 - q0q2;
+  95:IMU/MahonyAHRS.c **** 		halfvy = q0q1 + q2q3;
+  96:IMU/MahonyAHRS.c **** 		halfvz = q0q0 - 0.5f + q3q3;
+  97:IMU/MahonyAHRS.c ****         halfwx = bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2);
+  98:IMU/MahonyAHRS.c ****         halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
+  99:IMU/MahonyAHRS.c ****         halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+ 100:IMU/MahonyAHRS.c **** 	
+ 101:IMU/MahonyAHRS.c **** 		// Error is sum of cross product between estimated direction and measured direction of field vect
+ 102:IMU/MahonyAHRS.c **** 		halfex = (ay * halfvz - az * halfvy) + (my * halfwz - mz * halfwy);
+ 103:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 104:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 105:IMU/MahonyAHRS.c **** 
+ 106:IMU/MahonyAHRS.c **** 		// Compute and apply integral feedback if enabled
+ 107:IMU/MahonyAHRS.c **** 		if(twoKi > 0.0f) {
+ 108:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 109:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 110:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 111:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 112:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 113:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 114:IMU/MahonyAHRS.c **** 		}
+ 115:IMU/MahonyAHRS.c **** 		else {
+ 116:IMU/MahonyAHRS.c **** 			integralFBx = 0.0f;	// prevent integral windup
+ 117:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 118:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 119:IMU/MahonyAHRS.c **** 		}
+ 120:IMU/MahonyAHRS.c **** 
+ 121:IMU/MahonyAHRS.c **** 		// Apply proportional feedback
+ 122:IMU/MahonyAHRS.c **** 		gx += twoKp * halfex;
+ 123:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 124:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 125:IMU/MahonyAHRS.c **** 	}
+ 126:IMU/MahonyAHRS.c **** 	
+ 127:IMU/MahonyAHRS.c **** 	// Integrate rate of change of quaternion
+ 128:IMU/MahonyAHRS.c **** 	gx *= (0.5f * (1.0f / sampleFreq));		// pre-multiply common factors
+ 129:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 130:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ 131:IMU/MahonyAHRS.c **** 	qa = q[0];
+ 132:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 133:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 134:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 135:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 136:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 137:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 138:IMU/MahonyAHRS.c **** 	
+ 139:IMU/MahonyAHRS.c **** 	// Normalise quaternion
+ 140:IMU/MahonyAHRS.c **** 	recipNorm = invSqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+ 141:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 142:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 143:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ARM GAS  /tmp/ccp5XL8h.s 			page 4
+
+
+ 144:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 145:IMU/MahonyAHRS.c **** }
+ 146:IMU/MahonyAHRS.c **** 
+ 147:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+ 148:IMU/MahonyAHRS.c **** // IMU algorithm update
+ 149:IMU/MahonyAHRS.c **** 
+ 150:IMU/MahonyAHRS.c **** void MahonyAHRSupdateIMU(float q[4], float gx, float gy, float gz, float ax, float ay, float az) {
+ 151:IMU/MahonyAHRS.c **** 	float recipNorm;
+ 152:IMU/MahonyAHRS.c **** 	float halfvx, halfvy, halfvz;
+ 153:IMU/MahonyAHRS.c **** 	float halfex, halfey, halfez;
+ 154:IMU/MahonyAHRS.c **** 	float qa, qb, qc;
+ 155:IMU/MahonyAHRS.c **** 
+ 156:IMU/MahonyAHRS.c **** 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisa
+ 157:IMU/MahonyAHRS.c **** 	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
+ 158:IMU/MahonyAHRS.c **** 
+ 159:IMU/MahonyAHRS.c **** 		// Normalise accelerometer measurement
+ 160:IMU/MahonyAHRS.c **** 		recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+ 161:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 162:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+ 163:IMU/MahonyAHRS.c **** 		az *= recipNorm;        
+ 164:IMU/MahonyAHRS.c **** 
+ 165:IMU/MahonyAHRS.c **** 		// Estimated direction of gravity and vector perpendicular to magnetic flux
+ 166:IMU/MahonyAHRS.c **** 		halfvx = q[1] * q[3] - q[0] * q[2];
+ 167:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 168:IMU/MahonyAHRS.c **** 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];
+ 169:IMU/MahonyAHRS.c **** 	
+ 170:IMU/MahonyAHRS.c **** 		// Error is sum of cross product between estimated and measured direction of gravity
+ 171:IMU/MahonyAHRS.c **** 		halfex = (ay * halfvz - az * halfvy);
+ 172:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz);
+ 173:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx);
+ 174:IMU/MahonyAHRS.c **** 
+ 175:IMU/MahonyAHRS.c **** 		// Compute and apply integral feedback if enabled
+ 176:IMU/MahonyAHRS.c **** 		if(twoKi > 0.0f) {
+ 177:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 178:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 179:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 180:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 181:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 182:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 183:IMU/MahonyAHRS.c **** 		}
+ 184:IMU/MahonyAHRS.c **** 		else {
+ 185:IMU/MahonyAHRS.c **** 			integralFBx = 0.0f;	// prevent integral windup
+ 186:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 187:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 188:IMU/MahonyAHRS.c **** 		}
+ 189:IMU/MahonyAHRS.c **** 
+ 190:IMU/MahonyAHRS.c **** 		// Apply proportional feedback
+ 191:IMU/MahonyAHRS.c **** 		gx += twoKp * halfex;
+ 192:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 193:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 194:IMU/MahonyAHRS.c **** 	}
+ 195:IMU/MahonyAHRS.c **** 	
+ 196:IMU/MahonyAHRS.c **** 	// Integrate rate of change of quaternion
+ 197:IMU/MahonyAHRS.c **** 	gx *= (0.5f * (1.0f / sampleFreq));		// pre-multiply common factors
+ 198:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 199:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ 200:IMU/MahonyAHRS.c **** 	qa = q[0];
+ARM GAS  /tmp/ccp5XL8h.s 			page 5
+
+
+ 201:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 202:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 203:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 204:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 205:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 206:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 207:IMU/MahonyAHRS.c **** 	
+ 208:IMU/MahonyAHRS.c **** 	// Normalise quaternion
+ 209:IMU/MahonyAHRS.c **** 	recipNorm = invSqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+ 210:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 211:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 212:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ 213:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 214:IMU/MahonyAHRS.c **** }
+ 215:IMU/MahonyAHRS.c **** 
+ 216:IMU/MahonyAHRS.c **** //-------------------------------------------------------------------------------------------------
+ 217:IMU/MahonyAHRS.c **** // Fast inverse square-root
+ 218:IMU/MahonyAHRS.c **** // See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
+ 219:IMU/MahonyAHRS.c **** 
+ 220:IMU/MahonyAHRS.c **** float invSqrt(float x) {
+  30              		.loc 1 220 24 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+ 221:IMU/MahonyAHRS.c **** 	float halfx = 0.5f * x;
+  35              		.loc 1 221 2 view .LVU1
+  36              		.loc 1 221 8 is_stmt 0 view .LVU2
+  37 0000 F6EE007A 		vmov.f32	s15, #5.0e-1
+  38 0004 60EE277A 		vmul.f32	s15, s0, s15
+  39              	.LVL1:
+ 222:IMU/MahonyAHRS.c **** 	float y = x;
+  40              		.loc 1 222 2 is_stmt 1 view .LVU3
+ 223:IMU/MahonyAHRS.c **** 	long i = *(long*)&y;
+  41              		.loc 1 223 2 view .LVU4
+  42              		.loc 1 223 11 is_stmt 0 view .LVU5
+  43 0008 10EE103A 		vmov	r3, s0	@ int
+  44              	.LVL2:
+ 224:IMU/MahonyAHRS.c **** 	i = 0x5f3759df - (i>>1);
+  45              		.loc 1 224 2 is_stmt 1 view .LVU6
+ 225:IMU/MahonyAHRS.c **** 	y = *(float*)&i;
+  46              		.loc 1 225 2 view .LVU7
+  47              		.loc 1 225 6 is_stmt 0 view .LVU8
+  48 000c 074A     		ldr	r2, .L2
+  49 000e A2EB6303 		sub	r3, r2, r3, asr #1
+  50              	.LVL3:
+  51              		.loc 1 225 6 view .LVU9
+  52 0012 07EE103A 		vmov	s14, r3	@ int
+  53              	.LVL4:
+ 226:IMU/MahonyAHRS.c **** 	y = y * (1.5f - (halfx * y * y));
+  54              		.loc 1 226 2 is_stmt 1 view .LVU10
+  55              		.loc 1 226 25 is_stmt 0 view .LVU11
+  56 0016 67EE277A 		vmul.f32	s15, s14, s15
+  57              	.LVL5:
+  58              		.loc 1 226 29 view .LVU12
+  59 001a 67EE277A 		vmul.f32	s15, s14, s15
+  60              		.loc 1 226 16 view .LVU13
+ARM GAS  /tmp/ccp5XL8h.s 			page 6
+
+
+  61 001e B7EE080A 		vmov.f32	s0, #1.5e+0
+  62              	.LVL6:
+  63              		.loc 1 226 16 view .LVU14
+  64 0022 30EE670A 		vsub.f32	s0, s0, s15
+  65              	.LVL7:
+ 227:IMU/MahonyAHRS.c **** 	return y;
+  66              		.loc 1 227 2 is_stmt 1 view .LVU15
+ 228:IMU/MahonyAHRS.c **** }
+  67              		.loc 1 228 1 is_stmt 0 view .LVU16
+  68 0026 27EE000A 		vmul.f32	s0, s14, s0
+  69 002a 7047     		bx	lr
+  70              	.L3:
+  71              		.align	2
+  72              	.L2:
+  73 002c DF59375F 		.word	1597463007
+  74              		.cfi_endproc
+  75              	.LFE2:
+  77              		.section	.text.MahonyAHRSupdateIMU,"ax",%progbits
+  78              		.align	1
+  79              		.global	MahonyAHRSupdateIMU
+  80              		.syntax unified
+  81              		.thumb
+  82              		.thumb_func
+  84              	MahonyAHRSupdateIMU:
+  85              	.LVL8:
+  86              	.LFB1:
+ 150:IMU/MahonyAHRS.c **** 	float recipNorm;
+  87              		.loc 1 150 98 is_stmt 1 view -0
+  88              		.cfi_startproc
+  89              		@ args = 0, pretend = 0, frame = 0
+  90              		@ frame_needed = 0, uses_anonymous_args = 0
+ 150:IMU/MahonyAHRS.c **** 	float recipNorm;
+  91              		.loc 1 150 98 is_stmt 0 view .LVU18
+  92 0000 10B5     		push	{r4, lr}
+  93              	.LCFI0:
+  94              		.cfi_def_cfa_offset 8
+  95              		.cfi_offset 4, -8
+  96              		.cfi_offset 14, -4
+  97 0002 2DED068B 		vpush.64	{d8, d9, d10}
+  98              	.LCFI1:
+  99              		.cfi_def_cfa_offset 32
+ 100              		.cfi_offset 80, -32
+ 101              		.cfi_offset 81, -28
+ 102              		.cfi_offset 82, -24
+ 103              		.cfi_offset 83, -20
+ 104              		.cfi_offset 84, -16
+ 105              		.cfi_offset 85, -12
+ 106 0006 0446     		mov	r4, r0
+ 107 0008 B0EE409A 		vmov.f32	s18, s0
+ 108 000c F0EE609A 		vmov.f32	s19, s1
+ 109 0010 B0EE418A 		vmov.f32	s16, s2
+ 110 0014 F0EE618A 		vmov.f32	s17, s3
+ 111 0018 B0EE42AA 		vmov.f32	s20, s4
+ 112 001c F0EE62AA 		vmov.f32	s21, s5
+ 151:IMU/MahonyAHRS.c **** 	float halfvx, halfvy, halfvz;
+ 113              		.loc 1 151 2 is_stmt 1 view .LVU19
+ 152:IMU/MahonyAHRS.c **** 	float halfex, halfey, halfez;
+ARM GAS  /tmp/ccp5XL8h.s 			page 7
+
+
+ 114              		.loc 1 152 2 view .LVU20
+ 153:IMU/MahonyAHRS.c **** 	float qa, qb, qc;
+ 115              		.loc 1 153 2 view .LVU21
+ 154:IMU/MahonyAHRS.c **** 
+ 116              		.loc 1 154 2 view .LVU22
+ 157:IMU/MahonyAHRS.c **** 
+ 117              		.loc 1 157 2 view .LVU23
+ 157:IMU/MahonyAHRS.c **** 
+ 118              		.loc 1 157 4 is_stmt 0 view .LVU24
+ 119 0020 F5EE401A 		vcmp.f32	s3, #0
+ 120 0024 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 121 0028 0AD1     		bne	.L5
+ 157:IMU/MahonyAHRS.c **** 
+ 122              		.loc 1 157 20 discriminator 1 view .LVU25
+ 123 002a B5EE402A 		vcmp.f32	s4, #0
+ 124 002e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 125 0032 05D1     		bne	.L5
+ 157:IMU/MahonyAHRS.c **** 
+ 126              		.loc 1 157 5 discriminator 2 view .LVU26
+ 127 0034 F5EE402A 		vcmp.f32	s5, #0
+ 128 0038 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 129 003c 00F09380 		beq	.L6
+ 130              	.L5:
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 131              		.loc 1 160 3 is_stmt 1 view .LVU27
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 132              		.loc 1 160 26 is_stmt 0 view .LVU28
+ 133 0040 68EEA87A 		vmul.f32	s15, s17, s17
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 134              		.loc 1 160 36 view .LVU29
+ 135 0044 2AEE0A0A 		vmul.f32	s0, s20, s20
+ 136              	.LVL9:
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 137              		.loc 1 160 31 view .LVU30
+ 138 0048 77EE807A 		vadd.f32	s15, s15, s0
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 139              		.loc 1 160 46 view .LVU31
+ 140 004c 2AEEAA0A 		vmul.f32	s0, s21, s21
+ 160:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 141              		.loc 1 160 15 view .LVU32
+ 142 0050 37EE800A 		vadd.f32	s0, s15, s0
+ 143 0054 FFF7FEFF 		bl	invSqrt
+ 144              	.LVL10:
+ 161:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+ 145              		.loc 1 161 3 is_stmt 1 view .LVU33
+ 161:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+ 146              		.loc 1 161 6 is_stmt 0 view .LVU34
+ 147 0058 68EE808A 		vmul.f32	s17, s17, s0
+ 148              	.LVL11:
+ 162:IMU/MahonyAHRS.c **** 		az *= recipNorm;        
+ 149              		.loc 1 162 3 is_stmt 1 view .LVU35
+ 162:IMU/MahonyAHRS.c **** 		az *= recipNorm;        
+ 150              		.loc 1 162 6 is_stmt 0 view .LVU36
+ 151 005c 2AEE00AA 		vmul.f32	s20, s20, s0
+ 152              	.LVL12:
+ 163:IMU/MahonyAHRS.c **** 
+ 153              		.loc 1 163 3 is_stmt 1 view .LVU37
+ARM GAS  /tmp/ccp5XL8h.s 			page 8
+
+
+ 163:IMU/MahonyAHRS.c **** 
+ 154              		.loc 1 163 6 is_stmt 0 view .LVU38
+ 155 0060 6AEE80AA 		vmul.f32	s21, s21, s0
+ 156              	.LVL13:
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 157              		.loc 1 166 3 is_stmt 1 view .LVU39
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 158              		.loc 1 166 13 is_stmt 0 view .LVU40
+ 159 0064 D4ED011A 		vldr.32	s3, [r4, #4]
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 160              		.loc 1 166 20 view .LVU41
+ 161 0068 94ED037A 		vldr.32	s14, [r4, #12]
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 162              		.loc 1 166 17 view .LVU42
+ 163 006c 21EE872A 		vmul.f32	s4, s3, s14
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 164              		.loc 1 166 27 view .LVU43
+ 165 0070 D4ED007A 		vldr.32	s15, [r4]
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 166              		.loc 1 166 34 view .LVU44
+ 167 0074 D4ED026A 		vldr.32	s13, [r4, #8]
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 168              		.loc 1 166 31 view .LVU45
+ 169 0078 27EEA66A 		vmul.f32	s12, s15, s13
+ 166:IMU/MahonyAHRS.c **** 		halfvy = q[0] * q[1] + q[2] * q[3];
+ 170              		.loc 1 166 10 view .LVU46
+ 171 007c 32EE462A 		vsub.f32	s4, s4, s12
+ 172              	.LVL14:
+ 167:IMU/MahonyAHRS.c **** 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];
+ 173              		.loc 1 167 3 is_stmt 1 view .LVU47
+ 167:IMU/MahonyAHRS.c **** 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];
+ 174              		.loc 1 167 17 is_stmt 0 view .LVU48
+ 175 0080 61EEA71A 		vmul.f32	s3, s3, s15
+ 167:IMU/MahonyAHRS.c **** 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];
+ 176              		.loc 1 167 31 view .LVU49
+ 177 0084 67EE266A 		vmul.f32	s13, s14, s13
+ 167:IMU/MahonyAHRS.c **** 		halfvz = q[0] * q[0] - 0.5f + q[3] * q[3];
+ 178              		.loc 1 167 10 view .LVU50
+ 179 0088 71EEA61A 		vadd.f32	s3, s3, s13
+ 180              	.LVL15:
+ 168:IMU/MahonyAHRS.c **** 	
+ 181              		.loc 1 168 3 is_stmt 1 view .LVU51
+ 168:IMU/MahonyAHRS.c **** 	
+ 182              		.loc 1 168 17 is_stmt 0 view .LVU52
+ 183 008c 67EEA77A 		vmul.f32	s15, s15, s15
+ 168:IMU/MahonyAHRS.c **** 	
+ 184              		.loc 1 168 24 view .LVU53
+ 185 0090 F6EE006A 		vmov.f32	s13, #5.0e-1
+ 186 0094 77EEE67A 		vsub.f32	s15, s15, s13
+ 168:IMU/MahonyAHRS.c **** 	
+ 187              		.loc 1 168 38 view .LVU54
+ 188 0098 27EE077A 		vmul.f32	s14, s14, s14
+ 168:IMU/MahonyAHRS.c **** 	
+ 189              		.loc 1 168 10 view .LVU55
+ 190 009c 77EE877A 		vadd.f32	s15, s15, s14
+ 191              	.LVL16:
+ 171:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz);
+ARM GAS  /tmp/ccp5XL8h.s 			page 9
+
+
+ 192              		.loc 1 171 3 is_stmt 1 view .LVU56
+ 171:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz);
+ 193              		.loc 1 171 16 is_stmt 0 view .LVU57
+ 194 00a0 2AEE275A 		vmul.f32	s10, s20, s15
+ 171:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz);
+ 195              		.loc 1 171 30 view .LVU58
+ 196 00a4 2AEEA17A 		vmul.f32	s14, s21, s3
+ 171:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz);
+ 197              		.loc 1 171 10 view .LVU59
+ 198 00a8 35EE475A 		vsub.f32	s10, s10, s14
+ 199              	.LVL17:
+ 172:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx);
+ 200              		.loc 1 172 3 is_stmt 1 view .LVU60
+ 172:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx);
+ 201              		.loc 1 172 16 is_stmt 0 view .LVU61
+ 202 00ac 6AEE82AA 		vmul.f32	s21, s21, s4
+ 203              	.LVL18:
+ 172:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx);
+ 204              		.loc 1 172 30 view .LVU62
+ 205 00b0 68EEA77A 		vmul.f32	s15, s17, s15
+ 206              	.LVL19:
+ 172:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx);
+ 207              		.loc 1 172 10 view .LVU63
+ 208 00b4 7AEEE7AA 		vsub.f32	s21, s21, s15
+ 209              	.LVL20:
+ 173:IMU/MahonyAHRS.c **** 
+ 210              		.loc 1 173 3 is_stmt 1 view .LVU64
+ 173:IMU/MahonyAHRS.c **** 
+ 211              		.loc 1 173 16 is_stmt 0 view .LVU65
+ 212 00b8 68EEA18A 		vmul.f32	s17, s17, s3
+ 213              	.LVL21:
+ 173:IMU/MahonyAHRS.c **** 
+ 214              		.loc 1 173 30 view .LVU66
+ 215 00bc 2AEE02AA 		vmul.f32	s20, s20, s4
+ 216              	.LVL22:
+ 173:IMU/MahonyAHRS.c **** 
+ 217              		.loc 1 173 10 view .LVU67
+ 218 00c0 78EECA8A 		vsub.f32	s17, s17, s20
+ 219              	.LVL23:
+ 176:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 220              		.loc 1 176 3 is_stmt 1 view .LVU68
+ 176:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 221              		.loc 1 176 12 is_stmt 0 view .LVU69
+ 222 00c4 614B     		ldr	r3, .L13
+ 223 00c6 D3ED007A 		vldr.32	s15, [r3]
+ 176:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 224              		.loc 1 176 5 view .LVU70
+ 225 00ca F5EEC07A 		vcmpe.f32	s15, #0
+ 226 00ce F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 227 00d2 40F3B380 		ble	.L11
+ 177:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 228              		.loc 1 177 4 is_stmt 1 view .LVU71
+ 177:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 229              		.loc 1 177 25 is_stmt 0 view .LVU72
+ 230 00d6 93ED006A 		vldr.32	s12, [r3]
+ 231 00da 26EE056A 		vmul.f32	s12, s12, s10
+ 177:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ARM GAS  /tmp/ccp5XL8h.s 			page 10
+
+
+ 232              		.loc 1 177 34 view .LVU73
+ 233 00de DFED5C5A 		vldr.32	s11, .L13+4
+ 234 00e2 26EE256A 		vmul.f32	s12, s12, s11
+ 177:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 235              		.loc 1 177 16 view .LVU74
+ 236 00e6 5B49     		ldr	r1, .L13+8
+ 237 00e8 D1ED006A 		vldr.32	s13, [r1]
+ 238              	.LVL24:
+ 177:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 239              		.loc 1 177 16 view .LVU75
+ 240 00ec 36EE866A 		vadd.f32	s12, s13, s12
+ 241 00f0 81ED006A 		vstr.32	s12, [r1]
+ 242              	.LVL25:
+ 178:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 243              		.loc 1 178 4 is_stmt 1 view .LVU76
+ 178:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 244              		.loc 1 178 25 is_stmt 0 view .LVU77
+ 245 00f4 93ED006A 		vldr.32	s12, [r3]
+ 246 00f8 26EE2A6A 		vmul.f32	s12, s12, s21
+ 178:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 247              		.loc 1 178 34 view .LVU78
+ 248 00fc 26EE256A 		vmul.f32	s12, s12, s11
+ 178:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 249              		.loc 1 178 16 view .LVU79
+ 250 0100 554A     		ldr	r2, .L13+12
+ 251 0102 D2ED006A 		vldr.32	s13, [r2]
+ 252 0106 36EE866A 		vadd.f32	s12, s13, s12
+ 253 010a 82ED006A 		vstr.32	s12, [r2]
+ 179:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 254              		.loc 1 179 4 is_stmt 1 view .LVU80
+ 179:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 255              		.loc 1 179 25 is_stmt 0 view .LVU81
+ 256 010e D3ED006A 		vldr.32	s13, [r3]
+ 257 0112 66EEA86A 		vmul.f32	s13, s13, s17
+ 179:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 258              		.loc 1 179 34 view .LVU82
+ 259 0116 66EEA56A 		vmul.f32	s13, s13, s11
+ 179:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 260              		.loc 1 179 16 view .LVU83
+ 261 011a 504B     		ldr	r3, .L13+16
+ 262 011c 93ED006A 		vldr.32	s12, [r3]
+ 263 0120 76EE266A 		vadd.f32	s13, s12, s13
+ 264 0124 C3ED006A 		vstr.32	s13, [r3]
+ 180:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 265              		.loc 1 180 4 is_stmt 1 view .LVU84
+ 266 0128 D1ED007A 		vldr.32	s15, [r1]
+ 180:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 267              		.loc 1 180 7 is_stmt 0 view .LVU85
+ 268 012c 39EE279A 		vadd.f32	s18, s18, s15
+ 269              	.LVL26:
+ 181:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 270              		.loc 1 181 4 is_stmt 1 view .LVU86
+ 271 0130 D2ED007A 		vldr.32	s15, [r2]
+ 181:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 272              		.loc 1 181 7 is_stmt 0 view .LVU87
+ 273 0134 79EEA79A 		vadd.f32	s19, s19, s15
+ 274              	.LVL27:
+ARM GAS  /tmp/ccp5XL8h.s 			page 11
+
+
+ 182:IMU/MahonyAHRS.c **** 		}
+ 275              		.loc 1 182 4 is_stmt 1 view .LVU88
+ 276 0138 D3ED007A 		vldr.32	s15, [r3]
+ 182:IMU/MahonyAHRS.c **** 		}
+ 277              		.loc 1 182 7 is_stmt 0 view .LVU89
+ 278 013c 38EE278A 		vadd.f32	s16, s16, s15
+ 279              	.LVL28:
+ 280              	.L9:
+ 191:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 281              		.loc 1 191 3 is_stmt 1 view .LVU90
+ 191:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 282              		.loc 1 191 15 is_stmt 0 view .LVU91
+ 283 0140 474B     		ldr	r3, .L13+20
+ 284 0142 93ED007A 		vldr.32	s14, [r3]
+ 285 0146 27EE057A 		vmul.f32	s14, s14, s10
+ 191:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 286              		.loc 1 191 6 view .LVU92
+ 287 014a 39EE079A 		vadd.f32	s18, s18, s14
+ 288              	.LVL29:
+ 192:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 289              		.loc 1 192 3 is_stmt 1 view .LVU93
+ 192:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 290              		.loc 1 192 15 is_stmt 0 view .LVU94
+ 291 014e 93ED007A 		vldr.32	s14, [r3]
+ 292 0152 67EE2AAA 		vmul.f32	s21, s14, s21
+ 293              	.LVL30:
+ 192:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 294              		.loc 1 192 6 view .LVU95
+ 295 0156 79EEAA9A 		vadd.f32	s19, s19, s21
+ 296              	.LVL31:
+ 193:IMU/MahonyAHRS.c **** 	}
+ 297              		.loc 1 193 3 is_stmt 1 view .LVU96
+ 193:IMU/MahonyAHRS.c **** 	}
+ 298              		.loc 1 193 15 is_stmt 0 view .LVU97
+ 299 015a D3ED007A 		vldr.32	s15, [r3]
+ 300 015e 67EEA88A 		vmul.f32	s17, s15, s17
+ 301              	.LVL32:
+ 193:IMU/MahonyAHRS.c **** 	}
+ 302              		.loc 1 193 6 view .LVU98
+ 303 0162 38EE288A 		vadd.f32	s16, s16, s17
+ 304              	.LVL33:
+ 305              	.L6:
+ 197:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 306              		.loc 1 197 2 is_stmt 1 view .LVU99
+ 197:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 307              		.loc 1 197 5 is_stmt 0 view .LVU100
+ 308 0166 9FED3F1A 		vldr.32	s2, .L13+24
+ 309 016a 29EE010A 		vmul.f32	s0, s18, s2
+ 310              	.LVL34:
+ 198:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ 311              		.loc 1 198 2 is_stmt 1 view .LVU101
+ 198:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ 312              		.loc 1 198 5 is_stmt 0 view .LVU102
+ 313 016e 69EE810A 		vmul.f32	s1, s19, s2
+ 314              	.LVL35:
+ 199:IMU/MahonyAHRS.c **** 	qa = q[0];
+ 315              		.loc 1 199 2 is_stmt 1 view .LVU103
+ARM GAS  /tmp/ccp5XL8h.s 			page 12
+
+
+ 199:IMU/MahonyAHRS.c **** 	qa = q[0];
+ 316              		.loc 1 199 5 is_stmt 0 view .LVU104
+ 317 0172 28EE011A 		vmul.f32	s2, s16, s2
+ 318              	.LVL36:
+ 200:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 319              		.loc 1 200 2 is_stmt 1 view .LVU105
+ 200:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 320              		.loc 1 200 5 is_stmt 0 view .LVU106
+ 321 0176 D4ED006A 		vldr.32	s13, [r4]
+ 322              	.LVL37:
+ 201:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 323              		.loc 1 201 2 is_stmt 1 view .LVU107
+ 201:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 324              		.loc 1 201 5 is_stmt 0 view .LVU108
+ 325 017a 94ED017A 		vldr.32	s14, [r4, #4]
+ 326              	.LVL38:
+ 202:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 327              		.loc 1 202 2 is_stmt 1 view .LVU109
+ 202:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 328              		.loc 1 202 5 is_stmt 0 view .LVU110
+ 329 017e D4ED027A 		vldr.32	s15, [r4, #8]
+ 330              	.LVL39:
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 331              		.loc 1 203 2 is_stmt 1 view .LVU111
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 332              		.loc 1 203 15 is_stmt 0 view .LVU112
+ 333 0182 27EE409A 		vnmul.f32	s18, s14, s0
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 334              		.loc 1 203 25 view .LVU113
+ 335 0186 20EEA76A 		vmul.f32	s12, s1, s15
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 336              		.loc 1 203 20 view .LVU114
+ 337 018a 39EE469A 		vsub.f32	s18, s18, s12
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 338              		.loc 1 203 33 view .LVU115
+ 339 018e D4ED039A 		vldr.32	s19, [r4, #12]
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 340              		.loc 1 203 37 view .LVU116
+ 341 0192 29EE816A 		vmul.f32	s12, s19, s2
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 342              		.loc 1 203 30 view .LVU117
+ 343 0196 39EE469A 		vsub.f32	s18, s18, s12
+ 203:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 344              		.loc 1 203 7 view .LVU118
+ 345 019a 39EE269A 		vadd.f32	s18, s18, s13
+ 346 019e 84ED009A 		vstr.32	s18, [r4]
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 347              		.loc 1 204 2 is_stmt 1 view .LVU119
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 348              		.loc 1 204 14 is_stmt 0 view .LVU120
+ 349 01a2 60EE268A 		vmul.f32	s17, s0, s13
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 350              		.loc 1 204 24 view .LVU121
+ 351 01a6 21EE276A 		vmul.f32	s12, s2, s15
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 352              		.loc 1 204 19 view .LVU122
+ 353 01aa 78EE868A 		vadd.f32	s17, s17, s12
+ARM GAS  /tmp/ccp5XL8h.s 			page 13
+
+
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 354              		.loc 1 204 36 view .LVU123
+ 355 01ae 29EEA06A 		vmul.f32	s12, s19, s1
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 356              		.loc 1 204 29 view .LVU124
+ 357 01b2 78EEC68A 		vsub.f32	s17, s17, s12
+ 204:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 358              		.loc 1 204 7 view .LVU125
+ 359 01b6 78EE878A 		vadd.f32	s17, s17, s14
+ 360 01ba C4ED018A 		vstr.32	s17, [r4, #4]
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 361              		.loc 1 205 2 is_stmt 1 view .LVU126
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 362              		.loc 1 205 14 is_stmt 0 view .LVU127
+ 363 01be 20EEA68A 		vmul.f32	s16, s1, s13
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 364              		.loc 1 205 24 view .LVU128
+ 365 01c2 21EE076A 		vmul.f32	s12, s2, s14
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 366              		.loc 1 205 19 view .LVU129
+ 367 01c6 38EE468A 		vsub.f32	s16, s16, s12
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 368              		.loc 1 205 36 view .LVU130
+ 369 01ca 29EE806A 		vmul.f32	s12, s19, s0
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 370              		.loc 1 205 29 view .LVU131
+ 371 01ce 38EE068A 		vadd.f32	s16, s16, s12
+ 205:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 372              		.loc 1 205 7 view .LVU132
+ 373 01d2 38EE278A 		vadd.f32	s16, s16, s15
+ 374 01d6 84ED028A 		vstr.32	s16, [r4, #8]
+ 206:IMU/MahonyAHRS.c **** 	
+ 375              		.loc 1 206 2 is_stmt 1 view .LVU133
+ 206:IMU/MahonyAHRS.c **** 	
+ 376              		.loc 1 206 14 is_stmt 0 view .LVU134
+ 377 01da 21EE261A 		vmul.f32	s2, s2, s13
+ 378              	.LVL40:
+ 206:IMU/MahonyAHRS.c **** 	
+ 379              		.loc 1 206 24 view .LVU135
+ 380 01de 60EE870A 		vmul.f32	s1, s1, s14
+ 381              	.LVL41:
+ 206:IMU/MahonyAHRS.c **** 	
+ 382              		.loc 1 206 19 view .LVU136
+ 383 01e2 31EE201A 		vadd.f32	s2, s2, s1
+ 206:IMU/MahonyAHRS.c **** 	
+ 384              		.loc 1 206 34 view .LVU137
+ 385 01e6 20EE270A 		vmul.f32	s0, s0, s15
+ 386              	.LVL42:
+ 206:IMU/MahonyAHRS.c **** 	
+ 387              		.loc 1 206 29 view .LVU138
+ 388 01ea 31EE401A 		vsub.f32	s2, s2, s0
+ 206:IMU/MahonyAHRS.c **** 	
+ 389              		.loc 1 206 7 view .LVU139
+ 390 01ee 79EE819A 		vadd.f32	s19, s19, s2
+ 391 01f2 C4ED039A 		vstr.32	s19, [r4, #12]
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 392              		.loc 1 209 2 is_stmt 1 view .LVU140
+ARM GAS  /tmp/ccp5XL8h.s 			page 14
+
+
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 393              		.loc 1 209 27 is_stmt 0 view .LVU141
+ 394 01f6 69EE097A 		vmul.f32	s15, s18, s18
+ 395              	.LVL43:
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 396              		.loc 1 209 41 view .LVU142
+ 397 01fa 28EEA80A 		vmul.f32	s0, s17, s17
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 398              		.loc 1 209 34 view .LVU143
+ 399 01fe 77EE807A 		vadd.f32	s15, s15, s0
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 400              		.loc 1 209 55 view .LVU144
+ 401 0202 28EE080A 		vmul.f32	s0, s16, s16
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 402              		.loc 1 209 48 view .LVU145
+ 403 0206 77EE807A 		vadd.f32	s15, s15, s0
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 404              		.loc 1 209 69 view .LVU146
+ 405 020a 29EEA90A 		vmul.f32	s0, s19, s19
+ 209:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 406              		.loc 1 209 14 view .LVU147
+ 407 020e 37EE800A 		vadd.f32	s0, s15, s0
+ 408 0212 FFF7FEFF 		bl	invSqrt
+ 409              	.LVL44:
+ 210:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 410              		.loc 1 210 2 is_stmt 1 view .LVU148
+ 210:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 411              		.loc 1 210 7 is_stmt 0 view .LVU149
+ 412 0216 29EE009A 		vmul.f32	s18, s18, s0
+ 413 021a 84ED009A 		vstr.32	s18, [r4]
+ 211:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ 414              		.loc 1 211 2 is_stmt 1 view .LVU150
+ 211:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ 415              		.loc 1 211 7 is_stmt 0 view .LVU151
+ 416 021e 68EE808A 		vmul.f32	s17, s17, s0
+ 417 0222 C4ED018A 		vstr.32	s17, [r4, #4]
+ 212:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 418              		.loc 1 212 2 is_stmt 1 view .LVU152
+ 212:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 419              		.loc 1 212 7 is_stmt 0 view .LVU153
+ 420 0226 28EE008A 		vmul.f32	s16, s16, s0
+ 421 022a 84ED028A 		vstr.32	s16, [r4, #8]
+ 213:IMU/MahonyAHRS.c **** }
+ 422              		.loc 1 213 2 is_stmt 1 view .LVU154
+ 213:IMU/MahonyAHRS.c **** }
+ 423              		.loc 1 213 7 is_stmt 0 view .LVU155
+ 424 022e 29EE801A 		vmul.f32	s2, s19, s0
+ 425 0232 84ED031A 		vstr.32	s2, [r4, #12]
+ 214:IMU/MahonyAHRS.c **** 
+ 426              		.loc 1 214 1 view .LVU156
+ 427 0236 BDEC068B 		vldm	sp!, {d8-d10}
+ 428              	.LCFI2:
+ 429              		.cfi_remember_state
+ 430              		.cfi_restore 84
+ 431              		.cfi_restore 85
+ 432              		.cfi_restore 82
+ 433              		.cfi_restore 83
+ARM GAS  /tmp/ccp5XL8h.s 			page 15
+
+
+ 434              		.cfi_restore 80
+ 435              		.cfi_restore 81
+ 436              		.cfi_def_cfa_offset 8
+ 437 023a 10BD     		pop	{r4, pc}
+ 438              	.LVL45:
+ 439              	.L11:
+ 440              	.LCFI3:
+ 441              		.cfi_restore_state
+ 185:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 442              		.loc 1 185 4 is_stmt 1 view .LVU157
+ 185:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 443              		.loc 1 185 16 is_stmt 0 view .LVU158
+ 444 023c 0023     		movs	r3, #0
+ 445 023e 054A     		ldr	r2, .L13+8
+ 446 0240 1360     		str	r3, [r2]	@ float
+ 447              	.LVL46:
+ 186:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 448              		.loc 1 186 4 is_stmt 1 view .LVU159
+ 186:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 449              		.loc 1 186 16 is_stmt 0 view .LVU160
+ 450 0242 054A     		ldr	r2, .L13+12
+ 451 0244 1360     		str	r3, [r2]	@ float
+ 187:IMU/MahonyAHRS.c **** 		}
+ 452              		.loc 1 187 4 is_stmt 1 view .LVU161
+ 187:IMU/MahonyAHRS.c **** 		}
+ 453              		.loc 1 187 16 is_stmt 0 view .LVU162
+ 454 0246 054A     		ldr	r2, .L13+16
+ 455 0248 1360     		str	r3, [r2]	@ float
+ 456 024a 79E7     		b	.L9
+ 457              	.L14:
+ 458              		.align	2
+ 459              	.L13:
+ 460 024c 00000000 		.word	.LANCHOR0
+ 461 0250 6F12833A 		.word	981668463
+ 462 0254 00000000 		.word	.LANCHOR1
+ 463 0258 00000000 		.word	.LANCHOR2
+ 464 025c 00000000 		.word	.LANCHOR3
+ 465 0260 00000000 		.word	.LANCHOR4
+ 466 0264 6F12033A 		.word	973279855
+ 467              		.cfi_endproc
+ 468              	.LFE1:
+ 470              		.global	__aeabi_f2d
+ 471              		.global	__aeabi_d2f
+ 472              		.section	.text.MahonyAHRSupdate,"ax",%progbits
+ 473              		.align	1
+ 474              		.global	MahonyAHRSupdate
+ 475              		.syntax unified
+ 476              		.thumb
+ 477              		.thumb_func
+ 479              	MahonyAHRSupdate:
+ 480              	.LVL47:
+ 481              	.LFB0:
+  46:IMU/MahonyAHRS.c **** 	float recipNorm;
+ 482              		.loc 1 46 125 is_stmt 1 view -0
+ 483              		.cfi_startproc
+ 484              		@ args = 0, pretend = 0, frame = 24
+ 485              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  /tmp/ccp5XL8h.s 			page 16
+
+
+  46:IMU/MahonyAHRS.c **** 	float recipNorm;
+ 486              		.loc 1 46 125 is_stmt 0 view .LVU164
+ 487 0000 10B5     		push	{r4, lr}
+ 488              	.LCFI4:
+ 489              		.cfi_def_cfa_offset 8
+ 490              		.cfi_offset 4, -8
+ 491              		.cfi_offset 14, -4
+ 492 0002 2DED108B 		vpush.64	{d8, d9, d10, d11, d12, d13, d14, d15}
+ 493              	.LCFI5:
+ 494              		.cfi_def_cfa_offset 72
+ 495              		.cfi_offset 80, -72
+ 496              		.cfi_offset 81, -68
+ 497              		.cfi_offset 82, -64
+ 498              		.cfi_offset 83, -60
+ 499              		.cfi_offset 84, -56
+ 500              		.cfi_offset 85, -52
+ 501              		.cfi_offset 86, -48
+ 502              		.cfi_offset 87, -44
+ 503              		.cfi_offset 88, -40
+ 504              		.cfi_offset 89, -36
+ 505              		.cfi_offset 90, -32
+ 506              		.cfi_offset 91, -28
+ 507              		.cfi_offset 92, -24
+ 508              		.cfi_offset 93, -20
+ 509              		.cfi_offset 94, -16
+ 510              		.cfi_offset 95, -12
+ 511 0006 86B0     		sub	sp, sp, #24
+ 512              	.LCFI6:
+ 513              		.cfi_def_cfa_offset 96
+ 514 0008 0446     		mov	r4, r0
+ 515 000a B0EE40AA 		vmov.f32	s20, s0
+ 516 000e F0EE60AA 		vmov.f32	s21, s1
+ 517 0012 B0EE418A 		vmov.f32	s16, s2
+ 518 0016 F0EE618A 		vmov.f32	s17, s3
+ 519 001a B0EE42BA 		vmov.f32	s22, s4
+ 520 001e B0EE62CA 		vmov.f32	s24, s5
+ 521 0022 B0EE439A 		vmov.f32	s18, s6
+ 522 0026 F0EE63BA 		vmov.f32	s23, s7
+ 523 002a F0EE449A 		vmov.f32	s19, s8
+  47:IMU/MahonyAHRS.c ****     float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
+ 524              		.loc 1 47 2 is_stmt 1 view .LVU165
+  48:IMU/MahonyAHRS.c **** 	float hx, hy, bx, bz;
+ 525              		.loc 1 48 5 view .LVU166
+  49:IMU/MahonyAHRS.c **** 	float halfvx, halfvy, halfvz, halfwx, halfwy, halfwz;
+ 526              		.loc 1 49 2 view .LVU167
+  50:IMU/MahonyAHRS.c **** 	float halfex, halfey, halfez;
+ 527              		.loc 1 50 2 view .LVU168
+  51:IMU/MahonyAHRS.c **** 	float qa, qb, qc;
+ 528              		.loc 1 51 2 view .LVU169
+  52:IMU/MahonyAHRS.c **** 
+ 529              		.loc 1 52 2 view .LVU170
+  55:IMU/MahonyAHRS.c **** 		MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
+ 530              		.loc 1 55 2 view .LVU171
+  55:IMU/MahonyAHRS.c **** 		MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
+ 531              		.loc 1 55 4 is_stmt 0 view .LVU172
+ 532 002e B5EE403A 		vcmp.f32	s6, #0
+ 533 0032 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ARM GAS  /tmp/ccp5XL8h.s 			page 17
+
+
+ 534 0036 0AD1     		bne	.L16
+  55:IMU/MahonyAHRS.c **** 		MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
+ 535              		.loc 1 55 18 discriminator 1 view .LVU173
+ 536 0038 F5EE403A 		vcmp.f32	s7, #0
+ 537 003c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 538 0040 05D1     		bne	.L16
+  55:IMU/MahonyAHRS.c **** 		MahonyAHRSupdateIMU(q, gx, gy, gz, ax, ay, az);
+ 539              		.loc 1 55 34 discriminator 2 view .LVU174
+ 540 0042 B5EE404A 		vcmp.f32	s8, #0
+ 541 0046 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 542 004a 00F0B181 		beq	.L26
+ 543              	.L16:
+  61:IMU/MahonyAHRS.c **** 
+ 544              		.loc 1 61 2 is_stmt 1 view .LVU175
+  61:IMU/MahonyAHRS.c **** 
+ 545              		.loc 1 61 4 is_stmt 0 view .LVU176
+ 546 004e F5EE408A 		vcmp.f32	s17, #0
+ 547 0052 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 548 0056 0AD1     		bne	.L18
+  61:IMU/MahonyAHRS.c **** 
+ 549              		.loc 1 61 20 discriminator 1 view .LVU177
+ 550 0058 B5EE40BA 		vcmp.f32	s22, #0
+ 551 005c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 552 0060 05D1     		bne	.L18
+  61:IMU/MahonyAHRS.c **** 
+ 553              		.loc 1 61 5 discriminator 2 view .LVU178
+ 554 0062 B5EE40CA 		vcmp.f32	s24, #0
+ 555 0066 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 556 006a 00F03581 		beq	.L19
+ 557              	.L18:
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 558              		.loc 1 64 3 is_stmt 1 view .LVU179
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 559              		.loc 1 64 26 is_stmt 0 view .LVU180
+ 560 006e 68EEA87A 		vmul.f32	s15, s17, s17
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 561              		.loc 1 64 36 view .LVU181
+ 562 0072 2BEE0B0A 		vmul.f32	s0, s22, s22
+ 563              	.LVL48:
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 564              		.loc 1 64 31 view .LVU182
+ 565 0076 77EE807A 		vadd.f32	s15, s15, s0
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 566              		.loc 1 64 46 view .LVU183
+ 567 007a 2CEE0C0A 		vmul.f32	s0, s24, s24
+  64:IMU/MahonyAHRS.c **** 		ax *= recipNorm;
+ 568              		.loc 1 64 15 view .LVU184
+ 569 007e 37EE800A 		vadd.f32	s0, s15, s0
+ 570 0082 FFF7FEFF 		bl	invSqrt
+ 571              	.LVL49:
+  65:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+ 572              		.loc 1 65 3 is_stmt 1 view .LVU185
+  65:IMU/MahonyAHRS.c **** 		ay *= recipNorm;
+ 573              		.loc 1 65 6 is_stmt 0 view .LVU186
+ 574 0086 68EE806A 		vmul.f32	s13, s17, s0
+ 575 008a CDED026A 		vstr.32	s13, [sp, #8]
+ 576              	.LVL50:
+ARM GAS  /tmp/ccp5XL8h.s 			page 18
+
+
+  66:IMU/MahonyAHRS.c **** 		az *= recipNorm;     
+ 577              		.loc 1 66 3 is_stmt 1 view .LVU187
+  66:IMU/MahonyAHRS.c **** 		az *= recipNorm;     
+ 578              		.loc 1 66 6 is_stmt 0 view .LVU188
+ 579 008e 6BEE005A 		vmul.f32	s11, s22, s0
+ 580 0092 CDED035A 		vstr.32	s11, [sp, #12]
+ 581              	.LVL51:
+  67:IMU/MahonyAHRS.c **** 
+ 582              		.loc 1 67 3 is_stmt 1 view .LVU189
+  67:IMU/MahonyAHRS.c **** 
+ 583              		.loc 1 67 6 is_stmt 0 view .LVU190
+ 584 0096 2CEE005A 		vmul.f32	s10, s24, s0
+ 585 009a 8DED045A 		vstr.32	s10, [sp, #16]
+ 586              	.LVL52:
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 587              		.loc 1 70 3 is_stmt 1 view .LVU191
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 588              		.loc 1 70 26 is_stmt 0 view .LVU192
+ 589 009e 69EE097A 		vmul.f32	s15, s18, s18
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 590              		.loc 1 70 36 view .LVU193
+ 591 00a2 2BEEAB0A 		vmul.f32	s0, s23, s23
+ 592              	.LVL53:
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 593              		.loc 1 70 31 view .LVU194
+ 594 00a6 77EE807A 		vadd.f32	s15, s15, s0
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 595              		.loc 1 70 46 view .LVU195
+ 596 00aa 29EEA90A 		vmul.f32	s0, s19, s19
+  70:IMU/MahonyAHRS.c **** 		mx *= recipNorm;
+ 597              		.loc 1 70 15 view .LVU196
+ 598 00ae 37EE800A 		vadd.f32	s0, s15, s0
+ 599 00b2 FFF7FEFF 		bl	invSqrt
+ 600              	.LVL54:
+  71:IMU/MahonyAHRS.c **** 		my *= recipNorm;
+ 601              		.loc 1 71 3 is_stmt 1 view .LVU197
+  71:IMU/MahonyAHRS.c **** 		my *= recipNorm;
+ 602              		.loc 1 71 6 is_stmt 0 view .LVU198
+ 603 00b6 29EE009A 		vmul.f32	s18, s18, s0
+ 604              	.LVL55:
+  72:IMU/MahonyAHRS.c **** 		mz *= recipNorm;   
+ 605              		.loc 1 72 3 is_stmt 1 view .LVU199
+  72:IMU/MahonyAHRS.c **** 		mz *= recipNorm;   
+ 606              		.loc 1 72 6 is_stmt 0 view .LVU200
+ 607 00ba 6BEE80BA 		vmul.f32	s23, s23, s0
+ 608              	.LVL56:
+  73:IMU/MahonyAHRS.c **** 
+ 609              		.loc 1 73 3 is_stmt 1 view .LVU201
+  73:IMU/MahonyAHRS.c **** 
+ 610              		.loc 1 73 6 is_stmt 0 view .LVU202
+ 611 00be 69EE809A 		vmul.f32	s19, s19, s0
+ 612              	.LVL57:
+  76:IMU/MahonyAHRS.c ****         q0q1 = q[0] * q[1];
+ 613              		.loc 1 76 9 is_stmt 1 view .LVU203
+  76:IMU/MahonyAHRS.c ****         q0q1 = q[0] * q[1];
+ 614              		.loc 1 76 17 is_stmt 0 view .LVU204
+ 615 00c2 D4ED007A 		vldr.32	s15, [r4]
+ARM GAS  /tmp/ccp5XL8h.s 			page 19
+
+
+  76:IMU/MahonyAHRS.c ****         q0q1 = q[0] * q[1];
+ 616              		.loc 1 76 14 view .LVU205
+ 617 00c6 27EEA77A 		vmul.f32	s14, s15, s15
+ 618 00ca 8DED057A 		vstr.32	s14, [sp, #20]
+ 619              	.LVL58:
+  77:IMU/MahonyAHRS.c ****         q0q2 = q[0] * q[2];
+ 620              		.loc 1 77 9 is_stmt 1 view .LVU206
+  77:IMU/MahonyAHRS.c ****         q0q2 = q[0] * q[2];
+ 621              		.loc 1 77 24 is_stmt 0 view .LVU207
+ 622 00ce 94ED01BA 		vldr.32	s22, [r4, #4]
+  77:IMU/MahonyAHRS.c ****         q0q2 = q[0] * q[2];
+ 623              		.loc 1 77 14 view .LVU208
+ 624 00d2 27EE8BFA 		vmul.f32	s30, s15, s22
+ 625              	.LVL59:
+  78:IMU/MahonyAHRS.c ****         q0q3 = q[0] * q[3];
+ 626              		.loc 1 78 9 is_stmt 1 view .LVU209
+  78:IMU/MahonyAHRS.c ****         q0q3 = q[0] * q[3];
+ 627              		.loc 1 78 24 is_stmt 0 view .LVU210
+ 628 00d6 D4ED028A 		vldr.32	s17, [r4, #8]
+  78:IMU/MahonyAHRS.c ****         q0q3 = q[0] * q[3];
+ 629              		.loc 1 78 14 view .LVU211
+ 630 00da 67EEA8FA 		vmul.f32	s31, s15, s17
+ 631              	.LVL60:
+  79:IMU/MahonyAHRS.c ****         q1q1 = q[1] * q[1];
+ 632              		.loc 1 79 9 is_stmt 1 view .LVU212
+  79:IMU/MahonyAHRS.c ****         q1q1 = q[1] * q[1];
+ 633              		.loc 1 79 24 is_stmt 0 view .LVU213
+ 634 00de 94ED03DA 		vldr.32	s26, [r4, #12]
+  79:IMU/MahonyAHRS.c ****         q1q1 = q[1] * q[1];
+ 635              		.loc 1 79 14 view .LVU214
+ 636 00e2 67EE8D7A 		vmul.f32	s15, s15, s26
+ 637              	.LVL61:
+  80:IMU/MahonyAHRS.c ****         q1q2 = q[1] * q[2];
+ 638              		.loc 1 80 9 is_stmt 1 view .LVU215
+  80:IMU/MahonyAHRS.c ****         q1q2 = q[1] * q[2];
+ 639              		.loc 1 80 14 is_stmt 0 view .LVU216
+ 640 00e6 6BEE0BCA 		vmul.f32	s25, s22, s22
+ 641              	.LVL62:
+  81:IMU/MahonyAHRS.c ****         q1q3 = q[1] * q[3];
+ 642              		.loc 1 81 9 is_stmt 1 view .LVU217
+  81:IMU/MahonyAHRS.c ****         q1q3 = q[1] * q[3];
+ 643              		.loc 1 81 14 is_stmt 0 view .LVU218
+ 644 00ea 6BEE286A 		vmul.f32	s13, s22, s17
+ 645              	.LVL63:
+  82:IMU/MahonyAHRS.c ****         q2q2 = q[2] * q[2];
+ 646              		.loc 1 82 9 is_stmt 1 view .LVU219
+  82:IMU/MahonyAHRS.c ****         q2q2 = q[2] * q[2];
+ 647              		.loc 1 82 14 is_stmt 0 view .LVU220
+ 648 00ee 2BEE0DBA 		vmul.f32	s22, s22, s26
+ 649              	.LVL64:
+  83:IMU/MahonyAHRS.c ****         q2q3 = q[2] * q[3];
+ 650              		.loc 1 83 9 is_stmt 1 view .LVU221
+  83:IMU/MahonyAHRS.c ****         q2q3 = q[2] * q[3];
+ 651              		.loc 1 83 14 is_stmt 0 view .LVU222
+ 652 00f2 68EEA8EA 		vmul.f32	s29, s17, s17
+ 653              	.LVL65:
+  84:IMU/MahonyAHRS.c ****         q3q3 = q[3] * q[3];   
+ARM GAS  /tmp/ccp5XL8h.s 			page 20
+
+
+ 654              		.loc 1 84 9 is_stmt 1 view .LVU223
+  84:IMU/MahonyAHRS.c ****         q3q3 = q[3] * q[3];   
+ 655              		.loc 1 84 14 is_stmt 0 view .LVU224
+ 656 00f6 68EE8D8A 		vmul.f32	s17, s17, s26
+ 657              	.LVL66:
+  85:IMU/MahonyAHRS.c **** 
+ 658              		.loc 1 85 9 is_stmt 1 view .LVU225
+  85:IMU/MahonyAHRS.c **** 
+ 659              		.loc 1 85 14 is_stmt 0 view .LVU226
+ 660 00fa 2DEE0DDA 		vmul.f32	s26, s26, s26
+ 661              	.LVL67:
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 662              		.loc 1 88 9 is_stmt 1 view .LVU227
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 663              		.loc 1 88 33 is_stmt 0 view .LVU228
+ 664 00fe B6EE00EA 		vmov.f32	s28, #5.0e-1
+ 665 0102 3EEE6ECA 		vsub.f32	s24, s28, s29
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 666              		.loc 1 88 40 view .LVU229
+ 667 0106 3CEE4DCA 		vsub.f32	s24, s24, s26
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 668              		.loc 1 88 25 view .LVU230
+ 669 010a 2CEE097A 		vmul.f32	s14, s24, s18
+ 670              	.LVL68:
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 671              		.loc 1 88 61 view .LVU231
+ 672 010e 76EEE7DA 		vsub.f32	s27, s13, s15
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 673              		.loc 1 88 53 view .LVU232
+ 674 0112 2DEEAB6A 		vmul.f32	s12, s27, s23
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 675              		.loc 1 88 48 view .LVU233
+ 676 0116 37EE067A 		vadd.f32	s14, s14, s12
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 677              		.loc 1 88 82 view .LVU234
+ 678 011a 3FEE8B6A 		vadd.f32	s12, s31, s22
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 679              		.loc 1 88 74 view .LVU235
+ 680 011e 8DED016A 		vstr.32	s12, [sp, #4]
+ 681 0122 26EE296A 		vmul.f32	s12, s12, s19
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 682              		.loc 1 88 69 view .LVU236
+ 683 0126 37EE067A 		vadd.f32	s14, s14, s12
+  88:IMU/MahonyAHRS.c ****         hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 684              		.loc 1 88 12 view .LVU237
+ 685 012a 37EE077A 		vadd.f32	s14, s14, s14
+ 686              	.LVL69:
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 687              		.loc 1 89 9 is_stmt 1 view .LVU238
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 688              		.loc 1 89 33 is_stmt 0 view .LVU239
+ 689 012e 77EEA67A 		vadd.f32	s15, s15, s13
+ 690              	.LVL70:
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 691              		.loc 1 89 25 view .LVU240
+ 692 0132 67EE897A 		vmul.f32	s15, s15, s18
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ARM GAS  /tmp/ccp5XL8h.s 			page 21
+
+
+ 693              		.loc 1 89 54 view .LVU241
+ 694 0136 7EEE6CCA 		vsub.f32	s25, s28, s25
+ 695              	.LVL71:
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 696              		.loc 1 89 61 view .LVU242
+ 697 013a 7CEECD6A 		vsub.f32	s13, s25, s26
+ 698              	.LVL72:
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 699              		.loc 1 89 46 view .LVU243
+ 700 013e 66EEAB6A 		vmul.f32	s13, s13, s23
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 701              		.loc 1 89 41 view .LVU244
+ 702 0142 77EEA67A 		vadd.f32	s15, s15, s13
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 703              		.loc 1 89 82 view .LVU245
+ 704 0146 78EECF6A 		vsub.f32	s13, s17, s30
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 705              		.loc 1 89 74 view .LVU246
+ 706 014a 66EEA96A 		vmul.f32	s13, s13, s19
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 707              		.loc 1 89 69 view .LVU247
+ 708 014e 77EEA67A 		vadd.f32	s15, s15, s13
+  89:IMU/MahonyAHRS.c ****         bx = sqrt(hx * hx + hy * hy);
+ 709              		.loc 1 89 12 view .LVU248
+ 710 0152 77EEA77A 		vadd.f32	s15, s15, s15
+ 711              	.LVL73:
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 712              		.loc 1 90 9 is_stmt 1 view .LVU249
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 713              		.loc 1 90 22 is_stmt 0 view .LVU250
+ 714 0156 27EE077A 		vmul.f32	s14, s14, s14
+ 715              	.LVL74:
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 716              		.loc 1 90 32 view .LVU251
+ 717 015a 67EEA77A 		vmul.f32	s15, s15, s15
+ 718              	.LVL75:
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 719              		.loc 1 90 14 view .LVU252
+ 720 015e 77EE277A 		vadd.f32	s15, s14, s15
+ 721 0162 17EE900A 		vmov	r0, s15
+ 722 0166 FFF7FEFF 		bl	__aeabi_f2d
+ 723              	.LVL76:
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 724              		.loc 1 90 14 view .LVU253
+ 725 016a 41EC100B 		vmov	d0, r0, r1
+ 726 016e FFF7FEFF 		bl	sqrt
+ 727              	.LVL77:
+ 728 0172 51EC100B 		vmov	r0, r1, d0
+  90:IMU/MahonyAHRS.c ****         bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 729              		.loc 1 90 12 view .LVU254
+ 730 0176 FFF7FEFF 		bl	__aeabi_d2f
+ 731              	.LVL78:
+ 732 017a 07EE100A 		vmov	s14, r0
+ 733              	.LVL79:
+  91:IMU/MahonyAHRS.c **** 
+ 734              		.loc 1 91 9 is_stmt 1 view .LVU255
+  91:IMU/MahonyAHRS.c **** 
+ARM GAS  /tmp/ccp5XL8h.s 			page 22
+
+
+ 735              		.loc 1 91 33 is_stmt 0 view .LVU256
+ 736 017e 3BEE6FBA 		vsub.f32	s22, s22, s31
+ 737              	.LVL80:
+  91:IMU/MahonyAHRS.c **** 
+ 738              		.loc 1 91 25 view .LVU257
+ 739 0182 6BEE097A 		vmul.f32	s15, s22, s18
+  91:IMU/MahonyAHRS.c **** 
+ 740              		.loc 1 91 54 view .LVU258
+ 741 0186 7FEE288A 		vadd.f32	s17, s30, s17
+ 742              	.LVL81:
+  91:IMU/MahonyAHRS.c **** 
+ 743              		.loc 1 91 46 view .LVU259
+ 744 018a 68EEAB6A 		vmul.f32	s13, s17, s23
+  91:IMU/MahonyAHRS.c **** 
+ 745              		.loc 1 91 41 view .LVU260
+ 746 018e 77EEA67A 		vadd.f32	s15, s15, s13
+  91:IMU/MahonyAHRS.c **** 
+ 747              		.loc 1 91 82 view .LVU261
+ 748 0192 7CEEEECA 		vsub.f32	s25, s25, s29
+  91:IMU/MahonyAHRS.c **** 
+ 749              		.loc 1 91 67 view .LVU262
+ 750 0196 6CEEA9EA 		vmul.f32	s29, s25, s19
+ 751              	.LVL82:
+  91:IMU/MahonyAHRS.c **** 
+ 752              		.loc 1 91 62 view .LVU263
+ 753 019a 77EEAE7A 		vadd.f32	s15, s15, s29
+  91:IMU/MahonyAHRS.c **** 
+ 754              		.loc 1 91 12 view .LVU264
+ 755 019e 77EEA77A 		vadd.f32	s15, s15, s15
+ 756              	.LVL83:
+  94:IMU/MahonyAHRS.c **** 		halfvy = q0q1 + q2q3;
+ 757              		.loc 1 94 3 is_stmt 1 view .LVU265
+  95:IMU/MahonyAHRS.c **** 		halfvz = q0q0 - 0.5f + q3q3;
+ 758              		.loc 1 95 3 view .LVU266
+  96:IMU/MahonyAHRS.c ****         halfwx = bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2);
+ 759              		.loc 1 96 3 view .LVU267
+  96:IMU/MahonyAHRS.c ****         halfwx = bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2);
+ 760              		.loc 1 96 17 is_stmt 0 view .LVU268
+ 761 01a2 DDED054A 		vldr.32	s9, [sp, #20]
+ 762 01a6 34EECEEA 		vsub.f32	s28, s9, s28
+  96:IMU/MahonyAHRS.c ****         halfwx = bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2);
+ 763              		.loc 1 96 10 view .LVU269
+ 764 01aa 3EEE0DDA 		vadd.f32	s26, s28, s26
+ 765              	.LVL84:
+  97:IMU/MahonyAHRS.c ****         halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
+ 766              		.loc 1 97 9 is_stmt 1 view .LVU270
+  97:IMU/MahonyAHRS.c ****         halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
+ 767              		.loc 1 97 21 is_stmt 0 view .LVU271
+ 768 01ae 2CEE07CA 		vmul.f32	s24, s24, s14
+ 769              	.LVL85:
+  97:IMU/MahonyAHRS.c ****         halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
+ 770              		.loc 1 97 49 view .LVU272
+ 771 01b2 6BEE276A 		vmul.f32	s13, s22, s15
+  97:IMU/MahonyAHRS.c ****         halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
+ 772              		.loc 1 97 16 view .LVU273
+ 773 01b6 3CEE26CA 		vadd.f32	s24, s24, s13
+ 774              	.LVL86:
+ARM GAS  /tmp/ccp5XL8h.s 			page 23
+
+
+  98:IMU/MahonyAHRS.c ****         halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+ 775              		.loc 1 98 9 is_stmt 1 view .LVU274
+  98:IMU/MahonyAHRS.c ****         halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+ 776              		.loc 1 98 21 is_stmt 0 view .LVU275
+ 777 01ba 6DEE87DA 		vmul.f32	s27, s27, s14
+  98:IMU/MahonyAHRS.c ****         halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+ 778              		.loc 1 98 42 view .LVU276
+ 779 01be 68EEA76A 		vmul.f32	s13, s17, s15
+  98:IMU/MahonyAHRS.c ****         halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+ 780              		.loc 1 98 16 view .LVU277
+ 781 01c2 7DEEA6DA 		vadd.f32	s27, s27, s13
+ 782              	.LVL87:
+  99:IMU/MahonyAHRS.c **** 	
+ 783              		.loc 1 99 9 is_stmt 1 view .LVU278
+  99:IMU/MahonyAHRS.c **** 	
+ 784              		.loc 1 99 21 is_stmt 0 view .LVU279
+ 785 01c6 9DED016A 		vldr.32	s12, [sp, #4]
+ 786 01ca 26EE077A 		vmul.f32	s14, s12, s14
+  99:IMU/MahonyAHRS.c **** 	
+ 787              		.loc 1 99 42 view .LVU280
+ 788 01ce 6CEEA77A 		vmul.f32	s15, s25, s15
+ 789              	.LVL88:
+  99:IMU/MahonyAHRS.c **** 	
+ 790              		.loc 1 99 16 view .LVU281
+ 791 01d2 77EE277A 		vadd.f32	s15, s14, s15
+ 792              	.LVL89:
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 793              		.loc 1 102 3 is_stmt 1 view .LVU282
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 794              		.loc 1 102 16 is_stmt 0 view .LVU283
+ 795 01d6 DDED035A 		vldr.32	s11, [sp, #12]
+ 796 01da 65EE8D6A 		vmul.f32	s13, s11, s26
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 797              		.loc 1 102 30 view .LVU284
+ 798 01de 9DED045A 		vldr.32	s10, [sp, #16]
+ 799 01e2 28EE857A 		vmul.f32	s14, s17, s10
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 800              		.loc 1 102 25 view .LVU285
+ 801 01e6 76EEC76A 		vsub.f32	s13, s13, s14
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 802              		.loc 1 102 46 view .LVU286
+ 803 01ea 2BEEA77A 		vmul.f32	s14, s23, s15
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 804              		.loc 1 102 60 view .LVU287
+ 805 01ee 29EEAD6A 		vmul.f32	s12, s19, s27
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 806              		.loc 1 102 55 view .LVU288
+ 807 01f2 37EE467A 		vsub.f32	s14, s14, s12
+ 102:IMU/MahonyAHRS.c **** 		halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+ 808              		.loc 1 102 10 view .LVU289
+ 809 01f6 36EE877A 		vadd.f32	s14, s13, s14
+ 810              	.LVL90:
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 811              		.loc 1 103 3 is_stmt 1 view .LVU290
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 812              		.loc 1 103 16 is_stmt 0 view .LVU291
+ 813 01fa 6BEE052A 		vmul.f32	s5, s22, s10
+ARM GAS  /tmp/ccp5XL8h.s 			page 24
+
+
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 814              		.loc 1 103 30 view .LVU292
+ 815 01fe DDED026A 		vldr.32	s13, [sp, #8]
+ 816 0202 26EE8DDA 		vmul.f32	s26, s13, s26
+ 817              	.LVL91:
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 818              		.loc 1 103 25 view .LVU293
+ 819 0206 32EECDDA 		vsub.f32	s26, s5, s26
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 820              		.loc 1 103 46 view .LVU294
+ 821 020a 69EE8C9A 		vmul.f32	s19, s19, s24
+ 822              	.LVL92:
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 823              		.loc 1 103 60 view .LVU295
+ 824 020e 69EE277A 		vmul.f32	s15, s18, s15
+ 825              	.LVL93:
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 826              		.loc 1 103 55 view .LVU296
+ 827 0212 79EEE79A 		vsub.f32	s19, s19, s15
+ 103:IMU/MahonyAHRS.c **** 		halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+ 828              		.loc 1 103 10 view .LVU297
+ 829 0216 3DEE29DA 		vadd.f32	s26, s26, s19
+ 830              	.LVL94:
+ 104:IMU/MahonyAHRS.c **** 
+ 831              		.loc 1 104 3 is_stmt 1 view .LVU298
+ 104:IMU/MahonyAHRS.c **** 
+ 832              		.loc 1 104 16 is_stmt 0 view .LVU299
+ 833 021a 68EEA68A 		vmul.f32	s17, s17, s13
+ 834              	.LVL95:
+ 104:IMU/MahonyAHRS.c **** 
+ 835              		.loc 1 104 30 view .LVU300
+ 836 021e 2BEE25BA 		vmul.f32	s22, s22, s11
+ 837              	.LVL96:
+ 104:IMU/MahonyAHRS.c **** 
+ 838              		.loc 1 104 25 view .LVU301
+ 839 0222 78EECB8A 		vsub.f32	s17, s17, s22
+ 104:IMU/MahonyAHRS.c **** 
+ 840              		.loc 1 104 46 view .LVU302
+ 841 0226 29EE2D9A 		vmul.f32	s18, s18, s27
+ 842              	.LVL97:
+ 104:IMU/MahonyAHRS.c **** 
+ 843              		.loc 1 104 60 view .LVU303
+ 844 022a 6BEE8CBA 		vmul.f32	s23, s23, s24
+ 845              	.LVL98:
+ 104:IMU/MahonyAHRS.c **** 
+ 846              		.loc 1 104 55 view .LVU304
+ 847 022e 39EE6B9A 		vsub.f32	s18, s18, s23
+ 104:IMU/MahonyAHRS.c **** 
+ 848              		.loc 1 104 10 view .LVU305
+ 849 0232 78EE898A 		vadd.f32	s17, s17, s18
+ 850              	.LVL99:
+ 107:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 851              		.loc 1 107 3 is_stmt 1 view .LVU306
+ 107:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 852              		.loc 1 107 12 is_stmt 0 view .LVU307
+ 853 0236 644B     		ldr	r3, .L27
+ 854 0238 D3ED007A 		vldr.32	s15, [r3]
+ARM GAS  /tmp/ccp5XL8h.s 			page 25
+
+
+ 107:IMU/MahonyAHRS.c **** 			integralFBx += twoKi * halfex * (1.0f / sampleFreq);	// integral error scaled by Ki
+ 855              		.loc 1 107 5 view .LVU308
+ 856 023c F5EEC07A 		vcmpe.f32	s15, #0
+ 857 0240 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 858 0244 40F3B780 		ble	.L24
+ 108:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 859              		.loc 1 108 4 is_stmt 1 view .LVU309
+ 108:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 860              		.loc 1 108 25 is_stmt 0 view .LVU310
+ 861 0248 D3ED006A 		vldr.32	s13, [r3]
+ 862 024c 66EE876A 		vmul.f32	s13, s13, s14
+ 108:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 863              		.loc 1 108 34 view .LVU311
+ 864 0250 9FED5E6A 		vldr.32	s12, .L27+4
+ 865 0254 66EE866A 		vmul.f32	s13, s13, s12
+ 108:IMU/MahonyAHRS.c **** 			integralFBy += twoKi * halfey * (1.0f / sampleFreq);
+ 866              		.loc 1 108 16 view .LVU312
+ 867 0258 5D49     		ldr	r1, .L27+8
+ 868 025a D1ED007A 		vldr.32	s15, [r1]
+ 869 025e 77EEA66A 		vadd.f32	s13, s15, s13
+ 870 0262 C1ED006A 		vstr.32	s13, [r1]
+ 109:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 871              		.loc 1 109 4 is_stmt 1 view .LVU313
+ 109:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 872              		.loc 1 109 25 is_stmt 0 view .LVU314
+ 873 0266 D3ED006A 		vldr.32	s13, [r3]
+ 874 026a 66EE8D6A 		vmul.f32	s13, s13, s26
+ 109:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 875              		.loc 1 109 34 view .LVU315
+ 876 026e 66EE866A 		vmul.f32	s13, s13, s12
+ 109:IMU/MahonyAHRS.c **** 			integralFBz += twoKi * halfez * (1.0f / sampleFreq);
+ 877              		.loc 1 109 16 view .LVU316
+ 878 0272 584A     		ldr	r2, .L27+12
+ 879 0274 D2ED007A 		vldr.32	s15, [r2]
+ 880 0278 77EEA66A 		vadd.f32	s13, s15, s13
+ 881 027c C2ED006A 		vstr.32	s13, [r2]
+ 110:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 882              		.loc 1 110 4 is_stmt 1 view .LVU317
+ 110:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 883              		.loc 1 110 25 is_stmt 0 view .LVU318
+ 884 0280 D3ED007A 		vldr.32	s15, [r3]
+ 885 0284 67EEA87A 		vmul.f32	s15, s15, s17
+ 110:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 886              		.loc 1 110 34 view .LVU319
+ 887 0288 67EE867A 		vmul.f32	s15, s15, s12
+ 110:IMU/MahonyAHRS.c **** 			gx += integralFBx;	// apply integral feedback
+ 888              		.loc 1 110 16 view .LVU320
+ 889 028c 524B     		ldr	r3, .L27+16
+ 890 028e D3ED006A 		vldr.32	s13, [r3]
+ 891 0292 76EEA77A 		vadd.f32	s15, s13, s15
+ 892 0296 C3ED007A 		vstr.32	s15, [r3]
+ 111:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 893              		.loc 1 111 4 is_stmt 1 view .LVU321
+ 894 029a D1ED007A 		vldr.32	s15, [r1]
+ 111:IMU/MahonyAHRS.c **** 			gy += integralFBy;
+ 895              		.loc 1 111 7 is_stmt 0 view .LVU322
+ 896 029e 3AEE27AA 		vadd.f32	s20, s20, s15
+ARM GAS  /tmp/ccp5XL8h.s 			page 26
+
+
+ 897              	.LVL100:
+ 112:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 898              		.loc 1 112 4 is_stmt 1 view .LVU323
+ 899 02a2 D2ED007A 		vldr.32	s15, [r2]
+ 112:IMU/MahonyAHRS.c **** 			gz += integralFBz;
+ 900              		.loc 1 112 7 is_stmt 0 view .LVU324
+ 901 02a6 7AEEA7AA 		vadd.f32	s21, s21, s15
+ 902              	.LVL101:
+ 113:IMU/MahonyAHRS.c **** 		}
+ 903              		.loc 1 113 4 is_stmt 1 view .LVU325
+ 904 02aa D3ED007A 		vldr.32	s15, [r3]
+ 113:IMU/MahonyAHRS.c **** 		}
+ 905              		.loc 1 113 7 is_stmt 0 view .LVU326
+ 906 02ae 38EE278A 		vadd.f32	s16, s16, s15
+ 907              	.LVL102:
+ 908              	.L22:
+ 122:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 909              		.loc 1 122 3 is_stmt 1 view .LVU327
+ 122:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 910              		.loc 1 122 15 is_stmt 0 view .LVU328
+ 911 02b2 4A4B     		ldr	r3, .L27+20
+ 912 02b4 D3ED007A 		vldr.32	s15, [r3]
+ 913 02b8 67EE877A 		vmul.f32	s15, s15, s14
+ 122:IMU/MahonyAHRS.c **** 		gy += twoKp * halfey;
+ 914              		.loc 1 122 6 view .LVU329
+ 915 02bc 3AEE27AA 		vadd.f32	s20, s20, s15
+ 916              	.LVL103:
+ 123:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 917              		.loc 1 123 3 is_stmt 1 view .LVU330
+ 123:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 918              		.loc 1 123 15 is_stmt 0 view .LVU331
+ 919 02c0 D3ED009A 		vldr.32	s19, [r3]
+ 920 02c4 69EE8D9A 		vmul.f32	s19, s19, s26
+ 123:IMU/MahonyAHRS.c **** 		gz += twoKp * halfez;
+ 921              		.loc 1 123 6 view .LVU332
+ 922 02c8 7AEEA9AA 		vadd.f32	s21, s21, s19
+ 923              	.LVL104:
+ 124:IMU/MahonyAHRS.c **** 	}
+ 924              		.loc 1 124 3 is_stmt 1 view .LVU333
+ 124:IMU/MahonyAHRS.c **** 	}
+ 925              		.loc 1 124 15 is_stmt 0 view .LVU334
+ 926 02cc 93ED009A 		vldr.32	s18, [r3]
+ 927 02d0 69EE288A 		vmul.f32	s17, s18, s17
+ 928              	.LVL105:
+ 124:IMU/MahonyAHRS.c **** 	}
+ 929              		.loc 1 124 6 view .LVU335
+ 930 02d4 38EE288A 		vadd.f32	s16, s16, s17
+ 931              	.LVL106:
+ 932              	.L19:
+ 128:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 933              		.loc 1 128 2 is_stmt 1 view .LVU336
+ 128:IMU/MahonyAHRS.c **** 	gy *= (0.5f * (1.0f / sampleFreq));
+ 934              		.loc 1 128 5 is_stmt 0 view .LVU337
+ 935 02d8 9FED411A 		vldr.32	s2, .L27+24
+ 936 02dc 2AEE01AA 		vmul.f32	s20, s20, s2
+ 937              	.LVL107:
+ 129:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ARM GAS  /tmp/ccp5XL8h.s 			page 27
+
+
+ 938              		.loc 1 129 2 is_stmt 1 view .LVU338
+ 129:IMU/MahonyAHRS.c **** 	gz *= (0.5f * (1.0f / sampleFreq));
+ 939              		.loc 1 129 5 is_stmt 0 view .LVU339
+ 940 02e0 6AEE81AA 		vmul.f32	s21, s21, s2
+ 941              	.LVL108:
+ 130:IMU/MahonyAHRS.c **** 	qa = q[0];
+ 942              		.loc 1 130 2 is_stmt 1 view .LVU340
+ 130:IMU/MahonyAHRS.c **** 	qa = q[0];
+ 943              		.loc 1 130 5 is_stmt 0 view .LVU341
+ 944 02e4 28EE018A 		vmul.f32	s16, s16, s2
+ 945              	.LVL109:
+ 131:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 946              		.loc 1 131 2 is_stmt 1 view .LVU342
+ 131:IMU/MahonyAHRS.c **** 	qb = q[1];
+ 947              		.loc 1 131 5 is_stmt 0 view .LVU343
+ 948 02e8 94ED001A 		vldr.32	s2, [r4]
+ 949              	.LVL110:
+ 132:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 950              		.loc 1 132 2 is_stmt 1 view .LVU344
+ 132:IMU/MahonyAHRS.c **** 	qc = q[2];
+ 951              		.loc 1 132 5 is_stmt 0 view .LVU345
+ 952 02ec D4ED010A 		vldr.32	s1, [r4, #4]
+ 953              	.LVL111:
+ 133:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 954              		.loc 1 133 2 is_stmt 1 view .LVU346
+ 133:IMU/MahonyAHRS.c **** 	q[0] += (-qb * gx - qc * gy - q[3] * gz);
+ 955              		.loc 1 133 5 is_stmt 0 view .LVU347
+ 956 02f0 94ED020A 		vldr.32	s0, [r4, #8]
+ 957              	.LVL112:
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 958              		.loc 1 134 2 is_stmt 1 view .LVU348
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 959              		.loc 1 134 15 is_stmt 0 view .LVU349
+ 960 02f4 60EECA9A 		vnmul.f32	s19, s1, s20
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 961              		.loc 1 134 25 view .LVU350
+ 962 02f8 6AEE807A 		vmul.f32	s15, s21, s0
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 963              		.loc 1 134 20 view .LVU351
+ 964 02fc 79EEE79A 		vsub.f32	s19, s19, s15
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 965              		.loc 1 134 33 view .LVU352
+ 966 0300 D4ED037A 		vldr.32	s15, [r4, #12]
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 967              		.loc 1 134 37 view .LVU353
+ 968 0304 27EE887A 		vmul.f32	s14, s15, s16
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 969              		.loc 1 134 30 view .LVU354
+ 970 0308 79EEC79A 		vsub.f32	s19, s19, s14
+ 134:IMU/MahonyAHRS.c **** 	q[1] += (qa * gx + qc * gz - q[3] * gy);
+ 971              		.loc 1 134 7 view .LVU355
+ 972 030c 79EE819A 		vadd.f32	s19, s19, s2
+ 973 0310 C4ED009A 		vstr.32	s19, [r4]
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 974              		.loc 1 135 2 is_stmt 1 view .LVU356
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 975              		.loc 1 135 14 is_stmt 0 view .LVU357
+ARM GAS  /tmp/ccp5XL8h.s 			page 28
+
+
+ 976 0314 2AEE019A 		vmul.f32	s18, s20, s2
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 977              		.loc 1 135 24 view .LVU358
+ 978 0318 28EE007A 		vmul.f32	s14, s16, s0
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 979              		.loc 1 135 19 view .LVU359
+ 980 031c 39EE079A 		vadd.f32	s18, s18, s14
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 981              		.loc 1 135 36 view .LVU360
+ 982 0320 27EEAA7A 		vmul.f32	s14, s15, s21
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 983              		.loc 1 135 29 view .LVU361
+ 984 0324 39EE479A 		vsub.f32	s18, s18, s14
+ 135:IMU/MahonyAHRS.c **** 	q[2] += (qa * gy - qb * gz + q[3] * gx);
+ 985              		.loc 1 135 7 view .LVU362
+ 986 0328 39EE209A 		vadd.f32	s18, s18, s1
+ 987 032c 84ED019A 		vstr.32	s18, [r4, #4]
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 988              		.loc 1 136 2 is_stmt 1 view .LVU363
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 989              		.loc 1 136 14 is_stmt 0 view .LVU364
+ 990 0330 6AEE818A 		vmul.f32	s17, s21, s2
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 991              		.loc 1 136 24 view .LVU365
+ 992 0334 28EE207A 		vmul.f32	s14, s16, s1
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 993              		.loc 1 136 19 view .LVU366
+ 994 0338 78EEC78A 		vsub.f32	s17, s17, s14
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 995              		.loc 1 136 36 view .LVU367
+ 996 033c 27EE8A7A 		vmul.f32	s14, s15, s20
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 997              		.loc 1 136 29 view .LVU368
+ 998 0340 78EE878A 		vadd.f32	s17, s17, s14
+ 136:IMU/MahonyAHRS.c **** 	q[3] += (qa * gz + qb * gy - qc * gx); 
+ 999              		.loc 1 136 7 view .LVU369
+ 1000 0344 78EE808A 		vadd.f32	s17, s17, s0
+ 1001 0348 C4ED028A 		vstr.32	s17, [r4, #8]
+ 137:IMU/MahonyAHRS.c **** 	
+ 1002              		.loc 1 137 2 is_stmt 1 view .LVU370
+ 137:IMU/MahonyAHRS.c **** 	
+ 1003              		.loc 1 137 14 is_stmt 0 view .LVU371
+ 1004 034c 28EE018A 		vmul.f32	s16, s16, s2
+ 1005              	.LVL113:
+ 137:IMU/MahonyAHRS.c **** 	
+ 1006              		.loc 1 137 24 view .LVU372
+ 1007 0350 6AEEA0AA 		vmul.f32	s21, s21, s1
+ 1008              	.LVL114:
+ 137:IMU/MahonyAHRS.c **** 	
+ 1009              		.loc 1 137 19 view .LVU373
+ 1010 0354 38EE2A8A 		vadd.f32	s16, s16, s21
+ 137:IMU/MahonyAHRS.c **** 	
+ 1011              		.loc 1 137 34 view .LVU374
+ 1012 0358 2AEE00AA 		vmul.f32	s20, s20, s0
+ 1013              	.LVL115:
+ 137:IMU/MahonyAHRS.c **** 	
+ 1014              		.loc 1 137 29 view .LVU375
+ARM GAS  /tmp/ccp5XL8h.s 			page 29
+
+
+ 1015 035c 38EE4A8A 		vsub.f32	s16, s16, s20
+ 137:IMU/MahonyAHRS.c **** 	
+ 1016              		.loc 1 137 7 view .LVU376
+ 1017 0360 37EE888A 		vadd.f32	s16, s15, s16
+ 1018 0364 84ED038A 		vstr.32	s16, [r4, #12]
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1019              		.loc 1 140 2 is_stmt 1 view .LVU377
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1020              		.loc 1 140 27 is_stmt 0 view .LVU378
+ 1021 0368 69EEA97A 		vmul.f32	s15, s19, s19
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1022              		.loc 1 140 41 view .LVU379
+ 1023 036c 29EE090A 		vmul.f32	s0, s18, s18
+ 1024              	.LVL116:
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1025              		.loc 1 140 34 view .LVU380
+ 1026 0370 77EE807A 		vadd.f32	s15, s15, s0
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1027              		.loc 1 140 55 view .LVU381
+ 1028 0374 28EEA80A 		vmul.f32	s0, s17, s17
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1029              		.loc 1 140 48 view .LVU382
+ 1030 0378 77EE807A 		vadd.f32	s15, s15, s0
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1031              		.loc 1 140 69 view .LVU383
+ 1032 037c 28EE080A 		vmul.f32	s0, s16, s16
+ 140:IMU/MahonyAHRS.c **** 	q[0] *= recipNorm;
+ 1033              		.loc 1 140 14 view .LVU384
+ 1034 0380 37EE800A 		vadd.f32	s0, s15, s0
+ 1035 0384 FFF7FEFF 		bl	invSqrt
+ 1036              	.LVL117:
+ 141:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 1037              		.loc 1 141 2 is_stmt 1 view .LVU385
+ 141:IMU/MahonyAHRS.c **** 	q[1] *= recipNorm;
+ 1038              		.loc 1 141 7 is_stmt 0 view .LVU386
+ 1039 0388 69EE809A 		vmul.f32	s19, s19, s0
+ 1040 038c C4ED009A 		vstr.32	s19, [r4]
+ 142:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ 1041              		.loc 1 142 2 is_stmt 1 view .LVU387
+ 142:IMU/MahonyAHRS.c **** 	q[2] *= recipNorm;
+ 1042              		.loc 1 142 7 is_stmt 0 view .LVU388
+ 1043 0390 29EE009A 		vmul.f32	s18, s18, s0
+ 1044 0394 84ED019A 		vstr.32	s18, [r4, #4]
+ 143:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 1045              		.loc 1 143 2 is_stmt 1 view .LVU389
+ 143:IMU/MahonyAHRS.c **** 	q[3] *= recipNorm;
+ 1046              		.loc 1 143 7 is_stmt 0 view .LVU390
+ 1047 0398 68EE808A 		vmul.f32	s17, s17, s0
+ 1048 039c C4ED028A 		vstr.32	s17, [r4, #8]
+ 144:IMU/MahonyAHRS.c **** }
+ 1049              		.loc 1 144 2 is_stmt 1 view .LVU391
+ 144:IMU/MahonyAHRS.c **** }
+ 1050              		.loc 1 144 7 is_stmt 0 view .LVU392
+ 1051 03a0 28EE008A 		vmul.f32	s16, s16, s0
+ 1052 03a4 84ED038A 		vstr.32	s16, [r4, #12]
+ 1053              	.LVL118:
+ 1054              	.L15:
+ARM GAS  /tmp/ccp5XL8h.s 			page 30
+
+
+ 145:IMU/MahonyAHRS.c **** 
+ 1055              		.loc 1 145 1 view .LVU393
+ 1056 03a8 06B0     		add	sp, sp, #24
+ 1057              	.LCFI7:
+ 1058              		.cfi_remember_state
+ 1059              		.cfi_def_cfa_offset 72
+ 1060              		@ sp needed
+ 1061 03aa BDEC108B 		vldm	sp!, {d8-d15}
+ 1062              	.LCFI8:
+ 1063              		.cfi_restore 94
+ 1064              		.cfi_restore 95
+ 1065              		.cfi_restore 92
+ 1066              		.cfi_restore 93
+ 1067              		.cfi_restore 90
+ 1068              		.cfi_restore 91
+ 1069              		.cfi_restore 88
+ 1070              		.cfi_restore 89
+ 1071              		.cfi_restore 86
+ 1072              		.cfi_restore 87
+ 1073              		.cfi_restore 84
+ 1074              		.cfi_restore 85
+ 1075              		.cfi_restore 82
+ 1076              		.cfi_restore 83
+ 1077              		.cfi_restore 80
+ 1078              		.cfi_restore 81
+ 1079              		.cfi_def_cfa_offset 8
+ 1080 03ae 10BD     		pop	{r4, pc}
+ 1081              	.LVL119:
+ 1082              	.L26:
+ 1083              	.LCFI9:
+ 1084              		.cfi_restore_state
+  56:IMU/MahonyAHRS.c **** 		return;
+ 1085              		.loc 1 56 3 is_stmt 1 view .LVU394
+ 1086 03b0 FFF7FEFF 		bl	MahonyAHRSupdateIMU
+ 1087              	.LVL120:
+  57:IMU/MahonyAHRS.c **** 	}
+ 1088              		.loc 1 57 3 view .LVU395
+ 1089 03b4 F8E7     		b	.L15
+ 1090              	.LVL121:
+ 1091              	.L24:
+ 116:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 1092              		.loc 1 116 4 view .LVU396
+ 116:IMU/MahonyAHRS.c **** 			integralFBy = 0.0f;
+ 1093              		.loc 1 116 16 is_stmt 0 view .LVU397
+ 1094 03b6 0023     		movs	r3, #0
+ 1095 03b8 054A     		ldr	r2, .L27+8
+ 1096 03ba 1360     		str	r3, [r2]	@ float
+ 117:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 1097              		.loc 1 117 4 is_stmt 1 view .LVU398
+ 117:IMU/MahonyAHRS.c **** 			integralFBz = 0.0f;
+ 1098              		.loc 1 117 16 is_stmt 0 view .LVU399
+ 1099 03bc 054A     		ldr	r2, .L27+12
+ 1100 03be 1360     		str	r3, [r2]	@ float
+ 118:IMU/MahonyAHRS.c **** 		}
+ 1101              		.loc 1 118 4 is_stmt 1 view .LVU400
+ 118:IMU/MahonyAHRS.c **** 		}
+ 1102              		.loc 1 118 16 is_stmt 0 view .LVU401
+ARM GAS  /tmp/ccp5XL8h.s 			page 31
+
+
+ 1103 03c0 054A     		ldr	r2, .L27+16
+ 1104 03c2 1360     		str	r3, [r2]	@ float
+ 1105 03c4 75E7     		b	.L22
+ 1106              	.L28:
+ 1107 03c6 00BF     		.align	2
+ 1108              	.L27:
+ 1109 03c8 00000000 		.word	.LANCHOR0
+ 1110 03cc 6F12833A 		.word	981668463
+ 1111 03d0 00000000 		.word	.LANCHOR1
+ 1112 03d4 00000000 		.word	.LANCHOR2
+ 1113 03d8 00000000 		.word	.LANCHOR3
+ 1114 03dc 00000000 		.word	.LANCHOR4
+ 1115 03e0 6F12033A 		.word	973279855
+ 1116              		.cfi_endproc
+ 1117              	.LFE0:
+ 1119              		.global	integralFBz
+ 1120              		.global	integralFBy
+ 1121              		.global	integralFBx
+ 1122              		.global	twoKi
+ 1123              		.global	twoKp
+ 1124              		.section	.bss.integralFBx,"aw",%nobits
+ 1125              		.align	2
+ 1126              		.set	.LANCHOR1,. + 0
+ 1129              	integralFBx:
+ 1130 0000 00000000 		.space	4
+ 1131              		.section	.bss.integralFBy,"aw",%nobits
+ 1132              		.align	2
+ 1133              		.set	.LANCHOR2,. + 0
+ 1136              	integralFBy:
+ 1137 0000 00000000 		.space	4
+ 1138              		.section	.bss.integralFBz,"aw",%nobits
+ 1139              		.align	2
+ 1140              		.set	.LANCHOR3,. + 0
+ 1143              	integralFBz:
+ 1144 0000 00000000 		.space	4
+ 1145              		.section	.bss.twoKi,"aw",%nobits
+ 1146              		.align	2
+ 1147              		.set	.LANCHOR0,. + 0
+ 1150              	twoKi:
+ 1151 0000 00000000 		.space	4
+ 1152              		.section	.data.twoKp,"aw"
+ 1153              		.align	2
+ 1154              		.set	.LANCHOR4,. + 0
+ 1157              	twoKp:
+ 1158 0000 0000803F 		.word	1065353216
+ 1159              		.text
+ 1160              	.Letext0:
+ 1161              		.file 2 "IMU/MahonyAHRS.h"
+ 1162              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/math.h"
+ARM GAS  /tmp/ccp5XL8h.s 			page 32
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 MahonyAHRS.c
+     /tmp/ccp5XL8h.s:20     .text.invSqrt:0000000000000000 $t
+     /tmp/ccp5XL8h.s:26     .text.invSqrt:0000000000000000 invSqrt
+     /tmp/ccp5XL8h.s:73     .text.invSqrt:000000000000002c $d
+     /tmp/ccp5XL8h.s:78     .text.MahonyAHRSupdateIMU:0000000000000000 $t
+     /tmp/ccp5XL8h.s:84     .text.MahonyAHRSupdateIMU:0000000000000000 MahonyAHRSupdateIMU
+     /tmp/ccp5XL8h.s:460    .text.MahonyAHRSupdateIMU:000000000000024c $d
+     /tmp/ccp5XL8h.s:473    .text.MahonyAHRSupdate:0000000000000000 $t
+     /tmp/ccp5XL8h.s:479    .text.MahonyAHRSupdate:0000000000000000 MahonyAHRSupdate
+     /tmp/ccp5XL8h.s:1109   .text.MahonyAHRSupdate:00000000000003c8 $d
+     /tmp/ccp5XL8h.s:1143   .bss.integralFBz:0000000000000000 integralFBz
+     /tmp/ccp5XL8h.s:1136   .bss.integralFBy:0000000000000000 integralFBy
+     /tmp/ccp5XL8h.s:1129   .bss.integralFBx:0000000000000000 integralFBx
+     /tmp/ccp5XL8h.s:1150   .bss.twoKi:0000000000000000 twoKi
+     /tmp/ccp5XL8h.s:1157   .data.twoKp:0000000000000000 twoKp
+     /tmp/ccp5XL8h.s:1125   .bss.integralFBx:0000000000000000 $d
+     /tmp/ccp5XL8h.s:1132   .bss.integralFBy:0000000000000000 $d
+     /tmp/ccp5XL8h.s:1139   .bss.integralFBz:0000000000000000 $d
+     /tmp/ccp5XL8h.s:1146   .bss.twoKi:0000000000000000 $d
+     /tmp/ccp5XL8h.s:1153   .data.twoKp:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+__aeabi_f2d
+__aeabi_d2f
+sqrt

@@ -1,0 +1,1638 @@
+ARM GAS  /tmp/ccvDFaDw.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"chassis_behaviour.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.chassis_zero_force_control,"ax",%progbits
+  20              		.align	1
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	chassis_zero_force_control:
+  26              	.LVL0:
+  27              	.LFB170:
+  28              		.file 1 "Chassis/chassis_behaviour.c"
+   1:Chassis/chassis_behaviour.c ****   /**
+   2:Chassis/chassis_behaviour.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Chassis/chassis_behaviour.c ****   * @file       chassis_behaviour.c/h
+   4:Chassis/chassis_behaviour.c ****   * @brief      according to remote control, change the chassis behaviour.
+   5:Chassis/chassis_behaviour.c ****   *             根据遥控器的值，决定底盘行为。
+   6:Chassis/chassis_behaviour.c ****   * @note       
+   7:Chassis/chassis_behaviour.c ****   * @history
+   8:Chassis/chassis_behaviour.c ****   *  Version    Date            Author          Modification
+   9:Chassis/chassis_behaviour.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  10:Chassis/chassis_behaviour.c ****   *  V1.1.0     Nov-11-2019     RM              1. add some annotation
+  11:Chassis/chassis_behaviour.c ****   *
+  12:Chassis/chassis_behaviour.c ****   @verbatim
+  13:Chassis/chassis_behaviour.c ****   ==============================================================================
+  14:Chassis/chassis_behaviour.c ****     add a chassis behaviour mode
+  15:Chassis/chassis_behaviour.c ****     1. in chassis_behaviour.h , add a new behaviour name in chassis_behaviour
+  16:Chassis/chassis_behaviour.c ****     erum
+  17:Chassis/chassis_behaviour.c ****     {  
+  18:Chassis/chassis_behaviour.c ****         ...
+  19:Chassis/chassis_behaviour.c ****         ...
+  20:Chassis/chassis_behaviour.c ****         CHASSIS_XXX_XXX, // new add
+  21:Chassis/chassis_behaviour.c ****     }chassis_behaviour_e,
+  22:Chassis/chassis_behaviour.c ****     2. implement new function. chassis_xxx_xxx_control(fp32 *vx, fp32 *vy, fp32 *wz, chassis_move_t
+  23:Chassis/chassis_behaviour.c ****         "vx, vy, wz" param is chassis movement contorl input. 
+  24:Chassis/chassis_behaviour.c ****         first param: 'vx' usually means  vertical speed,
+  25:Chassis/chassis_behaviour.c ****             positive value means forward speed, negative value means backward speed.
+  26:Chassis/chassis_behaviour.c ****         second param: 'vy' usually means horizotal speed,
+  27:Chassis/chassis_behaviour.c ****             positive value means letf speed, negative value means right speed
+  28:Chassis/chassis_behaviour.c ****         third param: 'wz' can be rotation speed set or angle set, 
+  29:Chassis/chassis_behaviour.c **** 
+  30:Chassis/chassis_behaviour.c ****         in this new function, you can assign speed to "vx","vy",and "wz",as your wish
+ARM GAS  /tmp/ccvDFaDw.s 			page 2
+
+
+  31:Chassis/chassis_behaviour.c ****     3.  in "chassis_behaviour_mode_set" function, add new logical judgement to assign CHASSIS_XXX_X
+  32:Chassis/chassis_behaviour.c ****         and in the last of the function, add "else if(chassis_behaviour_mode == CHASSIS_XXX_XXX)" 
+  33:Chassis/chassis_behaviour.c ****         choose a chassis control mode.
+  34:Chassis/chassis_behaviour.c ****         four mode:
+  35:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW : 'vx' and 'vy' are speed control, 'wz' is angle set to co
+  36:Chassis/chassis_behaviour.c ****             between chassis and gimbal. you can name third param to 'xxx_angle_set' other than 'wz'
+  37:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW : 'vx' and 'vy' are speed control, 'wz' is angle set to c
+  38:Chassis/chassis_behaviour.c ****             you can name third param to 'xxx_angle_set.
+  39:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_NO_FOLLOW_YAW : 'vx' and 'vy' are speed control, 'wz' is rotation speed cont
+  40:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_RAW : will use 'vx' 'vy' and 'wz'  to linearly calculate four wheel current 
+  41:Chassis/chassis_behaviour.c ****             current set will be derectly sent to can bus.
+  42:Chassis/chassis_behaviour.c ****     4. in the last of "chassis_behaviour_control_set" function, add
+  43:Chassis/chassis_behaviour.c ****         else if(chassis_behaviour_mode == CHASSIS_XXX_XXX)
+  44:Chassis/chassis_behaviour.c ****         {
+  45:Chassis/chassis_behaviour.c ****             chassis_xxx_xxx_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+  46:Chassis/chassis_behaviour.c ****         }
+  47:Chassis/chassis_behaviour.c **** 
+  48:Chassis/chassis_behaviour.c ****         
+  49:Chassis/chassis_behaviour.c ****     如果要添加一个新的行为模式
+  50:Chassis/chassis_behaviour.c ****     1.首先，在chassis_behaviour.h文件中， 添加一个新行为名字在 chassis_behaviour_
+  51:Chassis/chassis_behaviour.c ****     erum
+  52:Chassis/chassis_behaviour.c ****     {  
+  53:Chassis/chassis_behaviour.c ****         ...
+  54:Chassis/chassis_behaviour.c ****         ...
+  55:Chassis/chassis_behaviour.c ****         CHASSIS_XXX_XXX, // 新添加的
+  56:Chassis/chassis_behaviour.c ****     }chassis_behaviour_e,
+  57:Chassis/chassis_behaviour.c **** 
+  58:Chassis/chassis_behaviour.c ****     2. 实现一个新的函数 chassis_xxx_xxx_control(fp32 *vx, fp32 *vy, fp32 *wz, chassis_move_
+  59:Chassis/chassis_behaviour.c ****         "vx,vy,wz" 参数是底盘运动控制输入量
+  60:Chassis/chassis_behaviour.c ****         第一个参数: 'vx' 通常控制纵向移动,正值 前进， 负值 后退
+  61:Chassis/chassis_behaviour.c ****         第二个参数: 'vy' 通常控制横向移动,正值 左移, 负值 右移
+  62:Chassis/chassis_behaviour.c ****         第三个参数: 'wz' 可能是角度控制或者旋转速度控制
+  63:Chassis/chassis_behaviour.c ****         在这个新的函数, 你能给 "vx","vy",and "wz" 赋值想要的速度参数
+  64:Chassis/chassis_behaviour.c ****     3.  在"chassis_behaviour_mode_set"这个函数中，添加新的逻辑判断，给chassis_beha
+  65:Chassis/chassis_behaviour.c ****         在函数最后，添加"else if(chassis_behaviour_mode == CHASSIS_XXX_XXX)" ,然后选择�
+  66:Chassis/chassis_behaviour.c ****         4种:
+  67:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW : 'vx' and 'vy'是速度控制， 'wz'是角度控制 云�
+  68:Chassis/chassis_behaviour.c ****         你可以命名成"xxx_angle_set"而不是'wz'
+  69:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW : 'vx' and 'vy'是速度控制， 'wz'是角度控制 底
+  70:Chassis/chassis_behaviour.c ****         你可以命名成"xxx_angle_set"
+  71:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_NO_FOLLOW_YAW : 'vx' and 'vy'是速度控制， 'wz'是旋转速度控制
+  72:Chassis/chassis_behaviour.c ****         CHASSIS_VECTOR_RAW : 使用'vx' 'vy' and 'wz'直接线性计算出车轮的电流值，电�
+  73:Chassis/chassis_behaviour.c ****     4.  在"chassis_behaviour_control_set" 函数的最后，添加
+  74:Chassis/chassis_behaviour.c ****         else if(chassis_behaviour_mode == CHASSIS_XXX_XXX)
+  75:Chassis/chassis_behaviour.c ****         {
+  76:Chassis/chassis_behaviour.c ****             chassis_xxx_xxx_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+  77:Chassis/chassis_behaviour.c ****         }
+  78:Chassis/chassis_behaviour.c ****   ==============================================================================
+  79:Chassis/chassis_behaviour.c ****   @endverbatim
+  80:Chassis/chassis_behaviour.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  81:Chassis/chassis_behaviour.c ****   */
+  82:Chassis/chassis_behaviour.c **** 
+  83:Chassis/chassis_behaviour.c **** #include "chassis_behaviour.h"
+  84:Chassis/chassis_behaviour.c **** #include "cmsis_os.h"
+  85:Chassis/chassis_behaviour.c **** #include "chassis_task.h"
+  86:Chassis/chassis_behaviour.c **** #include "arm_math.h"
+  87:Chassis/chassis_behaviour.c **** 
+ARM GAS  /tmp/ccvDFaDw.s 			page 3
+
+
+  88:Chassis/chassis_behaviour.c **** 
+  89:Chassis/chassis_behaviour.c **** /**
+  90:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_ZERO_FORCE, the function is called
+  91:Chassis/chassis_behaviour.c ****   *                 and chassis control mode is raw. The raw chassis control mode means set value
+  92:Chassis/chassis_behaviour.c ****   *                 will be sent to CAN bus derectly, and the function will set all speed zero.
+  93:Chassis/chassis_behaviour.c ****   * @param[out]     vx_can_set: vx speed value, it will be sent to CAN bus derectly.
+  94:Chassis/chassis_behaviour.c ****   * @param[out]     vy_can_set: vy speed value, it will be sent to CAN bus derectly.
+  95:Chassis/chassis_behaviour.c ****   * @param[out]     wz_can_set: wz rotate speed value, it will be sent to CAN bus derectly.
+  96:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+  97:Chassis/chassis_behaviour.c ****   * @retval         none
+  98:Chassis/chassis_behaviour.c ****   */
+  99:Chassis/chassis_behaviour.c **** /**
+ 100:Chassis/chassis_behaviour.c ****   * @brief          底盘无力的行为状态机下，底盘模式是raw，故而设定值会直�
+ 101:Chassis/chassis_behaviour.c ****   * @author         RM
+ 102:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度 设定值将直接发送到can总线上
+ 103:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度 设定值将直接发送到can总线上
+ 104:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set旋转的速度 设定值将直接发送到can总线上
+ 105:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 106:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 107:Chassis/chassis_behaviour.c ****   */
+ 108:Chassis/chassis_behaviour.c **** static void chassis_zero_force_control(fp32 *vx_can_set, fp32 *vy_can_set, fp32 *wz_can_set, chassi
+ 109:Chassis/chassis_behaviour.c **** 
+ 110:Chassis/chassis_behaviour.c **** 
+ 111:Chassis/chassis_behaviour.c **** /**
+ 112:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_NO_MOVE, chassis control mode is speed c
+ 113:Chassis/chassis_behaviour.c ****   *                 chassis does not follow gimbal, and the function will set all speed zero to mak
+ 114:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 115:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 116:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: wz rotate speed value, positive value means counterclockwise , negative
+ 117:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 118:Chassis/chassis_behaviour.c ****   * @retval         none
+ 119:Chassis/chassis_behaviour.c ****   */
+ 120:Chassis/chassis_behaviour.c **** /**
+ 121:Chassis/chassis_behaviour.c ****   * @brief          底盘不移动的行为状态机下，底盘模式是不跟随角度，
+ 122:Chassis/chassis_behaviour.c ****   * @author         RM
+ 123:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 124:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 125:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set旋转的速度，旋转速度是控制底盘的底盘角速度
+ 126:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 127:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 128:Chassis/chassis_behaviour.c ****   */
+ 129:Chassis/chassis_behaviour.c **** static void chassis_no_move_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t *chass
+ 130:Chassis/chassis_behaviour.c **** 
+ 131:Chassis/chassis_behaviour.c **** /**
+ 132:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW, chassis cont
+ 133:Chassis/chassis_behaviour.c ****   *                 chassis will follow gimbal, chassis rotation speed is calculated from the angle
+ 134:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 135:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 136:Chassis/chassis_behaviour.c ****   * @param[out]     angle_set: control angle difference between chassis and gimbal
+ 137:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 138:Chassis/chassis_behaviour.c ****   * @retval         none
+ 139:Chassis/chassis_behaviour.c ****   */
+ 140:Chassis/chassis_behaviour.c **** /**
+ 141:Chassis/chassis_behaviour.c ****   * @brief          底盘跟随云台的行为状态机下，底盘模式是跟随云台角度，�
+ 142:Chassis/chassis_behaviour.c ****   * @author         RM
+ 143:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 144:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ARM GAS  /tmp/ccvDFaDw.s 			page 4
+
+
+ 145:Chassis/chassis_behaviour.c ****   * @param[in]      angle_set底盘与云台控制到的相对角度
+ 146:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 147:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 148:Chassis/chassis_behaviour.c ****   */
+ 149:Chassis/chassis_behaviour.c **** static void chassis_infantry_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set,
+ 150:Chassis/chassis_behaviour.c **** 
+ 151:Chassis/chassis_behaviour.c **** /**
+ 152:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW, chassis con
+ 153:Chassis/chassis_behaviour.c ****   *                 chassis will follow chassis yaw, chassis rotation speed is calculated from the 
+ 154:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 155:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 156:Chassis/chassis_behaviour.c ****   * @param[out]     angle_set: control angle[-PI, PI]
+ 157:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 158:Chassis/chassis_behaviour.c ****   * @retval         none
+ 159:Chassis/chassis_behaviour.c ****   */
+ 160:Chassis/chassis_behaviour.c **** /**
+ 161:Chassis/chassis_behaviour.c ****   * @brief          底盘跟随底盘yaw的行为状态机下，底盘模式是跟随底盘角度�
+ 162:Chassis/chassis_behaviour.c ****   * @author         RM
+ 163:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 164:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 165:Chassis/chassis_behaviour.c ****   * @param[in]      angle_set底盘设置的yaw，范围 -PI到PI
+ 166:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 167:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 168:Chassis/chassis_behaviour.c ****   */
+ 169:Chassis/chassis_behaviour.c **** static void chassis_engineer_follow_chassis_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set
+ 170:Chassis/chassis_behaviour.c **** 
+ 171:Chassis/chassis_behaviour.c **** /**
+ 172:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_NO_FOLLOW_YAW, chassis control mode is s
+ 173:Chassis/chassis_behaviour.c ****   *                 chassis will no follow angle, chassis rotation speed is set by wz_set.
+ 174:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 175:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 176:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: rotation speed,positive value means counterclockwise , negative value m
+ 177:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 178:Chassis/chassis_behaviour.c ****   * @retval         none
+ 179:Chassis/chassis_behaviour.c ****   */
+ 180:Chassis/chassis_behaviour.c **** /**
+ 181:Chassis/chassis_behaviour.c ****   * @brief          底盘不跟随角度的行为状态机下，底盘模式是不跟随角度，�
+ 182:Chassis/chassis_behaviour.c ****   * @author         RM
+ 183:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 184:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 185:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set底盘设置的旋转速度,正值 逆时针旋转，负值 顺时针旋�
+ 186:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 187:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 188:Chassis/chassis_behaviour.c ****   */
+ 189:Chassis/chassis_behaviour.c **** static void chassis_no_follow_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t 
+ 190:Chassis/chassis_behaviour.c **** 
+ 191:Chassis/chassis_behaviour.c **** 
+ 192:Chassis/chassis_behaviour.c **** 
+ 193:Chassis/chassis_behaviour.c **** /**
+ 194:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_OPEN, chassis control mode is raw contro
+ 195:Chassis/chassis_behaviour.c ****   *                 set value will be sent to can bus.
+ 196:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 197:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 198:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: rotation speed,positive value means counterclockwise , negative value m
+ 199:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 200:Chassis/chassis_behaviour.c ****   * @retval         none
+ 201:Chassis/chassis_behaviour.c ****   */
+ARM GAS  /tmp/ccvDFaDw.s 			page 5
+
+
+ 202:Chassis/chassis_behaviour.c **** /**
+ 203:Chassis/chassis_behaviour.c ****   * @brief          底盘开环的行为状态机下，底盘模式是raw原生状态，故而设�
+ 204:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 205:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度，正值 左移速度， 负值 右移速度
+ 206:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set 旋转速度， 正值 逆时针旋转，负值 顺时针旋转
+ 207:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 208:Chassis/chassis_behaviour.c ****   * @retval         none
+ 209:Chassis/chassis_behaviour.c ****   */
+ 210:Chassis/chassis_behaviour.c **** 
+ 211:Chassis/chassis_behaviour.c **** static void chassis_open_set_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t *chas
+ 212:Chassis/chassis_behaviour.c **** 
+ 213:Chassis/chassis_behaviour.c **** 
+ 214:Chassis/chassis_behaviour.c **** 
+ 215:Chassis/chassis_behaviour.c **** 
+ 216:Chassis/chassis_behaviour.c **** 
+ 217:Chassis/chassis_behaviour.c **** 
+ 218:Chassis/chassis_behaviour.c **** //highlight, the variable chassis behaviour mode 
+ 219:Chassis/chassis_behaviour.c **** //留意，这个底盘行为模式变量
+ 220:Chassis/chassis_behaviour.c **** chassis_behaviour_e chassis_behaviour_mode = CHASSIS_ZERO_FORCE;
+ 221:Chassis/chassis_behaviour.c **** 
+ 222:Chassis/chassis_behaviour.c **** 
+ 223:Chassis/chassis_behaviour.c **** /**
+ 224:Chassis/chassis_behaviour.c ****   * @brief          logical judgement to assign "chassis_behaviour_mode" variable to which mode
+ 225:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_mode: chassis data
+ 226:Chassis/chassis_behaviour.c ****   * @retval         none
+ 227:Chassis/chassis_behaviour.c ****   */
+ 228:Chassis/chassis_behaviour.c **** /**
+ 229:Chassis/chassis_behaviour.c ****   * @brief          通过逻辑判断，赋值"chassis_behaviour_mode"成哪种模式
+ 230:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_mode: 底盘数据
+ 231:Chassis/chassis_behaviour.c ****   * @retval         none
+ 232:Chassis/chassis_behaviour.c ****   */
+ 233:Chassis/chassis_behaviour.c **** void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
+ 234:Chassis/chassis_behaviour.c **** {
+ 235:Chassis/chassis_behaviour.c ****     if (chassis_move_mode == NULL)
+ 236:Chassis/chassis_behaviour.c ****     {
+ 237:Chassis/chassis_behaviour.c ****         return;
+ 238:Chassis/chassis_behaviour.c ****     }
+ 239:Chassis/chassis_behaviour.c **** 
+ 240:Chassis/chassis_behaviour.c **** 
+ 241:Chassis/chassis_behaviour.c ****     //remote control  set chassis behaviour mode
+ 242:Chassis/chassis_behaviour.c ****     //遥控器设置模式
+ 243:Chassis/chassis_behaviour.c ****     if (switch_is_mid(chassis_move_mode->chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]))
+ 244:Chassis/chassis_behaviour.c ****     {
+ 245:Chassis/chassis_behaviour.c ****         //can change to CHASSIS_ZERO_FORCE,CHASSIS_NO_MOVE,CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW,
+ 246:Chassis/chassis_behaviour.c ****         //CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW,CHASSIS_NO_FOLLOW_YAW,CHASSIS_OPEN
+ 247:Chassis/chassis_behaviour.c ****         chassis_behaviour_mode = CHASSIS_NO_FOLLOW_YAW;
+ 248:Chassis/chassis_behaviour.c ****     }
+ 249:Chassis/chassis_behaviour.c ****     else if (switch_is_down(chassis_move_mode->chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]))
+ 250:Chassis/chassis_behaviour.c ****     {
+ 251:Chassis/chassis_behaviour.c ****         chassis_behaviour_mode = CHASSIS_NO_MOVE;
+ 252:Chassis/chassis_behaviour.c ****     }
+ 253:Chassis/chassis_behaviour.c ****     else if (switch_is_up(chassis_move_mode->chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]))
+ 254:Chassis/chassis_behaviour.c ****     {
+ 255:Chassis/chassis_behaviour.c ****         chassis_behaviour_mode = CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW;
+ 256:Chassis/chassis_behaviour.c ****     }
+ 257:Chassis/chassis_behaviour.c **** 
+ 258:Chassis/chassis_behaviour.c ****     //when gimbal in some mode, such as init mode, chassis must's move
+ARM GAS  /tmp/ccvDFaDw.s 			page 6
+
+
+ 259:Chassis/chassis_behaviour.c ****     //当云台在某些模式下，像初始化， 底盘不动
+ 260:Chassis/chassis_behaviour.c **** //    if (gimbal_cmd_to_chassis_stop())
+ 261:Chassis/chassis_behaviour.c **** //    {
+ 262:Chassis/chassis_behaviour.c **** //        chassis_behaviour_mode = CHASSIS_NO_MOVE;
+ 263:Chassis/chassis_behaviour.c **** //    }
+ 264:Chassis/chassis_behaviour.c **** 
+ 265:Chassis/chassis_behaviour.c **** 
+ 266:Chassis/chassis_behaviour.c ****     //add your own logic to enter the new mode
+ 267:Chassis/chassis_behaviour.c ****     //添加自己的逻辑判断进入新模式
+ 268:Chassis/chassis_behaviour.c **** 
+ 269:Chassis/chassis_behaviour.c **** 
+ 270:Chassis/chassis_behaviour.c ****     //accord to beheviour mode, choose chassis control mode
+ 271:Chassis/chassis_behaviour.c ****     //根据行为模式选择一个底盘控制模式
+ 272:Chassis/chassis_behaviour.c ****     if (chassis_behaviour_mode == CHASSIS_ZERO_FORCE)
+ 273:Chassis/chassis_behaviour.c ****     {
+ 274:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_RAW; 
+ 275:Chassis/chassis_behaviour.c ****     }
+ 276:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_NO_MOVE)
+ 277:Chassis/chassis_behaviour.c ****     {
+ 278:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_NO_FOLLOW_YAW; 
+ 279:Chassis/chassis_behaviour.c ****     }
+ 280:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW)
+ 281:Chassis/chassis_behaviour.c ****     {
+ 282:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW; 
+ 283:Chassis/chassis_behaviour.c ****     }
+ 284:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW)
+ 285:Chassis/chassis_behaviour.c ****     {
+ 286:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW;
+ 287:Chassis/chassis_behaviour.c ****     }
+ 288:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW)
+ 289:Chassis/chassis_behaviour.c ****     {
+ 290:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_NO_FOLLOW_YAW;
+ 291:Chassis/chassis_behaviour.c ****     }
+ 292:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_OPEN)
+ 293:Chassis/chassis_behaviour.c ****     {
+ 294:Chassis/chassis_behaviour.c ****         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_RAW;
+ 295:Chassis/chassis_behaviour.c ****     }
+ 296:Chassis/chassis_behaviour.c **** }
+ 297:Chassis/chassis_behaviour.c **** 
+ 298:Chassis/chassis_behaviour.c **** 
+ 299:Chassis/chassis_behaviour.c **** /**
+ 300:Chassis/chassis_behaviour.c ****   * @brief          set control set-point. three movement param, according to difference control mo
+ 301:Chassis/chassis_behaviour.c ****   *                 will control corresponding movement.in the function, usually call different con
+ 302:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set, usually controls vertical speed.
+ 303:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set, usually controls horizotal speed.
+ 304:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set, usually controls rotation speed.
+ 305:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector,  has all data of chassis
+ 306:Chassis/chassis_behaviour.c ****   * @retval         none
+ 307:Chassis/chassis_behaviour.c ****   */
+ 308:Chassis/chassis_behaviour.c **** /**
+ 309:Chassis/chassis_behaviour.c ****   * @brief          设置控制量.根据不同底盘控制模式，三个参数会控制不同运
+ 310:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set, 通常控制纵向移动.
+ 311:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set, 通常控制横向移动.
+ 312:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set, 通常控制旋转运动.
+ 313:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector,  包括底盘所有信息.
+ 314:Chassis/chassis_behaviour.c ****   * @retval         none
+ 315:Chassis/chassis_behaviour.c ****   */
+ARM GAS  /tmp/ccvDFaDw.s 			page 7
+
+
+ 316:Chassis/chassis_behaviour.c **** 
+ 317:Chassis/chassis_behaviour.c **** void chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, chassis_move_t *cha
+ 318:Chassis/chassis_behaviour.c **** {
+ 319:Chassis/chassis_behaviour.c **** 
+ 320:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 321:Chassis/chassis_behaviour.c ****     {
+ 322:Chassis/chassis_behaviour.c ****         return;
+ 323:Chassis/chassis_behaviour.c ****     }
+ 324:Chassis/chassis_behaviour.c **** 
+ 325:Chassis/chassis_behaviour.c ****     if (chassis_behaviour_mode == CHASSIS_ZERO_FORCE)
+ 326:Chassis/chassis_behaviour.c ****     {
+ 327:Chassis/chassis_behaviour.c ****         chassis_zero_force_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+ 328:Chassis/chassis_behaviour.c ****     }
+ 329:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_NO_MOVE)
+ 330:Chassis/chassis_behaviour.c ****     {
+ 331:Chassis/chassis_behaviour.c ****         chassis_no_move_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+ 332:Chassis/chassis_behaviour.c ****     }
+ 333:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW)
+ 334:Chassis/chassis_behaviour.c ****     {
+ 335:Chassis/chassis_behaviour.c ****         chassis_infantry_follow_gimbal_yaw_control(vx_set, vy_set, angle_set, chassis_move_rc_to_ve
+ 336:Chassis/chassis_behaviour.c ****     }
+ 337:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW)
+ 338:Chassis/chassis_behaviour.c ****     {
+ 339:Chassis/chassis_behaviour.c ****         chassis_engineer_follow_chassis_yaw_control(vx_set, vy_set, angle_set, chassis_move_rc_to_v
+ 340:Chassis/chassis_behaviour.c ****     }
+ 341:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW)
+ 342:Chassis/chassis_behaviour.c ****     {
+ 343:Chassis/chassis_behaviour.c ****         chassis_no_follow_yaw_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+ 344:Chassis/chassis_behaviour.c ****     }
+ 345:Chassis/chassis_behaviour.c ****     else if (chassis_behaviour_mode == CHASSIS_OPEN)
+ 346:Chassis/chassis_behaviour.c ****     {
+ 347:Chassis/chassis_behaviour.c ****         chassis_open_set_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
+ 348:Chassis/chassis_behaviour.c ****     }
+ 349:Chassis/chassis_behaviour.c **** }
+ 350:Chassis/chassis_behaviour.c **** 
+ 351:Chassis/chassis_behaviour.c **** /**
+ 352:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_ZERO_FORCE, the function is called
+ 353:Chassis/chassis_behaviour.c ****   *                 and chassis control mode is raw. The raw chassis chontrol mode means set value
+ 354:Chassis/chassis_behaviour.c ****   *                 will be sent to CAN bus derectly, and the function will set all speed zero.
+ 355:Chassis/chassis_behaviour.c ****   * @param[out]     vx_can_set: vx speed value, it will be sent to CAN bus derectly.
+ 356:Chassis/chassis_behaviour.c ****   * @param[out]     vy_can_set: vy speed value, it will be sent to CAN bus derectly.
+ 357:Chassis/chassis_behaviour.c ****   * @param[out]     wz_can_set: wz rotate speed value, it will be sent to CAN bus derectly.
+ 358:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 359:Chassis/chassis_behaviour.c ****   * @retval         none
+ 360:Chassis/chassis_behaviour.c ****   */
+ 361:Chassis/chassis_behaviour.c **** /**
+ 362:Chassis/chassis_behaviour.c ****   * @brief          底盘无力的行为状态机下，底盘模式是raw，故而设定值会直�
+ 363:Chassis/chassis_behaviour.c ****   * @author         RM
+ 364:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度 设定值将直接发送到can总线上
+ 365:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度 设定值将直接发送到can总线上
+ 366:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set旋转的速度 设定值将直接发送到can总线上
+ 367:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 368:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 369:Chassis/chassis_behaviour.c ****   */
+ 370:Chassis/chassis_behaviour.c **** 
+ 371:Chassis/chassis_behaviour.c **** static void chassis_zero_force_control(fp32 *vx_can_set, fp32 *vy_can_set, fp32 *wz_can_set, chassi
+ 372:Chassis/chassis_behaviour.c **** {
+ARM GAS  /tmp/ccvDFaDw.s 			page 8
+
+
+  29              		.loc 1 372 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+ 373:Chassis/chassis_behaviour.c ****     if (vx_can_set == NULL || vy_can_set == NULL || wz_can_set == NULL || chassis_move_rc_to_vector
+  34              		.loc 1 373 5 view .LVU1
+  35              		.loc 1 373 8 is_stmt 0 view .LVU2
+  36 0000 30B1     		cbz	r0, .L1
+  37              		.loc 1 373 28 discriminator 1 view .LVU3
+  38 0002 29B1     		cbz	r1, .L1
+  39              		.loc 1 373 50 discriminator 2 view .LVU4
+  40 0004 22B1     		cbz	r2, .L1
+  41              		.loc 1 373 72 discriminator 3 view .LVU5
+  42 0006 1BB1     		cbz	r3, .L1
+ 374:Chassis/chassis_behaviour.c ****     {
+ 375:Chassis/chassis_behaviour.c ****         return;
+ 376:Chassis/chassis_behaviour.c ****     }
+ 377:Chassis/chassis_behaviour.c ****     *vx_can_set = 0.0f;
+  43              		.loc 1 377 5 is_stmt 1 view .LVU6
+  44              		.loc 1 377 17 is_stmt 0 view .LVU7
+  45 0008 0023     		movs	r3, #0
+  46              	.LVL1:
+  47              		.loc 1 377 17 view .LVU8
+  48 000a 0360     		str	r3, [r0]	@ float
+ 378:Chassis/chassis_behaviour.c ****     *vy_can_set = 0.0f;
+  49              		.loc 1 378 5 is_stmt 1 view .LVU9
+  50              		.loc 1 378 17 is_stmt 0 view .LVU10
+  51 000c 0B60     		str	r3, [r1]	@ float
+ 379:Chassis/chassis_behaviour.c ****     *wz_can_set = 0.0f;
+  52              		.loc 1 379 5 is_stmt 1 view .LVU11
+  53              		.loc 1 379 17 is_stmt 0 view .LVU12
+  54 000e 1360     		str	r3, [r2]	@ float
+  55              	.L1:
+ 380:Chassis/chassis_behaviour.c **** }
+  56              		.loc 1 380 1 view .LVU13
+  57 0010 7047     		bx	lr
+  58              		.cfi_endproc
+  59              	.LFE170:
+  61              		.section	.text.chassis_no_move_control,"ax",%progbits
+  62              		.align	1
+  63              		.syntax unified
+  64              		.thumb
+  65              		.thumb_func
+  67              	chassis_no_move_control:
+  68              	.LVL2:
+  69              	.LFB171:
+ 381:Chassis/chassis_behaviour.c **** 
+ 382:Chassis/chassis_behaviour.c **** /**
+ 383:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_NO_MOVE, chassis control mode is speed c
+ 384:Chassis/chassis_behaviour.c ****   *                 chassis does not follow gimbal, and the function will set all speed zero to mak
+ 385:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 386:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 387:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: wz rotate speed value, positive value means counterclockwise , negative
+ 388:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 389:Chassis/chassis_behaviour.c ****   * @retval         none
+ 390:Chassis/chassis_behaviour.c ****   */
+ARM GAS  /tmp/ccvDFaDw.s 			page 9
+
+
+ 391:Chassis/chassis_behaviour.c **** /**
+ 392:Chassis/chassis_behaviour.c ****   * @brief          底盘不移动的行为状态机下，底盘模式是不跟随角度，
+ 393:Chassis/chassis_behaviour.c ****   * @author         RM
+ 394:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 395:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 396:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set旋转的速度，旋转速度是控制底盘的底盘角速度
+ 397:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 398:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 399:Chassis/chassis_behaviour.c ****   */
+ 400:Chassis/chassis_behaviour.c **** 
+ 401:Chassis/chassis_behaviour.c **** static void chassis_no_move_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t *chass
+ 402:Chassis/chassis_behaviour.c **** {
+  70              		.loc 1 402 1 is_stmt 1 view -0
+  71              		.cfi_startproc
+  72              		@ args = 0, pretend = 0, frame = 0
+  73              		@ frame_needed = 0, uses_anonymous_args = 0
+  74              		@ link register save eliminated.
+ 403:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || wz_set == NULL || chassis_move_rc_to_vector == NULL)
+  75              		.loc 1 403 5 view .LVU15
+  76              		.loc 1 403 8 is_stmt 0 view .LVU16
+  77 0000 30B1     		cbz	r0, .L3
+  78              		.loc 1 403 24 discriminator 1 view .LVU17
+  79 0002 29B1     		cbz	r1, .L3
+  80              		.loc 1 403 42 discriminator 2 view .LVU18
+  81 0004 22B1     		cbz	r2, .L3
+  82              		.loc 1 403 60 discriminator 3 view .LVU19
+  83 0006 1BB1     		cbz	r3, .L3
+ 404:Chassis/chassis_behaviour.c ****     {
+ 405:Chassis/chassis_behaviour.c ****         return;
+ 406:Chassis/chassis_behaviour.c ****     }
+ 407:Chassis/chassis_behaviour.c ****     *vx_set = 0.0f;
+  84              		.loc 1 407 5 is_stmt 1 view .LVU20
+  85              		.loc 1 407 13 is_stmt 0 view .LVU21
+  86 0008 0023     		movs	r3, #0
+  87              	.LVL3:
+  88              		.loc 1 407 13 view .LVU22
+  89 000a 0360     		str	r3, [r0]	@ float
+ 408:Chassis/chassis_behaviour.c ****     *vy_set = 0.0f;
+  90              		.loc 1 408 5 is_stmt 1 view .LVU23
+  91              		.loc 1 408 13 is_stmt 0 view .LVU24
+  92 000c 0B60     		str	r3, [r1]	@ float
+ 409:Chassis/chassis_behaviour.c ****     *wz_set = 0.0f;
+  93              		.loc 1 409 5 is_stmt 1 view .LVU25
+  94              		.loc 1 409 13 is_stmt 0 view .LVU26
+  95 000e 1360     		str	r3, [r2]	@ float
+  96              	.L3:
+ 410:Chassis/chassis_behaviour.c **** }
+  97              		.loc 1 410 1 view .LVU27
+  98 0010 7047     		bx	lr
+  99              		.cfi_endproc
+ 100              	.LFE171:
+ 102              		.section	.text.chassis_open_set_control,"ax",%progbits
+ 103              		.align	1
+ 104              		.syntax unified
+ 105              		.thumb
+ 106              		.thumb_func
+ 108              	chassis_open_set_control:
+ARM GAS  /tmp/ccvDFaDw.s 			page 10
+
+
+ 109              	.LVL4:
+ 110              	.LFB175:
+ 411:Chassis/chassis_behaviour.c **** 
+ 412:Chassis/chassis_behaviour.c **** /**
+ 413:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW, chassis cont
+ 414:Chassis/chassis_behaviour.c ****   *                 chassis will follow gimbal, chassis rotation speed is calculated from the angle
+ 415:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 416:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 417:Chassis/chassis_behaviour.c ****   * @param[out]     angle_set: control angle difference between chassis and gimbal
+ 418:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 419:Chassis/chassis_behaviour.c ****   * @retval         none
+ 420:Chassis/chassis_behaviour.c ****   */
+ 421:Chassis/chassis_behaviour.c **** /**
+ 422:Chassis/chassis_behaviour.c ****   * @brief          底盘跟随云台的行为状态机下，底盘模式是跟随云台角度，�
+ 423:Chassis/chassis_behaviour.c ****   * @author         RM
+ 424:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 425:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 426:Chassis/chassis_behaviour.c ****   * @param[in]      angle_set底盘与云台控制到的相对角度
+ 427:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 428:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 429:Chassis/chassis_behaviour.c ****   */
+ 430:Chassis/chassis_behaviour.c **** 
+ 431:Chassis/chassis_behaviour.c **** static void chassis_infantry_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set,
+ 432:Chassis/chassis_behaviour.c **** {
+ 433:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 434:Chassis/chassis_behaviour.c ****     {
+ 435:Chassis/chassis_behaviour.c ****         return;
+ 436:Chassis/chassis_behaviour.c ****     }
+ 437:Chassis/chassis_behaviour.c **** 
+ 438:Chassis/chassis_behaviour.c ****     //channel value and keyboard value change to speed set-point, in general
+ 439:Chassis/chassis_behaviour.c ****     //遥控器的通道值以及键盘按键 得出 一般情况下的速度设定值
+ 440:Chassis/chassis_behaviour.c ****     chassis_rc_to_control_vector(vx_set, vy_set, chassis_move_rc_to_vector);
+ 441:Chassis/chassis_behaviour.c **** 
+ 442:Chassis/chassis_behaviour.c ****     //swing angle is generated by sin function, swing_time is the input time of sin
+ 443:Chassis/chassis_behaviour.c ****     //摇摆角度是利用sin函数生成，swing_time 是sin函数的输入值
+ 444:Chassis/chassis_behaviour.c ****     static fp32 swing_time = 0.0f;
+ 445:Chassis/chassis_behaviour.c ****     
+ 446:Chassis/chassis_behaviour.c ****     static fp32 swing_angle = 0.0f;
+ 447:Chassis/chassis_behaviour.c ****     //max_angle is the max angle that chassis will ratate
+ 448:Chassis/chassis_behaviour.c ****     //max_angle 是sin函数的幅值
+ 449:Chassis/chassis_behaviour.c ****     static fp32 max_angle = SWING_NO_MOVE_ANGLE;
+ 450:Chassis/chassis_behaviour.c ****     //swing_time  plus the add_time in one control cycle
+ 451:Chassis/chassis_behaviour.c ****     //swing_time 在一个控制周期内，加上 add_time
+ 452:Chassis/chassis_behaviour.c ****     static fp32 const add_time = PI * 0.5f * configTICK_RATE_HZ / CHASSIS_CONTROL_TIME_MS;
+ 453:Chassis/chassis_behaviour.c ****     
+ 454:Chassis/chassis_behaviour.c ****     static uint8_t swing_flag = 0;
+ 455:Chassis/chassis_behaviour.c **** 
+ 456:Chassis/chassis_behaviour.c ****     //judge if swing
+ 457:Chassis/chassis_behaviour.c ****     //判断是否要摇摆
+ 458:Chassis/chassis_behaviour.c ****     if (chassis_move_rc_to_vector->chassis_RC->key.v & SWING_KEY)
+ 459:Chassis/chassis_behaviour.c ****     {
+ 460:Chassis/chassis_behaviour.c ****         if (swing_flag == 0)
+ 461:Chassis/chassis_behaviour.c ****         {
+ 462:Chassis/chassis_behaviour.c ****             swing_flag = 1;
+ 463:Chassis/chassis_behaviour.c ****             swing_time = 0.0f;
+ 464:Chassis/chassis_behaviour.c ****         }
+ 465:Chassis/chassis_behaviour.c ****     }
+ARM GAS  /tmp/ccvDFaDw.s 			page 11
+
+
+ 466:Chassis/chassis_behaviour.c ****     else
+ 467:Chassis/chassis_behaviour.c ****     {
+ 468:Chassis/chassis_behaviour.c ****         swing_flag = 0;
+ 469:Chassis/chassis_behaviour.c ****     }
+ 470:Chassis/chassis_behaviour.c **** 
+ 471:Chassis/chassis_behaviour.c ****     //judge if keyboard is controlling the chassis, if yes, reduce the max_angle
+ 472:Chassis/chassis_behaviour.c ****     //判断键盘输入是不是在控制底盘运动，底盘在运动减小摇摆角度
+ 473:Chassis/chassis_behaviour.c ****     if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_FRONT_KEY || chassis_move_rc_to_vect
+ 474:Chassis/chassis_behaviour.c ****         chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY || chassis_move_rc_to_vecto
+ 475:Chassis/chassis_behaviour.c ****     {
+ 476:Chassis/chassis_behaviour.c ****         max_angle = SWING_MOVE_ANGLE;
+ 477:Chassis/chassis_behaviour.c ****     }
+ 478:Chassis/chassis_behaviour.c ****     else
+ 479:Chassis/chassis_behaviour.c ****     {
+ 480:Chassis/chassis_behaviour.c ****         max_angle = SWING_NO_MOVE_ANGLE;
+ 481:Chassis/chassis_behaviour.c ****     }
+ 482:Chassis/chassis_behaviour.c ****     
+ 483:Chassis/chassis_behaviour.c ****     if (swing_flag)
+ 484:Chassis/chassis_behaviour.c ****     {
+ 485:Chassis/chassis_behaviour.c ****         swing_angle = max_angle * arm_sin_f32(swing_time);
+ 486:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 487:Chassis/chassis_behaviour.c ****     }
+ 488:Chassis/chassis_behaviour.c ****     else
+ 489:Chassis/chassis_behaviour.c ****     {
+ 490:Chassis/chassis_behaviour.c ****         swing_angle = 0.0f;
+ 491:Chassis/chassis_behaviour.c ****     }
+ 492:Chassis/chassis_behaviour.c ****     //swing_time  range [0, 2*PI]
+ 493:Chassis/chassis_behaviour.c ****     //sin函数不超过2pi
+ 494:Chassis/chassis_behaviour.c ****     if (swing_time > 2 * PI)
+ 495:Chassis/chassis_behaviour.c ****     {
+ 496:Chassis/chassis_behaviour.c ****         swing_time -= 2 * PI;
+ 497:Chassis/chassis_behaviour.c ****     }
+ 498:Chassis/chassis_behaviour.c **** 
+ 499:Chassis/chassis_behaviour.c **** 
+ 500:Chassis/chassis_behaviour.c ****     *angle_set = swing_angle;
+ 501:Chassis/chassis_behaviour.c **** }
+ 502:Chassis/chassis_behaviour.c **** 
+ 503:Chassis/chassis_behaviour.c **** /**
+ 504:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW, chassis con
+ 505:Chassis/chassis_behaviour.c ****   *                 chassis will follow chassis yaw, chassis rotation speed is calculated from the 
+ 506:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 507:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 508:Chassis/chassis_behaviour.c ****   * @param[out]     angle_set: control angle[-PI, PI]
+ 509:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 510:Chassis/chassis_behaviour.c ****   * @retval         none
+ 511:Chassis/chassis_behaviour.c ****   */
+ 512:Chassis/chassis_behaviour.c **** /**
+ 513:Chassis/chassis_behaviour.c ****   * @brief          底盘跟随底盘yaw的行为状态机下，底盘模式是跟随底盘角度�
+ 514:Chassis/chassis_behaviour.c ****   * @author         RM
+ 515:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 516:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 517:Chassis/chassis_behaviour.c ****   * @param[in]      angle_set底盘设置的yaw，范围 -PI到PI
+ 518:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 519:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 520:Chassis/chassis_behaviour.c ****   */
+ 521:Chassis/chassis_behaviour.c **** 
+ 522:Chassis/chassis_behaviour.c **** static void chassis_engineer_follow_chassis_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set
+ARM GAS  /tmp/ccvDFaDw.s 			page 12
+
+
+ 523:Chassis/chassis_behaviour.c **** {
+ 524:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 525:Chassis/chassis_behaviour.c ****     {
+ 526:Chassis/chassis_behaviour.c ****         return;
+ 527:Chassis/chassis_behaviour.c ****     }
+ 528:Chassis/chassis_behaviour.c **** 
+ 529:Chassis/chassis_behaviour.c ****     chassis_rc_to_control_vector(vx_set, vy_set, chassis_move_rc_to_vector);
+ 530:Chassis/chassis_behaviour.c **** 
+ 531:Chassis/chassis_behaviour.c ****     *angle_set = rad_format(chassis_move_rc_to_vector->chassis_yaw_set - CHASSIS_ANGLE_Z_RC_SEN * c
+ 532:Chassis/chassis_behaviour.c **** }
+ 533:Chassis/chassis_behaviour.c **** 
+ 534:Chassis/chassis_behaviour.c **** /**
+ 535:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_NO_FOLLOW_YAW, chassis control mode is s
+ 536:Chassis/chassis_behaviour.c ****   *                 chassis will no follow angle, chassis rotation speed is set by wz_set.
+ 537:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 538:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 539:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: rotation speed,positive value means counterclockwise , negative value m
+ 540:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 541:Chassis/chassis_behaviour.c ****   * @retval         none
+ 542:Chassis/chassis_behaviour.c ****   */
+ 543:Chassis/chassis_behaviour.c **** /**
+ 544:Chassis/chassis_behaviour.c ****   * @brief          底盘不跟随角度的行为状态机下，底盘模式是不跟随角度，�
+ 545:Chassis/chassis_behaviour.c ****   * @author         RM
+ 546:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 547:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度,正值 左移速度， 负值 右移速度
+ 548:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set底盘设置的旋转速度,正值 逆时针旋转，负值 顺时针旋�
+ 549:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 550:Chassis/chassis_behaviour.c ****   * @retval         返回空
+ 551:Chassis/chassis_behaviour.c ****   */
+ 552:Chassis/chassis_behaviour.c **** 
+ 553:Chassis/chassis_behaviour.c **** static void chassis_no_follow_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t 
+ 554:Chassis/chassis_behaviour.c **** {
+ 555:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || wz_set == NULL || chassis_move_rc_to_vector == NULL)
+ 556:Chassis/chassis_behaviour.c ****     {
+ 557:Chassis/chassis_behaviour.c ****         return;
+ 558:Chassis/chassis_behaviour.c ****     }
+ 559:Chassis/chassis_behaviour.c **** 
+ 560:Chassis/chassis_behaviour.c ****     chassis_rc_to_control_vector(vx_set, vy_set, chassis_move_rc_to_vector);
+ 561:Chassis/chassis_behaviour.c ****     *wz_set = -CHASSIS_WZ_RC_SEN * chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL]
+ 562:Chassis/chassis_behaviour.c **** }
+ 563:Chassis/chassis_behaviour.c **** 
+ 564:Chassis/chassis_behaviour.c **** /**
+ 565:Chassis/chassis_behaviour.c ****   * @brief          when chassis behaviour mode is CHASSIS_OPEN, chassis control mode is raw contro
+ 566:Chassis/chassis_behaviour.c ****   *                 set value will be sent to can bus.
+ 567:Chassis/chassis_behaviour.c ****   * @param[out]     vx_set: vx speed value, positive value means forward speed, negative value mean
+ 568:Chassis/chassis_behaviour.c ****   * @param[out]     vy_set: vy speed value, positive value means left speed, negative value means r
+ 569:Chassis/chassis_behaviour.c ****   * @param[out]     wz_set: rotation speed,positive value means counterclockwise , negative value m
+ 570:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector: chassis data
+ 571:Chassis/chassis_behaviour.c ****   * @retval         none
+ 572:Chassis/chassis_behaviour.c ****   */
+ 573:Chassis/chassis_behaviour.c **** /**
+ 574:Chassis/chassis_behaviour.c ****   * @brief          底盘开环的行为状态机下，底盘模式是raw原生状态，故而设�
+ 575:Chassis/chassis_behaviour.c ****   * @param[in]      vx_set前进的速度,正值 前进速度， 负值 后退速度
+ 576:Chassis/chassis_behaviour.c ****   * @param[in]      vy_set左右的速度，正值 左移速度， 负值 右移速度
+ 577:Chassis/chassis_behaviour.c ****   * @param[in]      wz_set 旋转速度， 正值 逆时针旋转，负值 顺时针旋转
+ 578:Chassis/chassis_behaviour.c ****   * @param[in]      chassis_move_rc_to_vector底盘数据
+ 579:Chassis/chassis_behaviour.c ****   * @retval         none
+ARM GAS  /tmp/ccvDFaDw.s 			page 13
+
+
+ 580:Chassis/chassis_behaviour.c ****   */
+ 581:Chassis/chassis_behaviour.c **** 
+ 582:Chassis/chassis_behaviour.c **** static void chassis_open_set_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz_set, chassis_move_t *chas
+ 583:Chassis/chassis_behaviour.c **** {
+ 111              		.loc 1 583 1 is_stmt 1 view -0
+ 112              		.cfi_startproc
+ 113              		@ args = 0, pretend = 0, frame = 0
+ 114              		@ frame_needed = 0, uses_anonymous_args = 0
+ 115              		@ link register save eliminated.
+ 584:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || wz_set == NULL || chassis_move_rc_to_vector == NULL)
+ 116              		.loc 1 584 5 view .LVU29
+ 117              		.loc 1 584 8 is_stmt 0 view .LVU30
+ 118 0000 8446     		mov	ip, r0
+ 119 0002 30B3     		cbz	r0, .L5
+ 120              		.loc 1 584 24 discriminator 1 view .LVU31
+ 121 0004 29B3     		cbz	r1, .L5
+ 122              		.loc 1 584 42 discriminator 2 view .LVU32
+ 123 0006 22B3     		cbz	r2, .L5
+ 124              		.loc 1 584 60 discriminator 3 view .LVU33
+ 125 0008 1BB3     		cbz	r3, .L5
+ 585:Chassis/chassis_behaviour.c ****     {
+ 586:Chassis/chassis_behaviour.c ****         return;
+ 587:Chassis/chassis_behaviour.c ****     }
+ 588:Chassis/chassis_behaviour.c **** 
+ 589:Chassis/chassis_behaviour.c ****     *vx_set = chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_X_CHANNEL] * CHASSIS_OPEN_RC_SCA
+ 126              		.loc 1 589 5 is_stmt 1 view .LVU34
+ 127              		.loc 1 589 40 is_stmt 0 view .LVU35
+ 128 000a 1868     		ldr	r0, [r3]
+ 129              	.LVL5:
+ 130              		.loc 1 589 59 view .LVU36
+ 131 000c B0F90200 		ldrsh	r0, [r0, #2]	@ unaligned
+ 132              		.loc 1 589 79 view .LVU37
+ 133 0010 00EB8000 		add	r0, r0, r0, lsl #2
+ 134 0014 4000     		lsls	r0, r0, #1
+ 135              		.loc 1 589 13 view .LVU38
+ 136 0016 07EE900A 		vmov	s15, r0	@ int
+ 137 001a F8EEE77A 		vcvt.f32.s32	s15, s15
+ 138 001e CCED007A 		vstr.32	s15, [ip]
+ 590:Chassis/chassis_behaviour.c ****     *vy_set = -chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL] * CHASSIS_OPEN_RC_SC
+ 139              		.loc 1 590 5 is_stmt 1 view .LVU39
+ 140              		.loc 1 590 41 is_stmt 0 view .LVU40
+ 141 0022 1868     		ldr	r0, [r3]
+ 142              		.loc 1 590 60 view .LVU41
+ 143 0024 B0F90000 		ldrsh	r0, [r0]	@ unaligned
+ 144              		.loc 1 590 80 view .LVU42
+ 145 0028 6FF0090C 		mvn	ip, #9
+ 146              	.LVL6:
+ 147              		.loc 1 590 80 view .LVU43
+ 148 002c 0CFB00F0 		mul	r0, ip, r0
+ 149              		.loc 1 590 13 view .LVU44
+ 150 0030 07EE900A 		vmov	s15, r0	@ int
+ 151 0034 F8EEE77A 		vcvt.f32.s32	s15, s15
+ 152 0038 C1ED007A 		vstr.32	s15, [r1]
+ 591:Chassis/chassis_behaviour.c ****     *wz_set = -chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL] * CHASSIS_OPEN_RC_S
+ 153              		.loc 1 591 5 is_stmt 1 view .LVU45
+ 154              		.loc 1 591 41 is_stmt 0 view .LVU46
+ 155 003c 1B68     		ldr	r3, [r3]
+ARM GAS  /tmp/ccvDFaDw.s 			page 14
+
+
+ 156              	.LVL7:
+ 157              		.loc 1 591 60 view .LVU47
+ 158 003e B3F90430 		ldrsh	r3, [r3, #4]	@ unaligned
+ 159              		.loc 1 591 81 view .LVU48
+ 160 0042 0CFB03F3 		mul	r3, ip, r3
+ 161              		.loc 1 591 13 view .LVU49
+ 162 0046 07EE903A 		vmov	s15, r3	@ int
+ 163 004a F8EEE77A 		vcvt.f32.s32	s15, s15
+ 164 004e C2ED007A 		vstr.32	s15, [r2]
+ 592:Chassis/chassis_behaviour.c ****     return;
+ 165              		.loc 1 592 5 is_stmt 1 view .LVU50
+ 166              	.L5:
+ 593:Chassis/chassis_behaviour.c **** }
+ 167              		.loc 1 593 1 is_stmt 0 view .LVU51
+ 168 0052 7047     		bx	lr
+ 169              		.cfi_endproc
+ 170              	.LFE175:
+ 172              		.section	.text.chassis_no_follow_yaw_control,"ax",%progbits
+ 173              		.align	1
+ 174              		.syntax unified
+ 175              		.thumb
+ 176              		.thumb_func
+ 178              	chassis_no_follow_yaw_control:
+ 179              	.LVL8:
+ 180              	.LFB174:
+ 554:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || wz_set == NULL || chassis_move_rc_to_vector == NULL)
+ 181              		.loc 1 554 1 is_stmt 1 view -0
+ 182              		.cfi_startproc
+ 183              		@ args = 0, pretend = 0, frame = 0
+ 184              		@ frame_needed = 0, uses_anonymous_args = 0
+ 555:Chassis/chassis_behaviour.c ****     {
+ 185              		.loc 1 555 5 view .LVU53
+ 555:Chassis/chassis_behaviour.c ****     {
+ 186              		.loc 1 555 8 is_stmt 0 view .LVU54
+ 187 0000 B0B1     		cbz	r0, .L10
+ 554:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || wz_set == NULL || chassis_move_rc_to_vector == NULL)
+ 188              		.loc 1 554 1 discriminator 1 view .LVU55
+ 189 0002 38B5     		push	{r3, r4, r5, lr}
+ 190              	.LCFI0:
+ 191              		.cfi_def_cfa_offset 16
+ 192              		.cfi_offset 3, -16
+ 193              		.cfi_offset 4, -12
+ 194              		.cfi_offset 5, -8
+ 195              		.cfi_offset 14, -4
+ 196 0004 1546     		mov	r5, r2
+ 197 0006 1C46     		mov	r4, r3
+ 555:Chassis/chassis_behaviour.c ****     {
+ 198              		.loc 1 555 24 discriminator 1 view .LVU56
+ 199 0008 89B1     		cbz	r1, .L7
+ 555:Chassis/chassis_behaviour.c ****     {
+ 200              		.loc 1 555 42 discriminator 2 view .LVU57
+ 201 000a 82B1     		cbz	r2, .L7
+ 555:Chassis/chassis_behaviour.c ****     {
+ 202              		.loc 1 555 60 discriminator 3 view .LVU58
+ 203 000c 7CB1     		cbz	r4, .L7
+ 560:Chassis/chassis_behaviour.c ****     *wz_set = -CHASSIS_WZ_RC_SEN * chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL]
+ 204              		.loc 1 560 5 is_stmt 1 view .LVU59
+ARM GAS  /tmp/ccvDFaDw.s 			page 15
+
+
+ 205 000e 2246     		mov	r2, r4
+ 206              	.LVL9:
+ 560:Chassis/chassis_behaviour.c ****     *wz_set = -CHASSIS_WZ_RC_SEN * chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL]
+ 207              		.loc 1 560 5 is_stmt 0 view .LVU60
+ 208 0010 FFF7FEFF 		bl	chassis_rc_to_control_vector
+ 209              	.LVL10:
+ 561:Chassis/chassis_behaviour.c **** }
+ 210              		.loc 1 561 5 is_stmt 1 view .LVU61
+ 561:Chassis/chassis_behaviour.c **** }
+ 211              		.loc 1 561 61 is_stmt 0 view .LVU62
+ 212 0014 2368     		ldr	r3, [r4]
+ 561:Chassis/chassis_behaviour.c **** }
+ 213              		.loc 1 561 80 view .LVU63
+ 214 0016 B3F90430 		ldrsh	r3, [r3, #4]	@ unaligned
+ 215 001a 07EE903A 		vmov	s15, r3	@ int
+ 561:Chassis/chassis_behaviour.c **** }
+ 216              		.loc 1 561 34 view .LVU64
+ 217 001e F8EEE77A 		vcvt.f32.s32	s15, s15
+ 218 0022 9FED047A 		vldr.32	s14, .L13
+ 219 0026 67EE877A 		vmul.f32	s15, s15, s14
+ 561:Chassis/chassis_behaviour.c **** }
+ 220              		.loc 1 561 13 view .LVU65
+ 221 002a C5ED007A 		vstr.32	s15, [r5]
+ 222              	.L7:
+ 562:Chassis/chassis_behaviour.c **** 
+ 223              		.loc 1 562 1 view .LVU66
+ 224 002e 38BD     		pop	{r3, r4, r5, pc}
+ 225              	.LVL11:
+ 226              	.L10:
+ 227              	.LCFI1:
+ 228              		.cfi_def_cfa_offset 0
+ 229              		.cfi_restore 3
+ 230              		.cfi_restore 4
+ 231              		.cfi_restore 5
+ 232              		.cfi_restore 14
+ 562:Chassis/chassis_behaviour.c **** 
+ 233              		.loc 1 562 1 view .LVU67
+ 234 0030 7047     		bx	lr
+ 235              	.L14:
+ 236 0032 00BF     		.align	2
+ 237              	.L13:
+ 238 0034 0AD723BC 		.word	-1138501878
+ 239              		.cfi_endproc
+ 240              	.LFE174:
+ 242              		.section	.text.chassis_infantry_follow_gimbal_yaw_control,"ax",%progbits
+ 243              		.align	1
+ 244              		.syntax unified
+ 245              		.thumb
+ 246              		.thumb_func
+ 248              	chassis_infantry_follow_gimbal_yaw_control:
+ 249              	.LVL12:
+ 250              	.LFB172:
+ 432:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 251              		.loc 1 432 1 is_stmt 1 view -0
+ 252              		.cfi_startproc
+ 253              		@ args = 0, pretend = 0, frame = 0
+ 254              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  /tmp/ccvDFaDw.s 			page 16
+
+
+ 433:Chassis/chassis_behaviour.c ****     {
+ 255              		.loc 1 433 5 view .LVU69
+ 433:Chassis/chassis_behaviour.c ****     {
+ 256              		.loc 1 433 8 is_stmt 0 view .LVU70
+ 257 0000 0028     		cmp	r0, #0
+ 258 0002 55D0     		beq	.L27
+ 432:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 259              		.loc 1 432 1 discriminator 1 view .LVU71
+ 260 0004 38B5     		push	{r3, r4, r5, lr}
+ 261              	.LCFI2:
+ 262              		.cfi_def_cfa_offset 16
+ 263              		.cfi_offset 3, -16
+ 264              		.cfi_offset 4, -12
+ 265              		.cfi_offset 5, -8
+ 266              		.cfi_offset 14, -4
+ 267 0006 1546     		mov	r5, r2
+ 268 0008 1C46     		mov	r4, r3
+ 433:Chassis/chassis_behaviour.c ****     {
+ 269              		.loc 1 433 24 discriminator 1 view .LVU72
+ 270 000a 0029     		cmp	r1, #0
+ 271 000c 35D0     		beq	.L15
+ 433:Chassis/chassis_behaviour.c ****     {
+ 272              		.loc 1 433 42 discriminator 2 view .LVU73
+ 273 000e 002A     		cmp	r2, #0
+ 274 0010 33D0     		beq	.L15
+ 433:Chassis/chassis_behaviour.c ****     {
+ 275              		.loc 1 433 63 discriminator 3 view .LVU74
+ 276 0012 002C     		cmp	r4, #0
+ 277 0014 31D0     		beq	.L15
+ 440:Chassis/chassis_behaviour.c **** 
+ 278              		.loc 1 440 5 is_stmt 1 view .LVU75
+ 279 0016 2246     		mov	r2, r4
+ 280              	.LVL13:
+ 440:Chassis/chassis_behaviour.c **** 
+ 281              		.loc 1 440 5 is_stmt 0 view .LVU76
+ 282 0018 FFF7FEFF 		bl	chassis_rc_to_control_vector
+ 283              	.LVL14:
+ 444:Chassis/chassis_behaviour.c ****     
+ 284              		.loc 1 444 5 is_stmt 1 view .LVU77
+ 446:Chassis/chassis_behaviour.c ****     //max_angle is the max angle that chassis will ratate
+ 285              		.loc 1 446 5 view .LVU78
+ 449:Chassis/chassis_behaviour.c ****     //swing_time  plus the add_time in one control cycle
+ 286              		.loc 1 449 5 view .LVU79
+ 452:Chassis/chassis_behaviour.c ****     
+ 287              		.loc 1 452 5 view .LVU80
+ 454:Chassis/chassis_behaviour.c **** 
+ 288              		.loc 1 454 5 view .LVU81
+ 458:Chassis/chassis_behaviour.c ****     {
+ 289              		.loc 1 458 5 view .LVU82
+ 458:Chassis/chassis_behaviour.c ****     {
+ 290              		.loc 1 458 34 is_stmt 0 view .LVU83
+ 291 001c 2368     		ldr	r3, [r4]
+ 458:Chassis/chassis_behaviour.c ****     {
+ 292              		.loc 1 458 51 view .LVU84
+ 293 001e 9B8A     		ldrh	r3, [r3, #20]	@ unaligned
+ 458:Chassis/chassis_behaviour.c ****     {
+ 294              		.loc 1 458 8 view .LVU85
+ARM GAS  /tmp/ccvDFaDw.s 			page 17
+
+
+ 295 0020 13F0200F 		tst	r3, #32
+ 296 0024 09D0     		beq	.L17
+ 460:Chassis/chassis_behaviour.c ****         {
+ 297              		.loc 1 460 9 is_stmt 1 view .LVU86
+ 460:Chassis/chassis_behaviour.c ****         {
+ 298              		.loc 1 460 24 is_stmt 0 view .LVU87
+ 299 0026 234A     		ldr	r2, .L31
+ 300 0028 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 460:Chassis/chassis_behaviour.c ****         {
+ 301              		.loc 1 460 12 view .LVU88
+ 302 002a 4AB9     		cbnz	r2, .L18
+ 462:Chassis/chassis_behaviour.c ****             swing_time = 0.0f;
+ 303              		.loc 1 462 13 is_stmt 1 view .LVU89
+ 462:Chassis/chassis_behaviour.c ****             swing_time = 0.0f;
+ 304              		.loc 1 462 24 is_stmt 0 view .LVU90
+ 305 002c 214A     		ldr	r2, .L31
+ 306 002e 0121     		movs	r1, #1
+ 307 0030 1170     		strb	r1, [r2]
+ 463:Chassis/chassis_behaviour.c ****         }
+ 308              		.loc 1 463 13 is_stmt 1 view .LVU91
+ 463:Chassis/chassis_behaviour.c ****         }
+ 309              		.loc 1 463 24 is_stmt 0 view .LVU92
+ 310 0032 214A     		ldr	r2, .L31+4
+ 311 0034 0021     		movs	r1, #0
+ 312 0036 1160     		str	r1, [r2]	@ float
+ 313 0038 02E0     		b	.L18
+ 314              	.L17:
+ 468:Chassis/chassis_behaviour.c ****     }
+ 315              		.loc 1 468 9 is_stmt 1 view .LVU93
+ 468:Chassis/chassis_behaviour.c ****     }
+ 316              		.loc 1 468 20 is_stmt 0 view .LVU94
+ 317 003a 1E4A     		ldr	r2, .L31
+ 318 003c 0021     		movs	r1, #0
+ 319 003e 1170     		strb	r1, [r2]
+ 320              	.L18:
+ 473:Chassis/chassis_behaviour.c ****         chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY || chassis_move_rc_to_vecto
+ 321              		.loc 1 473 5 is_stmt 1 view .LVU95
+ 473:Chassis/chassis_behaviour.c ****         chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY || chassis_move_rc_to_vecto
+ 322              		.loc 1 473 8 is_stmt 0 view .LVU96
+ 323 0040 13F00F0F 		tst	r3, #15
+ 324 0044 1AD0     		beq	.L19
+ 476:Chassis/chassis_behaviour.c ****     }
+ 325              		.loc 1 476 9 is_stmt 1 view .LVU97
+ 476:Chassis/chassis_behaviour.c ****     }
+ 326              		.loc 1 476 19 is_stmt 0 view .LVU98
+ 327 0046 1D4B     		ldr	r3, .L31+8
+ 328 0048 1D4A     		ldr	r2, .L31+12
+ 329 004a 1A60     		str	r2, [r3]	@ float
+ 330              	.L20:
+ 483:Chassis/chassis_behaviour.c ****     {
+ 331              		.loc 1 483 5 is_stmt 1 view .LVU99
+ 483:Chassis/chassis_behaviour.c ****     {
+ 332              		.loc 1 483 9 is_stmt 0 view .LVU100
+ 333 004c 194B     		ldr	r3, .L31
+ 334 004e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 483:Chassis/chassis_behaviour.c ****     {
+ 335              		.loc 1 483 8 view .LVU101
+ARM GAS  /tmp/ccvDFaDw.s 			page 18
+
+
+ 336 0050 C3B9     		cbnz	r3, .L30
+ 490:Chassis/chassis_behaviour.c ****     }
+ 337              		.loc 1 490 9 is_stmt 1 view .LVU102
+ 490:Chassis/chassis_behaviour.c ****     }
+ 338              		.loc 1 490 21 is_stmt 0 view .LVU103
+ 339 0052 1C4B     		ldr	r3, .L31+16
+ 340 0054 0022     		movs	r2, #0
+ 341 0056 1A60     		str	r2, [r3]	@ float
+ 342              	.LVL15:
+ 343              	.L22:
+ 494:Chassis/chassis_behaviour.c ****     {
+ 344              		.loc 1 494 5 is_stmt 1 view .LVU104
+ 494:Chassis/chassis_behaviour.c ****     {
+ 345              		.loc 1 494 20 is_stmt 0 view .LVU105
+ 346 0058 174B     		ldr	r3, .L31+4
+ 347 005a D3ED007A 		vldr.32	s15, [r3]
+ 494:Chassis/chassis_behaviour.c ****     {
+ 348              		.loc 1 494 8 view .LVU106
+ 349 005e 9FED1A7A 		vldr.32	s14, .L31+20
+ 350 0062 F4EEC77A 		vcmpe.f32	s15, s14
+ 351 0066 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 352 006a 03DD     		ble	.L23
+ 496:Chassis/chassis_behaviour.c ****     }
+ 353              		.loc 1 496 9 is_stmt 1 view .LVU107
+ 496:Chassis/chassis_behaviour.c ****     }
+ 354              		.loc 1 496 20 is_stmt 0 view .LVU108
+ 355 006c 77EEC77A 		vsub.f32	s15, s15, s14
+ 356 0070 C3ED007A 		vstr.32	s15, [r3]
+ 357              	.L23:
+ 500:Chassis/chassis_behaviour.c **** }
+ 358              		.loc 1 500 5 is_stmt 1 view .LVU109
+ 500:Chassis/chassis_behaviour.c **** }
+ 359              		.loc 1 500 16 is_stmt 0 view .LVU110
+ 360 0074 134B     		ldr	r3, .L31+16
+ 361 0076 1B68     		ldr	r3, [r3]	@ float
+ 362 0078 2B60     		str	r3, [r5]	@ float
+ 363              	.L15:
+ 501:Chassis/chassis_behaviour.c **** 
+ 364              		.loc 1 501 1 view .LVU111
+ 365 007a 38BD     		pop	{r3, r4, r5, pc}
+ 366              	.LVL16:
+ 367              	.L19:
+ 480:Chassis/chassis_behaviour.c ****     }
+ 368              		.loc 1 480 9 is_stmt 1 view .LVU112
+ 480:Chassis/chassis_behaviour.c ****     }
+ 369              		.loc 1 480 19 is_stmt 0 view .LVU113
+ 370 007c 0F4B     		ldr	r3, .L31+8
+ 371 007e 134A     		ldr	r2, .L31+24
+ 372 0080 1A60     		str	r2, [r3]	@ float
+ 373 0082 E3E7     		b	.L20
+ 374              	.L30:
+ 485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 375              		.loc 1 485 9 is_stmt 1 view .LVU114
+ 485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 376              		.loc 1 485 35 is_stmt 0 view .LVU115
+ 377 0084 0C4C     		ldr	r4, .L31+4
+ 378              	.LVL17:
+ARM GAS  /tmp/ccvDFaDw.s 			page 19
+
+
+ 485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 379              		.loc 1 485 35 view .LVU116
+ 380 0086 94ED000A 		vldr.32	s0, [r4]
+ 381 008a FFF7FEFF 		bl	arm_sin_f32
+ 382              	.LVL18:
+ 485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 383              		.loc 1 485 33 view .LVU117
+ 384 008e 0B4B     		ldr	r3, .L31+8
+ 385 0090 D3ED007A 		vldr.32	s15, [r3]
+ 386 0094 20EE270A 		vmul.f32	s0, s0, s15
+ 485:Chassis/chassis_behaviour.c ****         swing_time += add_time;
+ 387              		.loc 1 485 21 view .LVU118
+ 388 0098 0A4B     		ldr	r3, .L31+16
+ 389 009a 83ED000A 		vstr.32	s0, [r3]
+ 486:Chassis/chassis_behaviour.c ****     }
+ 390              		.loc 1 486 9 is_stmt 1 view .LVU119
+ 486:Chassis/chassis_behaviour.c ****     }
+ 391              		.loc 1 486 20 is_stmt 0 view .LVU120
+ 392 009e D4ED007A 		vldr.32	s15, [r4]
+ 393 00a2 9FED0B7A 		vldr.32	s14, .L31+28
+ 394 00a6 77EE877A 		vadd.f32	s15, s15, s14
+ 395 00aa C4ED007A 		vstr.32	s15, [r4]
+ 396 00ae D3E7     		b	.L22
+ 397              	.LVL19:
+ 398              	.L27:
+ 399              	.LCFI3:
+ 400              		.cfi_def_cfa_offset 0
+ 401              		.cfi_restore 3
+ 402              		.cfi_restore 4
+ 403              		.cfi_restore 5
+ 404              		.cfi_restore 14
+ 486:Chassis/chassis_behaviour.c ****     }
+ 405              		.loc 1 486 20 view .LVU121
+ 406 00b0 7047     		bx	lr
+ 407              	.L32:
+ 408 00b2 00BF     		.align	2
+ 409              	.L31:
+ 410 00b4 00000000 		.word	.LANCHOR0
+ 411 00b8 00000000 		.word	.LANCHOR1
+ 412 00bc 00000000 		.word	.LANCHOR2
+ 413 00c0 7CD9A03E 		.word	1050728828
+ 414 00c4 00000000 		.word	.LANCHOR3
+ 415 00c8 DB0FC940 		.word	1086918619
+ 416 00cc 3333333F 		.word	1060320051
+ 417 00d0 7C594444 		.word	1145330044
+ 418              		.cfi_endproc
+ 419              	.LFE172:
+ 421              		.section	.text.chassis_engineer_follow_chassis_yaw_control,"ax",%progbits
+ 422              		.align	1
+ 423              		.syntax unified
+ 424              		.thumb
+ 425              		.thumb_func
+ 427              	chassis_engineer_follow_chassis_yaw_control:
+ 428              	.LVL20:
+ 429              	.LFB173:
+ 523:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 430              		.loc 1 523 1 is_stmt 1 view -0
+ARM GAS  /tmp/ccvDFaDw.s 			page 20
+
+
+ 431              		.cfi_startproc
+ 432              		@ args = 0, pretend = 0, frame = 0
+ 433              		@ frame_needed = 0, uses_anonymous_args = 0
+ 524:Chassis/chassis_behaviour.c ****     {
+ 434              		.loc 1 524 5 view .LVU123
+ 524:Chassis/chassis_behaviour.c ****     {
+ 435              		.loc 1 524 8 is_stmt 0 view .LVU124
+ 436 0000 00B3     		cbz	r0, .L36
+ 523:Chassis/chassis_behaviour.c ****     if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
+ 437              		.loc 1 523 1 discriminator 1 view .LVU125
+ 438 0002 38B5     		push	{r3, r4, r5, lr}
+ 439              	.LCFI4:
+ 440              		.cfi_def_cfa_offset 16
+ 441              		.cfi_offset 3, -16
+ 442              		.cfi_offset 4, -12
+ 443              		.cfi_offset 5, -8
+ 444              		.cfi_offset 14, -4
+ 445 0004 1546     		mov	r5, r2
+ 446 0006 1C46     		mov	r4, r3
+ 524:Chassis/chassis_behaviour.c ****     {
+ 447              		.loc 1 524 24 discriminator 1 view .LVU126
+ 448 0008 D9B1     		cbz	r1, .L33
+ 524:Chassis/chassis_behaviour.c ****     {
+ 449              		.loc 1 524 42 discriminator 2 view .LVU127
+ 450 000a D2B1     		cbz	r2, .L33
+ 524:Chassis/chassis_behaviour.c ****     {
+ 451              		.loc 1 524 63 discriminator 3 view .LVU128
+ 452 000c CCB1     		cbz	r4, .L33
+ 529:Chassis/chassis_behaviour.c **** 
+ 453              		.loc 1 529 5 is_stmt 1 view .LVU129
+ 454 000e 2246     		mov	r2, r4
+ 455              	.LVL21:
+ 529:Chassis/chassis_behaviour.c **** 
+ 456              		.loc 1 529 5 is_stmt 0 view .LVU130
+ 457 0010 FFF7FEFF 		bl	chassis_rc_to_control_vector
+ 458              	.LVL22:
+ 531:Chassis/chassis_behaviour.c **** }
+ 459              		.loc 1 531 5 is_stmt 1 view .LVU131
+ 531:Chassis/chassis_behaviour.c **** }
+ 460              		.loc 1 531 18 is_stmt 0 view .LVU132
+ 461 0014 94ED810A 		vldr.32	s0, [r4, #516]
+ 462 0018 2368     		ldr	r3, [r4]
+ 463 001a B3F90430 		ldrsh	r3, [r3, #4]	@ unaligned
+ 464 001e 07EE903A 		vmov	s15, r3	@ int
+ 465 0022 F8EEE77A 		vcvt.f32.s32	s15, s15
+ 466 0026 9FED087A 		vldr.32	s14, .L39
+ 467 002a 67EE877A 		vmul.f32	s15, s15, s14
+ 468 002e 9FED071A 		vldr.32	s2, .L39+4
+ 469 0032 DFED070A 		vldr.32	s1, .L39+8
+ 470 0036 30EE670A 		vsub.f32	s0, s0, s15
+ 471 003a FFF7FEFF 		bl	loop_fp32_constrain
+ 472              	.LVL23:
+ 531:Chassis/chassis_behaviour.c **** }
+ 473              		.loc 1 531 16 view .LVU133
+ 474 003e 85ED000A 		vstr.32	s0, [r5]
+ 475              	.L33:
+ 532:Chassis/chassis_behaviour.c **** 
+ARM GAS  /tmp/ccvDFaDw.s 			page 21
+
+
+ 476              		.loc 1 532 1 view .LVU134
+ 477 0042 38BD     		pop	{r3, r4, r5, pc}
+ 478              	.LVL24:
+ 479              	.L36:
+ 480              	.LCFI5:
+ 481              		.cfi_def_cfa_offset 0
+ 482              		.cfi_restore 3
+ 483              		.cfi_restore 4
+ 484              		.cfi_restore 5
+ 485              		.cfi_restore 14
+ 532:Chassis/chassis_behaviour.c **** 
+ 486              		.loc 1 532 1 view .LVU135
+ 487 0044 7047     		bx	lr
+ 488              	.L40:
+ 489 0046 00BF     		.align	2
+ 490              	.L39:
+ 491 0048 BD370636 		.word	906377149
+ 492 004c DB0F4940 		.word	1078530011
+ 493 0050 DB0F49C0 		.word	-1068953637
+ 494              		.cfi_endproc
+ 495              	.LFE173:
+ 497              		.section	.text.chassis_behaviour_mode_set,"ax",%progbits
+ 498              		.align	1
+ 499              		.global	chassis_behaviour_mode_set
+ 500              		.syntax unified
+ 501              		.thumb
+ 502              		.thumb_func
+ 504              	chassis_behaviour_mode_set:
+ 505              	.LVL25:
+ 506              	.LFB168:
+ 234:Chassis/chassis_behaviour.c ****     if (chassis_move_mode == NULL)
+ 507              		.loc 1 234 1 is_stmt 1 view -0
+ 508              		.cfi_startproc
+ 509              		@ args = 0, pretend = 0, frame = 0
+ 510              		@ frame_needed = 0, uses_anonymous_args = 0
+ 511              		@ link register save eliminated.
+ 235:Chassis/chassis_behaviour.c ****     {
+ 512              		.loc 1 235 5 view .LVU137
+ 235:Chassis/chassis_behaviour.c ****     {
+ 513              		.loc 1 235 8 is_stmt 0 view .LVU138
+ 514 0000 0246     		mov	r2, r0
+ 515 0002 10B3     		cbz	r0, .L41
+ 243:Chassis/chassis_behaviour.c ****     {
+ 516              		.loc 1 243 5 is_stmt 1 view .LVU139
+ 243:Chassis/chassis_behaviour.c ****     {
+ 517              		.loc 1 243 9 is_stmt 0 view .LVU140
+ 518 0004 0368     		ldr	r3, [r0]
+ 519 0006 9B7A     		ldrb	r3, [r3, #10]	@ zero_extendqisi2
+ 243:Chassis/chassis_behaviour.c ****     {
+ 520              		.loc 1 243 8 view .LVU141
+ 521 0008 032B     		cmp	r3, #3
+ 522 000a 07D0     		beq	.L51
+ 249:Chassis/chassis_behaviour.c ****     {
+ 523              		.loc 1 249 10 is_stmt 1 view .LVU142
+ 249:Chassis/chassis_behaviour.c ****     {
+ 524              		.loc 1 249 13 is_stmt 0 view .LVU143
+ 525 000c 022B     		cmp	r3, #2
+ARM GAS  /tmp/ccvDFaDw.s 			page 22
+
+
+ 526 000e 0ED0     		beq	.L52
+ 253:Chassis/chassis_behaviour.c ****     {
+ 527              		.loc 1 253 10 is_stmt 1 view .LVU144
+ 253:Chassis/chassis_behaviour.c ****     {
+ 528              		.loc 1 253 13 is_stmt 0 view .LVU145
+ 529 0010 012B     		cmp	r3, #1
+ 530 0012 06D1     		bne	.L44
+ 255:Chassis/chassis_behaviour.c ****     }
+ 531              		.loc 1 255 9 is_stmt 1 view .LVU146
+ 255:Chassis/chassis_behaviour.c ****     }
+ 532              		.loc 1 255 32 is_stmt 0 view .LVU147
+ 533 0014 154B     		ldr	r3, .L58
+ 534 0016 0321     		movs	r1, #3
+ 535 0018 1970     		strb	r1, [r3]
+ 536 001a 02E0     		b	.L44
+ 537              	.L51:
+ 247:Chassis/chassis_behaviour.c ****     }
+ 538              		.loc 1 247 9 is_stmt 1 view .LVU148
+ 247:Chassis/chassis_behaviour.c ****     }
+ 539              		.loc 1 247 32 is_stmt 0 view .LVU149
+ 540 001c 134B     		ldr	r3, .L58
+ 541 001e 0421     		movs	r1, #4
+ 542 0020 1970     		strb	r1, [r3]
+ 543              	.L44:
+ 272:Chassis/chassis_behaviour.c ****     {
+ 544              		.loc 1 272 5 is_stmt 1 view .LVU150
+ 272:Chassis/chassis_behaviour.c ****     {
+ 545              		.loc 1 272 32 is_stmt 0 view .LVU151
+ 546 0022 124B     		ldr	r3, .L58
+ 547 0024 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 272:Chassis/chassis_behaviour.c ****     {
+ 548              		.loc 1 272 8 view .LVU152
+ 549 0026 33B9     		cbnz	r3, .L46
+ 274:Chassis/chassis_behaviour.c ****     }
+ 550              		.loc 1 274 9 is_stmt 1 view .LVU153
+ 274:Chassis/chassis_behaviour.c ****     }
+ 551              		.loc 1 274 41 is_stmt 0 view .LVU154
+ 552 0028 0323     		movs	r3, #3
+ 553 002a 1372     		strb	r3, [r2, #8]
+ 554 002c 7047     		bx	lr
+ 555              	.L52:
+ 251:Chassis/chassis_behaviour.c ****     }
+ 556              		.loc 1 251 9 is_stmt 1 view .LVU155
+ 251:Chassis/chassis_behaviour.c ****     }
+ 557              		.loc 1 251 32 is_stmt 0 view .LVU156
+ 558 002e 0F4B     		ldr	r3, .L58
+ 559 0030 0121     		movs	r1, #1
+ 560 0032 1970     		strb	r1, [r3]
+ 561 0034 F5E7     		b	.L44
+ 562              	.L46:
+ 276:Chassis/chassis_behaviour.c ****     {
+ 563              		.loc 1 276 10 is_stmt 1 view .LVU157
+ 276:Chassis/chassis_behaviour.c ****     {
+ 564              		.loc 1 276 13 is_stmt 0 view .LVU158
+ 565 0036 012B     		cmp	r3, #1
+ 566 0038 08D0     		beq	.L53
+ 280:Chassis/chassis_behaviour.c ****     {
+ARM GAS  /tmp/ccvDFaDw.s 			page 23
+
+
+ 567              		.loc 1 280 10 is_stmt 1 view .LVU159
+ 280:Chassis/chassis_behaviour.c ****     {
+ 568              		.loc 1 280 13 is_stmt 0 view .LVU160
+ 569 003a 022B     		cmp	r3, #2
+ 570 003c 09D0     		beq	.L54
+ 284:Chassis/chassis_behaviour.c ****     {
+ 571              		.loc 1 284 10 is_stmt 1 view .LVU161
+ 284:Chassis/chassis_behaviour.c ****     {
+ 572              		.loc 1 284 13 is_stmt 0 view .LVU162
+ 573 003e 032B     		cmp	r3, #3
+ 574 0040 0AD0     		beq	.L55
+ 288:Chassis/chassis_behaviour.c ****     {
+ 575              		.loc 1 288 10 is_stmt 1 view .LVU163
+ 288:Chassis/chassis_behaviour.c ****     {
+ 576              		.loc 1 288 13 is_stmt 0 view .LVU164
+ 577 0042 042B     		cmp	r3, #4
+ 578 0044 0BD0     		beq	.L56
+ 292:Chassis/chassis_behaviour.c ****     {
+ 579              		.loc 1 292 10 is_stmt 1 view .LVU165
+ 292:Chassis/chassis_behaviour.c ****     {
+ 580              		.loc 1 292 13 is_stmt 0 view .LVU166
+ 581 0046 052B     		cmp	r3, #5
+ 582 0048 0CD0     		beq	.L57
+ 583              	.L41:
+ 296:Chassis/chassis_behaviour.c **** 
+ 584              		.loc 1 296 1 view .LVU167
+ 585 004a 7047     		bx	lr
+ 586              	.L53:
+ 278:Chassis/chassis_behaviour.c ****     }
+ 587              		.loc 1 278 9 is_stmt 1 view .LVU168
+ 278:Chassis/chassis_behaviour.c ****     }
+ 588              		.loc 1 278 41 is_stmt 0 view .LVU169
+ 589 004c 0223     		movs	r3, #2
+ 590 004e 1372     		strb	r3, [r2, #8]
+ 591 0050 7047     		bx	lr
+ 592              	.L54:
+ 282:Chassis/chassis_behaviour.c ****     }
+ 593              		.loc 1 282 9 is_stmt 1 view .LVU170
+ 282:Chassis/chassis_behaviour.c ****     }
+ 594              		.loc 1 282 41 is_stmt 0 view .LVU171
+ 595 0052 0023     		movs	r3, #0
+ 596 0054 1372     		strb	r3, [r2, #8]
+ 597 0056 7047     		bx	lr
+ 598              	.L55:
+ 286:Chassis/chassis_behaviour.c ****     }
+ 599              		.loc 1 286 9 is_stmt 1 view .LVU172
+ 286:Chassis/chassis_behaviour.c ****     }
+ 600              		.loc 1 286 41 is_stmt 0 view .LVU173
+ 601 0058 0123     		movs	r3, #1
+ 602 005a 1372     		strb	r3, [r2, #8]
+ 603 005c 7047     		bx	lr
+ 604              	.L56:
+ 290:Chassis/chassis_behaviour.c ****     }
+ 605              		.loc 1 290 9 is_stmt 1 view .LVU174
+ 290:Chassis/chassis_behaviour.c ****     }
+ 606              		.loc 1 290 41 is_stmt 0 view .LVU175
+ 607 005e 0223     		movs	r3, #2
+ARM GAS  /tmp/ccvDFaDw.s 			page 24
+
+
+ 608 0060 1372     		strb	r3, [r2, #8]
+ 609 0062 7047     		bx	lr
+ 610              	.L57:
+ 294:Chassis/chassis_behaviour.c ****     }
+ 611              		.loc 1 294 9 is_stmt 1 view .LVU176
+ 294:Chassis/chassis_behaviour.c ****     }
+ 612              		.loc 1 294 41 is_stmt 0 view .LVU177
+ 613 0064 0323     		movs	r3, #3
+ 614 0066 1372     		strb	r3, [r2, #8]
+ 615 0068 EFE7     		b	.L41
+ 616              	.L59:
+ 617 006a 00BF     		.align	2
+ 618              	.L58:
+ 619 006c 00000000 		.word	.LANCHOR4
+ 620              		.cfi_endproc
+ 621              	.LFE168:
+ 623              		.section	.text.chassis_behaviour_control_set,"ax",%progbits
+ 624              		.align	1
+ 625              		.global	chassis_behaviour_control_set
+ 626              		.syntax unified
+ 627              		.thumb
+ 628              		.thumb_func
+ 630              	chassis_behaviour_control_set:
+ 631              	.LVL26:
+ 632              	.LFB169:
+ 318:Chassis/chassis_behaviour.c **** 
+ 633              		.loc 1 318 1 is_stmt 1 view -0
+ 634              		.cfi_startproc
+ 635              		@ args = 0, pretend = 0, frame = 0
+ 636              		@ frame_needed = 0, uses_anonymous_args = 0
+ 320:Chassis/chassis_behaviour.c ****     {
+ 637              		.loc 1 320 5 view .LVU179
+ 320:Chassis/chassis_behaviour.c ****     {
+ 638              		.loc 1 320 8 is_stmt 0 view .LVU180
+ 639 0000 48B3     		cbz	r0, .L68
+ 640 0002 8446     		mov	ip, r0
+ 320:Chassis/chassis_behaviour.c ****     {
+ 641              		.loc 1 320 24 discriminator 1 view .LVU181
+ 642 0004 39B3     		cbz	r1, .L68
+ 320:Chassis/chassis_behaviour.c ****     {
+ 643              		.loc 1 320 42 discriminator 2 view .LVU182
+ 644 0006 32B3     		cbz	r2, .L68
+ 320:Chassis/chassis_behaviour.c ****     {
+ 645              		.loc 1 320 63 discriminator 3 view .LVU183
+ 646 0008 2BB3     		cbz	r3, .L68
+ 318:Chassis/chassis_behaviour.c **** 
+ 647              		.loc 1 318 1 view .LVU184
+ 648 000a 10B5     		push	{r4, lr}
+ 649              	.LCFI6:
+ 650              		.cfi_def_cfa_offset 8
+ 651              		.cfi_offset 4, -8
+ 652              		.cfi_offset 14, -4
+ 325:Chassis/chassis_behaviour.c ****     {
+ 653              		.loc 1 325 5 is_stmt 1 view .LVU185
+ 325:Chassis/chassis_behaviour.c ****     {
+ 654              		.loc 1 325 32 is_stmt 0 view .LVU186
+ 655 000c 1248     		ldr	r0, .L76
+ARM GAS  /tmp/ccvDFaDw.s 			page 25
+
+
+ 656              	.LVL27:
+ 325:Chassis/chassis_behaviour.c ****     {
+ 657              		.loc 1 325 32 view .LVU187
+ 658 000e 0478     		ldrb	r4, [r0]	@ zero_extendqisi2
+ 325:Chassis/chassis_behaviour.c ****     {
+ 659              		.loc 1 325 8 view .LVU188
+ 660 0010 6CB1     		cbz	r4, .L71
+ 329:Chassis/chassis_behaviour.c ****     {
+ 661              		.loc 1 329 10 is_stmt 1 view .LVU189
+ 329:Chassis/chassis_behaviour.c ****     {
+ 662              		.loc 1 329 13 is_stmt 0 view .LVU190
+ 663 0012 012C     		cmp	r4, #1
+ 664 0014 0FD0     		beq	.L72
+ 333:Chassis/chassis_behaviour.c ****     {
+ 665              		.loc 1 333 10 is_stmt 1 view .LVU191
+ 333:Chassis/chassis_behaviour.c ****     {
+ 666              		.loc 1 333 13 is_stmt 0 view .LVU192
+ 667 0016 022C     		cmp	r4, #2
+ 668 0018 11D0     		beq	.L73
+ 337:Chassis/chassis_behaviour.c ****     {
+ 669              		.loc 1 337 10 is_stmt 1 view .LVU193
+ 337:Chassis/chassis_behaviour.c ****     {
+ 670              		.loc 1 337 13 is_stmt 0 view .LVU194
+ 671 001a 032C     		cmp	r4, #3
+ 672 001c 13D0     		beq	.L74
+ 341:Chassis/chassis_behaviour.c ****     {
+ 673              		.loc 1 341 10 is_stmt 1 view .LVU195
+ 341:Chassis/chassis_behaviour.c ****     {
+ 674              		.loc 1 341 13 is_stmt 0 view .LVU196
+ 675 001e 042C     		cmp	r4, #4
+ 676 0020 15D0     		beq	.L75
+ 345:Chassis/chassis_behaviour.c ****     {
+ 677              		.loc 1 345 10 is_stmt 1 view .LVU197
+ 345:Chassis/chassis_behaviour.c ****     {
+ 678              		.loc 1 345 13 is_stmt 0 view .LVU198
+ 679 0022 052C     		cmp	r4, #5
+ 680 0024 06D1     		bne	.L60
+ 347:Chassis/chassis_behaviour.c ****     }
+ 681              		.loc 1 347 9 is_stmt 1 view .LVU199
+ 682 0026 6046     		mov	r0, ip
+ 683 0028 FFF7FEFF 		bl	chassis_open_set_control
+ 684              	.LVL28:
+ 347:Chassis/chassis_behaviour.c ****     }
+ 685              		.loc 1 347 9 is_stmt 0 view .LVU200
+ 686 002c 02E0     		b	.L60
+ 687              	.LVL29:
+ 688              	.L71:
+ 327:Chassis/chassis_behaviour.c ****     }
+ 689              		.loc 1 327 9 is_stmt 1 view .LVU201
+ 690 002e 6046     		mov	r0, ip
+ 691 0030 FFF7FEFF 		bl	chassis_zero_force_control
+ 692              	.LVL30:
+ 693              	.L60:
+ 349:Chassis/chassis_behaviour.c **** 
+ 694              		.loc 1 349 1 is_stmt 0 view .LVU202
+ 695 0034 10BD     		pop	{r4, pc}
+ 696              	.LVL31:
+ARM GAS  /tmp/ccvDFaDw.s 			page 26
+
+
+ 697              	.L72:
+ 331:Chassis/chassis_behaviour.c ****     }
+ 698              		.loc 1 331 9 is_stmt 1 view .LVU203
+ 699 0036 6046     		mov	r0, ip
+ 700 0038 FFF7FEFF 		bl	chassis_no_move_control
+ 701              	.LVL32:
+ 331:Chassis/chassis_behaviour.c ****     }
+ 702              		.loc 1 331 9 is_stmt 0 view .LVU204
+ 703 003c FAE7     		b	.L60
+ 704              	.LVL33:
+ 705              	.L73:
+ 335:Chassis/chassis_behaviour.c ****     }
+ 706              		.loc 1 335 9 is_stmt 1 view .LVU205
+ 707 003e 6046     		mov	r0, ip
+ 708 0040 FFF7FEFF 		bl	chassis_infantry_follow_gimbal_yaw_control
+ 709              	.LVL34:
+ 335:Chassis/chassis_behaviour.c ****     }
+ 710              		.loc 1 335 9 is_stmt 0 view .LVU206
+ 711 0044 F6E7     		b	.L60
+ 712              	.LVL35:
+ 713              	.L74:
+ 339:Chassis/chassis_behaviour.c ****     }
+ 714              		.loc 1 339 9 is_stmt 1 view .LVU207
+ 715 0046 6046     		mov	r0, ip
+ 716 0048 FFF7FEFF 		bl	chassis_engineer_follow_chassis_yaw_control
+ 717              	.LVL36:
+ 339:Chassis/chassis_behaviour.c ****     }
+ 718              		.loc 1 339 9 is_stmt 0 view .LVU208
+ 719 004c F2E7     		b	.L60
+ 720              	.LVL37:
+ 721              	.L75:
+ 343:Chassis/chassis_behaviour.c ****     }
+ 722              		.loc 1 343 9 is_stmt 1 view .LVU209
+ 723 004e 6046     		mov	r0, ip
+ 724 0050 FFF7FEFF 		bl	chassis_no_follow_yaw_control
+ 725              	.LVL38:
+ 343:Chassis/chassis_behaviour.c ****     }
+ 726              		.loc 1 343 9 is_stmt 0 view .LVU210
+ 727 0054 EEE7     		b	.L60
+ 728              	.LVL39:
+ 729              	.L68:
+ 730              	.LCFI7:
+ 731              		.cfi_def_cfa_offset 0
+ 732              		.cfi_restore 4
+ 733              		.cfi_restore 14
+ 343:Chassis/chassis_behaviour.c ****     }
+ 734              		.loc 1 343 9 view .LVU211
+ 735 0056 7047     		bx	lr
+ 736              	.L77:
+ 737              		.align	2
+ 738              	.L76:
+ 739 0058 00000000 		.word	.LANCHOR4
+ 740              		.cfi_endproc
+ 741              	.LFE169:
+ 743              		.global	chassis_behaviour_mode
+ 744              		.section	.bss.chassis_behaviour_mode,"aw",%nobits
+ 745              		.set	.LANCHOR4,. + 0
+ARM GAS  /tmp/ccvDFaDw.s 			page 27
+
+
+ 748              	chassis_behaviour_mode:
+ 749 0000 00       		.space	1
+ 750              		.section	.bss.swing_angle.0,"aw",%nobits
+ 751              		.align	2
+ 752              		.set	.LANCHOR3,. + 0
+ 755              	swing_angle.0:
+ 756 0000 00000000 		.space	4
+ 757              		.section	.bss.swing_flag.3,"aw",%nobits
+ 758              		.set	.LANCHOR0,. + 0
+ 761              	swing_flag.3:
+ 762 0000 00       		.space	1
+ 763              		.section	.bss.swing_time.2,"aw",%nobits
+ 764              		.align	2
+ 765              		.set	.LANCHOR1,. + 0
+ 768              	swing_time.2:
+ 769 0000 00000000 		.space	4
+ 770              		.section	.data.max_angle.1,"aw"
+ 771              		.align	2
+ 772              		.set	.LANCHOR2,. + 0
+ 775              	max_angle.1:
+ 776 0000 3333333F 		.word	1060320051
+ 777              		.text
+ 778              	.Letext0:
+ 779              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 780              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 781              		.file 4 "algorithm/struct_typedef.h"
+ 782              		.file 5 "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h"
+ 783              		.file 6 "Chassis/bsp_can.h"
+ 784              		.file 7 "algorithm/pid.h"
+ 785              		.file 8 "Chassis/remote_control.h"
+ 786              		.file 9 "algorithm/user_lib.h"
+ 787              		.file 10 "Inc/chassis_task.h"
+ 788              		.file 11 "Chassis/chassis_behaviour.h"
+ 789              		.file 12 "algorithm/Include/arm_math.h"
+ARM GAS  /tmp/ccvDFaDw.s 			page 28
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 chassis_behaviour.c
+     /tmp/ccvDFaDw.s:20     .text.chassis_zero_force_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:25     .text.chassis_zero_force_control:0000000000000000 chassis_zero_force_control
+     /tmp/ccvDFaDw.s:62     .text.chassis_no_move_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:67     .text.chassis_no_move_control:0000000000000000 chassis_no_move_control
+     /tmp/ccvDFaDw.s:103    .text.chassis_open_set_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:108    .text.chassis_open_set_control:0000000000000000 chassis_open_set_control
+     /tmp/ccvDFaDw.s:173    .text.chassis_no_follow_yaw_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:178    .text.chassis_no_follow_yaw_control:0000000000000000 chassis_no_follow_yaw_control
+     /tmp/ccvDFaDw.s:238    .text.chassis_no_follow_yaw_control:0000000000000034 $d
+     /tmp/ccvDFaDw.s:243    .text.chassis_infantry_follow_gimbal_yaw_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:248    .text.chassis_infantry_follow_gimbal_yaw_control:0000000000000000 chassis_infantry_follow_gimbal_yaw_control
+     /tmp/ccvDFaDw.s:410    .text.chassis_infantry_follow_gimbal_yaw_control:00000000000000b4 $d
+     /tmp/ccvDFaDw.s:422    .text.chassis_engineer_follow_chassis_yaw_control:0000000000000000 $t
+     /tmp/ccvDFaDw.s:427    .text.chassis_engineer_follow_chassis_yaw_control:0000000000000000 chassis_engineer_follow_chassis_yaw_control
+     /tmp/ccvDFaDw.s:491    .text.chassis_engineer_follow_chassis_yaw_control:0000000000000048 $d
+     /tmp/ccvDFaDw.s:498    .text.chassis_behaviour_mode_set:0000000000000000 $t
+     /tmp/ccvDFaDw.s:504    .text.chassis_behaviour_mode_set:0000000000000000 chassis_behaviour_mode_set
+     /tmp/ccvDFaDw.s:619    .text.chassis_behaviour_mode_set:000000000000006c $d
+     /tmp/ccvDFaDw.s:624    .text.chassis_behaviour_control_set:0000000000000000 $t
+     /tmp/ccvDFaDw.s:630    .text.chassis_behaviour_control_set:0000000000000000 chassis_behaviour_control_set
+     /tmp/ccvDFaDw.s:739    .text.chassis_behaviour_control_set:0000000000000058 $d
+     /tmp/ccvDFaDw.s:748    .bss.chassis_behaviour_mode:0000000000000000 chassis_behaviour_mode
+     /tmp/ccvDFaDw.s:749    .bss.chassis_behaviour_mode:0000000000000000 $d
+     /tmp/ccvDFaDw.s:751    .bss.swing_angle.0:0000000000000000 $d
+     /tmp/ccvDFaDw.s:755    .bss.swing_angle.0:0000000000000000 swing_angle.0
+     /tmp/ccvDFaDw.s:761    .bss.swing_flag.3:0000000000000000 swing_flag.3
+     /tmp/ccvDFaDw.s:762    .bss.swing_flag.3:0000000000000000 $d
+     /tmp/ccvDFaDw.s:764    .bss.swing_time.2:0000000000000000 $d
+     /tmp/ccvDFaDw.s:768    .bss.swing_time.2:0000000000000000 swing_time.2
+     /tmp/ccvDFaDw.s:771    .data.max_angle.1:0000000000000000 $d
+     /tmp/ccvDFaDw.s:775    .data.max_angle.1:0000000000000000 max_angle.1
+
+UNDEFINED SYMBOLS
+chassis_rc_to_control_vector
+arm_sin_f32
+loop_fp32_constrain

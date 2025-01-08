@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "led_flow_task.h": "c",
+        "main.h": "c",
+        "freertos.h": "c",
+        "detect_task.h": "c",
+        "chassis_behaviour.h": "c",
+        "chassis_task.h": "c",
+        "remote_control.h": "c",
+        "arm_math.h": "c",
+        "pid.h": "c",
+        "ahrs_middleware.h": "c",
+        "bsp_can.h": "c",
+        "can.h": "c",
+        "ahrs.h": "c"
+    }
+}

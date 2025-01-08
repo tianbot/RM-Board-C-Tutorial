@@ -1,0 +1,1470 @@
+ARM GAS  /tmp/ccXbaTCg.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"remote_control.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.RC_abs,"ax",%progbits
+  20              		.align	1
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	RC_abs:
+  26              	.LVL0:
+  27              	.LFB139:
+  28              		.file 1 "Chassis/remote_control.c"
+   1:Chassis/remote_control.c **** /**
+   2:Chassis/remote_control.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+   3:Chassis/remote_control.c ****   * @file       remote_control.c/h
+   4:Chassis/remote_control.c ****   * @brief      遥控器处理，遥控器是通过类似SBUS的协议传输，利用DMA传输方�
+   5:Chassis/remote_control.c ****   *             资源，利用串口空闲中断来拉起处理函数，同时提供一些掉线�
+   6:Chassis/remote_control.c ****   *             的方式保证热插拔的稳定性。
+   7:Chassis/remote_control.c ****   * @note       该任务是通过串口中断启动，不是freeRTOS任务
+   8:Chassis/remote_control.c ****   * @history
+   9:Chassis/remote_control.c ****   *  Version    Date            Author          Modification
+  10:Chassis/remote_control.c ****   *  V1.0.0     Dec-26-2018     RM              1. done
+  11:Chassis/remote_control.c ****   *  V1.0.0     Nov-11-2019     RM              1. support development board tpye c
+  12:Chassis/remote_control.c ****   *
+  13:Chassis/remote_control.c ****   @verbatim
+  14:Chassis/remote_control.c ****   ==============================================================================
+  15:Chassis/remote_control.c **** 
+  16:Chassis/remote_control.c ****   ==============================================================================
+  17:Chassis/remote_control.c ****   @endverbatim
+  18:Chassis/remote_control.c ****   ****************************(C) COPYRIGHT 2019 DJI****************************
+  19:Chassis/remote_control.c ****   */
+  20:Chassis/remote_control.c **** 
+  21:Chassis/remote_control.c **** #include "remote_control.h"
+  22:Chassis/remote_control.c **** #include "main.h"
+  23:Chassis/remote_control.c **** #include "string.h"
+  24:Chassis/remote_control.c **** #include "detect_task.h"
+  25:Chassis/remote_control.c **** 
+  26:Chassis/remote_control.c **** extern UART_HandleTypeDef huart3;
+  27:Chassis/remote_control.c **** extern DMA_HandleTypeDef hdma_usart3_rx;
+  28:Chassis/remote_control.c **** 
+  29:Chassis/remote_control.c **** void RC_Init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
+  30:Chassis/remote_control.c **** {
+ARM GAS  /tmp/ccXbaTCg.s 			page 2
+
+
+  31:Chassis/remote_control.c **** 
+  32:Chassis/remote_control.c ****     //enable the DMA transfer for the receiver request
+  33:Chassis/remote_control.c ****     //使能DMA串口接收
+  34:Chassis/remote_control.c ****     SET_BIT(huart3.Instance->CR3, USART_CR3_DMAR);
+  35:Chassis/remote_control.c **** 
+  36:Chassis/remote_control.c ****     //enalbe idle interrupt
+  37:Chassis/remote_control.c ****     //使能空闲中断
+  38:Chassis/remote_control.c ****     __HAL_UART_ENABLE_IT(&huart3, UART_IT_IDLE);
+  39:Chassis/remote_control.c **** 
+  40:Chassis/remote_control.c ****     //disable DMA
+  41:Chassis/remote_control.c ****     //失效DMA
+  42:Chassis/remote_control.c ****     __HAL_DMA_DISABLE(&hdma_usart3_rx);
+  43:Chassis/remote_control.c ****     while(hdma_usart3_rx.Instance->CR & DMA_SxCR_EN)
+  44:Chassis/remote_control.c ****     {
+  45:Chassis/remote_control.c ****         __HAL_DMA_DISABLE(&hdma_usart3_rx);
+  46:Chassis/remote_control.c ****     }
+  47:Chassis/remote_control.c **** 
+  48:Chassis/remote_control.c ****     hdma_usart3_rx.Instance->PAR = (uint32_t) & (USART3->DR);
+  49:Chassis/remote_control.c ****     //memory buffer 1
+  50:Chassis/remote_control.c ****     //内存缓冲区1
+  51:Chassis/remote_control.c ****     hdma_usart3_rx.Instance->M0AR = (uint32_t)(rx1_buf);
+  52:Chassis/remote_control.c ****     //memory buffer 2
+  53:Chassis/remote_control.c ****     //内存缓冲区2
+  54:Chassis/remote_control.c ****     hdma_usart3_rx.Instance->M1AR = (uint32_t)(rx2_buf);
+  55:Chassis/remote_control.c ****     //data length
+  56:Chassis/remote_control.c ****     //数据长度
+  57:Chassis/remote_control.c ****     hdma_usart3_rx.Instance->NDTR = dma_buf_num;
+  58:Chassis/remote_control.c ****     //enable double memory buffer
+  59:Chassis/remote_control.c ****     //使能双缓冲区
+  60:Chassis/remote_control.c ****     SET_BIT(hdma_usart3_rx.Instance->CR, DMA_SxCR_DBM);
+  61:Chassis/remote_control.c **** 
+  62:Chassis/remote_control.c ****     //enable DMA
+  63:Chassis/remote_control.c ****     //使能DMA
+  64:Chassis/remote_control.c ****     __HAL_DMA_ENABLE(&hdma_usart3_rx);
+  65:Chassis/remote_control.c **** 
+  66:Chassis/remote_control.c **** 
+  67:Chassis/remote_control.c **** }
+  68:Chassis/remote_control.c **** void RC_unable(void)
+  69:Chassis/remote_control.c **** {
+  70:Chassis/remote_control.c ****     __HAL_UART_DISABLE(&huart3);
+  71:Chassis/remote_control.c **** }
+  72:Chassis/remote_control.c **** void RC_restart(uint16_t dma_buf_num)
+  73:Chassis/remote_control.c **** {
+  74:Chassis/remote_control.c ****     __HAL_UART_DISABLE(&huart3);
+  75:Chassis/remote_control.c ****     __HAL_DMA_DISABLE(&hdma_usart3_rx);
+  76:Chassis/remote_control.c **** 
+  77:Chassis/remote_control.c ****     hdma_usart3_rx.Instance->NDTR = dma_buf_num;
+  78:Chassis/remote_control.c **** 
+  79:Chassis/remote_control.c ****     __HAL_DMA_ENABLE(&hdma_usart3_rx);
+  80:Chassis/remote_control.c ****     __HAL_UART_ENABLE(&huart3);
+  81:Chassis/remote_control.c **** 
+  82:Chassis/remote_control.c **** }
+  83:Chassis/remote_control.c **** 
+  84:Chassis/remote_control.c **** 
+  85:Chassis/remote_control.c **** //遥控器出错数据上限
+  86:Chassis/remote_control.c **** #define RC_CHANNAL_ERROR_VALUE 700
+  87:Chassis/remote_control.c **** 
+ARM GAS  /tmp/ccXbaTCg.s 			page 3
+
+
+  88:Chassis/remote_control.c **** extern UART_HandleTypeDef huart3;
+  89:Chassis/remote_control.c **** extern DMA_HandleTypeDef hdma_usart3_rx;
+  90:Chassis/remote_control.c **** 
+  91:Chassis/remote_control.c **** 
+  92:Chassis/remote_control.c **** //取正函数
+  93:Chassis/remote_control.c **** static int16_t RC_abs(int16_t value);
+  94:Chassis/remote_control.c **** /**
+  95:Chassis/remote_control.c ****   * @brief          remote control protocol resolution
+  96:Chassis/remote_control.c ****   * @param[in]      sbus_buf: raw data point
+  97:Chassis/remote_control.c ****   * @param[out]     rc_ctrl: remote control data struct point
+  98:Chassis/remote_control.c ****   * @retval         none
+  99:Chassis/remote_control.c ****   */
+ 100:Chassis/remote_control.c **** /**
+ 101:Chassis/remote_control.c ****   * @brief          遥控器协议解析
+ 102:Chassis/remote_control.c ****   * @param[in]      sbus_buf: 原生数据指针
+ 103:Chassis/remote_control.c ****   * @param[out]     rc_ctrl: 遥控器数据指
+ 104:Chassis/remote_control.c ****   * @retval         none
+ 105:Chassis/remote_control.c ****   */
+ 106:Chassis/remote_control.c **** static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl);
+ 107:Chassis/remote_control.c **** 
+ 108:Chassis/remote_control.c **** //remote control data 
+ 109:Chassis/remote_control.c **** //遥控器控制变量
+ 110:Chassis/remote_control.c **** RC_ctrl_t rc_ctrl;
+ 111:Chassis/remote_control.c **** //接收原始数据，为18个字节，给了36个字节长度，防止DMA传输越界
+ 112:Chassis/remote_control.c **** static uint8_t sbus_rx_buf[2][SBUS_RX_BUF_NUM];
+ 113:Chassis/remote_control.c **** 
+ 114:Chassis/remote_control.c **** 
+ 115:Chassis/remote_control.c **** /**
+ 116:Chassis/remote_control.c ****   * @brief          remote control init
+ 117:Chassis/remote_control.c ****   * @param[in]      none
+ 118:Chassis/remote_control.c ****   * @retval         none
+ 119:Chassis/remote_control.c ****   */
+ 120:Chassis/remote_control.c **** /**
+ 121:Chassis/remote_control.c ****   * @brief          遥控器初始化
+ 122:Chassis/remote_control.c ****   * @param[in]      none
+ 123:Chassis/remote_control.c ****   * @retval         none
+ 124:Chassis/remote_control.c ****   */
+ 125:Chassis/remote_control.c **** void remote_control_init(void)
+ 126:Chassis/remote_control.c **** {
+ 127:Chassis/remote_control.c ****     RC_Init(sbus_rx_buf[0], sbus_rx_buf[1], SBUS_RX_BUF_NUM);
+ 128:Chassis/remote_control.c **** }
+ 129:Chassis/remote_control.c **** /**
+ 130:Chassis/remote_control.c ****   * @brief          get remote control data point
+ 131:Chassis/remote_control.c ****   * @param[in]      none
+ 132:Chassis/remote_control.c ****   * @retval         remote control data point
+ 133:Chassis/remote_control.c ****   */
+ 134:Chassis/remote_control.c **** /**
+ 135:Chassis/remote_control.c ****   * @brief          获取遥控器数据指针
+ 136:Chassis/remote_control.c ****   * @param[in]      none
+ 137:Chassis/remote_control.c ****   * @retval         遥控器数据指针
+ 138:Chassis/remote_control.c ****   */
+ 139:Chassis/remote_control.c **** const RC_ctrl_t *get_remote_control_point(void)
+ 140:Chassis/remote_control.c **** {
+ 141:Chassis/remote_control.c ****     return &rc_ctrl;
+ 142:Chassis/remote_control.c **** }
+ 143:Chassis/remote_control.c **** 
+ 144:Chassis/remote_control.c **** //判断遥控器数据是否出错，
+ARM GAS  /tmp/ccXbaTCg.s 			page 4
+
+
+ 145:Chassis/remote_control.c **** uint8_t RC_data_is_error(void)
+ 146:Chassis/remote_control.c **** {
+ 147:Chassis/remote_control.c ****     //使用了go to语句 方便出错统一处理遥控器变量数据归零
+ 148:Chassis/remote_control.c ****     if (RC_abs(rc_ctrl.rc.ch[0]) > RC_CHANNAL_ERROR_VALUE)
+ 149:Chassis/remote_control.c ****     {
+ 150:Chassis/remote_control.c ****         goto error;
+ 151:Chassis/remote_control.c ****     }
+ 152:Chassis/remote_control.c ****     if (RC_abs(rc_ctrl.rc.ch[1]) > RC_CHANNAL_ERROR_VALUE)
+ 153:Chassis/remote_control.c ****     {
+ 154:Chassis/remote_control.c ****         goto error;
+ 155:Chassis/remote_control.c ****     }
+ 156:Chassis/remote_control.c ****     if (RC_abs(rc_ctrl.rc.ch[2]) > RC_CHANNAL_ERROR_VALUE)
+ 157:Chassis/remote_control.c ****     {
+ 158:Chassis/remote_control.c ****         goto error;
+ 159:Chassis/remote_control.c ****     }
+ 160:Chassis/remote_control.c ****     if (RC_abs(rc_ctrl.rc.ch[3]) > RC_CHANNAL_ERROR_VALUE)
+ 161:Chassis/remote_control.c ****     {
+ 162:Chassis/remote_control.c ****         goto error;
+ 163:Chassis/remote_control.c ****     }
+ 164:Chassis/remote_control.c ****     if (rc_ctrl.rc.s[0] == 0)
+ 165:Chassis/remote_control.c ****     {
+ 166:Chassis/remote_control.c ****         goto error;
+ 167:Chassis/remote_control.c ****     }
+ 168:Chassis/remote_control.c ****     if (rc_ctrl.rc.s[1] == 0)
+ 169:Chassis/remote_control.c ****     {
+ 170:Chassis/remote_control.c ****         goto error;
+ 171:Chassis/remote_control.c ****     }
+ 172:Chassis/remote_control.c ****     return 0;
+ 173:Chassis/remote_control.c **** 
+ 174:Chassis/remote_control.c **** error:
+ 175:Chassis/remote_control.c ****     rc_ctrl.rc.ch[0] = 0;
+ 176:Chassis/remote_control.c ****     rc_ctrl.rc.ch[1] = 0;
+ 177:Chassis/remote_control.c ****     rc_ctrl.rc.ch[2] = 0;
+ 178:Chassis/remote_control.c ****     rc_ctrl.rc.ch[3] = 0;
+ 179:Chassis/remote_control.c ****     rc_ctrl.rc.ch[4] = 0;
+ 180:Chassis/remote_control.c ****     rc_ctrl.rc.s[0] = RC_SW_DOWN;
+ 181:Chassis/remote_control.c ****     rc_ctrl.rc.s[1] = RC_SW_DOWN;
+ 182:Chassis/remote_control.c ****     rc_ctrl.mouse.x = 0;
+ 183:Chassis/remote_control.c ****     rc_ctrl.mouse.y = 0;
+ 184:Chassis/remote_control.c ****     rc_ctrl.mouse.z = 0;
+ 185:Chassis/remote_control.c ****     rc_ctrl.mouse.press_l = 0;
+ 186:Chassis/remote_control.c ****     rc_ctrl.mouse.press_r = 0;
+ 187:Chassis/remote_control.c ****     rc_ctrl.key.v = 0;
+ 188:Chassis/remote_control.c ****     return 1;
+ 189:Chassis/remote_control.c **** }
+ 190:Chassis/remote_control.c **** 
+ 191:Chassis/remote_control.c **** void slove_RC_lost(void)
+ 192:Chassis/remote_control.c **** {
+ 193:Chassis/remote_control.c ****     RC_restart(SBUS_RX_BUF_NUM);
+ 194:Chassis/remote_control.c **** }
+ 195:Chassis/remote_control.c **** void slove_data_error(void)
+ 196:Chassis/remote_control.c **** {
+ 197:Chassis/remote_control.c ****     RC_restart(SBUS_RX_BUF_NUM);
+ 198:Chassis/remote_control.c **** }
+ 199:Chassis/remote_control.c **** 
+ 200:Chassis/remote_control.c **** //串口中断
+ 201:Chassis/remote_control.c **** void USART3_IRQHandler(void)
+ARM GAS  /tmp/ccXbaTCg.s 			page 5
+
+
+ 202:Chassis/remote_control.c **** {
+ 203:Chassis/remote_control.c ****     if(huart3.Instance->SR & UART_FLAG_RXNE)//接收到数据
+ 204:Chassis/remote_control.c ****     {
+ 205:Chassis/remote_control.c ****         __HAL_UART_CLEAR_PEFLAG(&huart3);
+ 206:Chassis/remote_control.c ****     }
+ 207:Chassis/remote_control.c ****     else if(USART3->SR & UART_FLAG_IDLE)
+ 208:Chassis/remote_control.c ****     {
+ 209:Chassis/remote_control.c ****         static uint16_t this_time_rx_len = 0;
+ 210:Chassis/remote_control.c **** 
+ 211:Chassis/remote_control.c ****         __HAL_UART_CLEAR_PEFLAG(&huart3);
+ 212:Chassis/remote_control.c **** 
+ 213:Chassis/remote_control.c ****         if ((hdma_usart3_rx.Instance->CR & DMA_SxCR_CT) == RESET)
+ 214:Chassis/remote_control.c ****         {
+ 215:Chassis/remote_control.c ****             /* Current memory buffer used is Memory 0 */
+ 216:Chassis/remote_control.c **** 
+ 217:Chassis/remote_control.c ****             //disable DMA
+ 218:Chassis/remote_control.c ****             //失效DMA
+ 219:Chassis/remote_control.c ****             __HAL_DMA_DISABLE(&hdma_usart3_rx);
+ 220:Chassis/remote_control.c **** 
+ 221:Chassis/remote_control.c ****             //get receive data length, length = set_data_length - remain_length
+ 222:Chassis/remote_control.c ****             //获取接收数据长度,长度 = 设定长度 - 剩余长度
+ 223:Chassis/remote_control.c ****             this_time_rx_len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
+ 224:Chassis/remote_control.c **** 
+ 225:Chassis/remote_control.c ****             //reset set_data_lenght
+ 226:Chassis/remote_control.c ****             //重新设定数据长度
+ 227:Chassis/remote_control.c ****             hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;
+ 228:Chassis/remote_control.c **** 
+ 229:Chassis/remote_control.c ****             //set memory buffer 1
+ 230:Chassis/remote_control.c ****             //设定缓冲区1
+ 231:Chassis/remote_control.c ****             hdma_usart3_rx.Instance->CR |= DMA_SxCR_CT;
+ 232:Chassis/remote_control.c ****             
+ 233:Chassis/remote_control.c ****             //enable DMA
+ 234:Chassis/remote_control.c ****             //使能DMA
+ 235:Chassis/remote_control.c ****             __HAL_DMA_ENABLE(&hdma_usart3_rx);
+ 236:Chassis/remote_control.c **** 
+ 237:Chassis/remote_control.c ****             if(this_time_rx_len == RC_FRAME_LENGTH)
+ 238:Chassis/remote_control.c ****             {
+ 239:Chassis/remote_control.c ****                 sbus_to_rc(sbus_rx_buf[0], &rc_ctrl);
+ 240:Chassis/remote_control.c ****                 //记录数据接收时间
+ 241:Chassis/remote_control.c ****                 detect_hook(DBUS_TOE);
+ 242:Chassis/remote_control.c ****             }
+ 243:Chassis/remote_control.c ****         }
+ 244:Chassis/remote_control.c ****         else
+ 245:Chassis/remote_control.c ****         {
+ 246:Chassis/remote_control.c ****             /* Current memory buffer used is Memory 1 */
+ 247:Chassis/remote_control.c ****             //disable DMA
+ 248:Chassis/remote_control.c ****             //失效DMA
+ 249:Chassis/remote_control.c ****             __HAL_DMA_DISABLE(&hdma_usart3_rx);
+ 250:Chassis/remote_control.c **** 
+ 251:Chassis/remote_control.c ****             //get receive data length, length = set_data_length - remain_length
+ 252:Chassis/remote_control.c ****             //获取接收数据长度,长度 = 设定长度 - 剩余长度
+ 253:Chassis/remote_control.c ****             this_time_rx_len = SBUS_RX_BUF_NUM - hdma_usart3_rx.Instance->NDTR;
+ 254:Chassis/remote_control.c **** 
+ 255:Chassis/remote_control.c ****             //reset set_data_lenght
+ 256:Chassis/remote_control.c ****             //重新设定数据长度
+ 257:Chassis/remote_control.c ****             hdma_usart3_rx.Instance->NDTR = SBUS_RX_BUF_NUM;
+ 258:Chassis/remote_control.c **** 
+ARM GAS  /tmp/ccXbaTCg.s 			page 6
+
+
+ 259:Chassis/remote_control.c ****             //set memory buffer 0
+ 260:Chassis/remote_control.c ****             //设定缓冲区0
+ 261:Chassis/remote_control.c ****             DMA1_Stream1->CR &= ~(DMA_SxCR_CT);
+ 262:Chassis/remote_control.c ****             
+ 263:Chassis/remote_control.c ****             //enable DMA
+ 264:Chassis/remote_control.c ****             //使能DMA
+ 265:Chassis/remote_control.c ****             __HAL_DMA_ENABLE(&hdma_usart3_rx);
+ 266:Chassis/remote_control.c **** 
+ 267:Chassis/remote_control.c ****             if(this_time_rx_len == RC_FRAME_LENGTH)
+ 268:Chassis/remote_control.c ****             {
+ 269:Chassis/remote_control.c ****                 //处理遥控器数据
+ 270:Chassis/remote_control.c ****                 sbus_to_rc(sbus_rx_buf[1], &rc_ctrl);
+ 271:Chassis/remote_control.c ****                 //记录数据接收时间
+ 272:Chassis/remote_control.c ****                 detect_hook(DBUS_TOE);
+ 273:Chassis/remote_control.c ****             }
+ 274:Chassis/remote_control.c ****         }
+ 275:Chassis/remote_control.c ****     }
+ 276:Chassis/remote_control.c **** 
+ 277:Chassis/remote_control.c **** }
+ 278:Chassis/remote_control.c **** 
+ 279:Chassis/remote_control.c **** //取正函数
+ 280:Chassis/remote_control.c **** static int16_t RC_abs(int16_t value)
+ 281:Chassis/remote_control.c **** {
+  29              		.loc 1 281 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+ 282:Chassis/remote_control.c ****     if (value > 0)
+  34              		.loc 1 282 5 view .LVU1
+  35              		.loc 1 282 8 is_stmt 0 view .LVU2
+  36 0000 0028     		cmp	r0, #0
+  37              	.LVL1:
+  38              		.loc 1 282 8 view .LVU3
+  39 0002 00DD     		ble	.L3
+  40              	.L2:
+ 283:Chassis/remote_control.c ****     {
+ 284:Chassis/remote_control.c ****         return value;
+ 285:Chassis/remote_control.c ****     }
+ 286:Chassis/remote_control.c ****     else
+ 287:Chassis/remote_control.c ****     {
+ 288:Chassis/remote_control.c ****         return -value;
+ 289:Chassis/remote_control.c ****     }
+ 290:Chassis/remote_control.c **** }
+  41              		.loc 1 290 1 view .LVU4
+  42 0004 7047     		bx	lr
+  43              	.L3:
+ 288:Chassis/remote_control.c ****     }
+  44              		.loc 1 288 9 is_stmt 1 view .LVU5
+ 288:Chassis/remote_control.c ****     }
+  45              		.loc 1 288 16 is_stmt 0 view .LVU6
+  46 0006 4042     		rsbs	r0, r0, #0
+  47 0008 00B2     		sxth	r0, r0
+  48 000a FBE7     		b	.L2
+  49              		.cfi_endproc
+  50              	.LFE139:
+  52              		.section	.text.sbus_to_rc,"ax",%progbits
+ARM GAS  /tmp/ccXbaTCg.s 			page 7
+
+
+  53              		.align	1
+  54              		.syntax unified
+  55              		.thumb
+  56              		.thumb_func
+  58              	sbus_to_rc:
+  59              	.LVL2:
+  60              	.LFB140:
+ 291:Chassis/remote_control.c **** /**
+ 292:Chassis/remote_control.c ****   * @brief          remote control protocol resolution
+ 293:Chassis/remote_control.c ****   * @param[in]      sbus_buf: raw data point
+ 294:Chassis/remote_control.c ****   * @param[out]     rc_ctrl: remote control data struct point
+ 295:Chassis/remote_control.c ****   * @retval         none
+ 296:Chassis/remote_control.c ****   */
+ 297:Chassis/remote_control.c **** /**
+ 298:Chassis/remote_control.c ****   * @brief          遥控器协议解析
+ 299:Chassis/remote_control.c ****   * @param[in]      sbus_buf: 原生数据指针
+ 300:Chassis/remote_control.c ****   * @param[out]     rc_ctrl: 遥控器数据指
+ 301:Chassis/remote_control.c ****   * @retval         none
+ 302:Chassis/remote_control.c ****   */
+ 303:Chassis/remote_control.c **** static void sbus_to_rc(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl)
+ 304:Chassis/remote_control.c **** {
+  61              		.loc 1 304 1 is_stmt 1 view -0
+  62              		.cfi_startproc
+  63              		@ args = 0, pretend = 0, frame = 0
+  64              		@ frame_needed = 0, uses_anonymous_args = 0
+ 305:Chassis/remote_control.c ****     if (sbus_buf == NULL || rc_ctrl == NULL)
+  65              		.loc 1 305 5 view .LVU8
+  66              		.loc 1 305 8 is_stmt 0 view .LVU9
+  67 0000 0028     		cmp	r0, #0
+  68 0002 5FD0     		beq	.L7
+  69 0004 0346     		mov	r3, r0
+  70              		.loc 1 305 26 discriminator 1 view .LVU10
+  71 0006 0029     		cmp	r1, #0
+  72 0008 5CD0     		beq	.L7
+ 304:Chassis/remote_control.c ****     if (sbus_buf == NULL || rc_ctrl == NULL)
+  73              		.loc 1 304 1 view .LVU11
+  74 000a 30B5     		push	{r4, r5, lr}
+  75              	.LCFI0:
+  76              		.cfi_def_cfa_offset 12
+  77              		.cfi_offset 4, -12
+  78              		.cfi_offset 5, -8
+  79              		.cfi_offset 14, -4
+ 306:Chassis/remote_control.c ****     {
+ 307:Chassis/remote_control.c ****         return;
+ 308:Chassis/remote_control.c ****     }
+ 309:Chassis/remote_control.c **** 
+ 310:Chassis/remote_control.c ****     rc_ctrl->rc.ch[0] = (sbus_buf[0] | (sbus_buf[1] << 8)) & 0x07ff;        //!< Channel 0
+  80              		.loc 1 310 5 is_stmt 1 view .LVU12
+  81              		.loc 1 310 34 is_stmt 0 view .LVU13
+  82 000c 90F800C0 		ldrb	ip, [r0]	@ zero_extendqisi2
+  83              		.loc 1 310 49 view .LVU14
+  84 0010 4278     		ldrb	r2, [r0, #1]	@ zero_extendqisi2
+  85              		.loc 1 310 38 view .LVU15
+  86 0012 4CEA022C 		orr	ip, ip, r2, lsl #8
+  87              		.loc 1 310 60 view .LVU16
+  88 0016 CCF30A0C 		ubfx	ip, ip, #0, #11
+  89              		.loc 1 310 23 view .LVU17
+ARM GAS  /tmp/ccXbaTCg.s 			page 8
+
+
+  90 001a A1F800C0 		strh	ip, [r1]	@ unaligned
+ 311:Chassis/remote_control.c ****     rc_ctrl->rc.ch[1] = ((sbus_buf[1] >> 3) | (sbus_buf[2] << 5)) & 0x07ff; //!< Channel 1
+  91              		.loc 1 311 5 is_stmt 1 view .LVU18
+  92              		.loc 1 311 35 is_stmt 0 view .LVU19
+  93 001e 4278     		ldrb	r2, [r0, #1]	@ zero_extendqisi2
+  94              		.loc 1 311 56 view .LVU20
+  95 0020 8078     		ldrb	r0, [r0, #2]	@ zero_extendqisi2
+  96              	.LVL3:
+  97              		.loc 1 311 45 view .LVU21
+  98 0022 D208     		lsrs	r2, r2, #3
+  99 0024 42EA4012 		orr	r2, r2, r0, lsl #5
+ 100              		.loc 1 311 67 view .LVU22
+ 101 0028 C2F30A0E 		ubfx	lr, r2, #0, #11
+ 102              		.loc 1 311 23 view .LVU23
+ 103 002c A1F802E0 		strh	lr, [r1, #2]	@ unaligned
+ 312:Chassis/remote_control.c ****     rc_ctrl->rc.ch[2] = ((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
+ 104              		.loc 1 312 5 is_stmt 1 view .LVU24
+ 105              		.loc 1 312 35 is_stmt 0 view .LVU25
+ 106 0030 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 107              		.loc 1 312 56 view .LVU26
+ 108 0032 D878     		ldrb	r0, [r3, #3]	@ zero_extendqisi2
+ 109              		.loc 1 312 45 view .LVU27
+ 110 0034 9209     		lsrs	r2, r2, #6
+ 111 0036 42EA8002 		orr	r2, r2, r0, lsl #2
+ 313:Chassis/remote_control.c ****                          (sbus_buf[4] << 10)) &0x07ff;
+ 112              		.loc 1 313 35 view .LVU28
+ 113 003a 1879     		ldrb	r0, [r3, #4]	@ zero_extendqisi2
+ 312:Chassis/remote_control.c ****     rc_ctrl->rc.ch[2] = ((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
+ 114              		.loc 1 312 66 view .LVU29
+ 115 003c 42EA8022 		orr	r2, r2, r0, lsl #10
+ 116              		.loc 1 313 47 view .LVU30
+ 117 0040 C2F30A02 		ubfx	r2, r2, #0, #11
+ 312:Chassis/remote_control.c ****     rc_ctrl->rc.ch[2] = ((sbus_buf[2] >> 6) | (sbus_buf[3] << 2) |          //!< Channel 2
+ 118              		.loc 1 312 23 view .LVU31
+ 119 0044 8A80     		strh	r2, [r1, #4]	@ unaligned
+ 314:Chassis/remote_control.c ****     rc_ctrl->rc.ch[3] = ((sbus_buf[4] >> 1) | (sbus_buf[5] << 7)) & 0x07ff; //!< Channel 3
+ 120              		.loc 1 314 5 is_stmt 1 view .LVU32
+ 121              		.loc 1 314 35 is_stmt 0 view .LVU33
+ 122 0046 1879     		ldrb	r0, [r3, #4]	@ zero_extendqisi2
+ 123              		.loc 1 314 56 view .LVU34
+ 124 0048 5C79     		ldrb	r4, [r3, #5]	@ zero_extendqisi2
+ 125              		.loc 1 314 45 view .LVU35
+ 126 004a 4008     		lsrs	r0, r0, #1
+ 127 004c 40EAC410 		orr	r0, r0, r4, lsl #7
+ 128              		.loc 1 314 67 view .LVU36
+ 129 0050 C0F30A00 		ubfx	r0, r0, #0, #11
+ 130              		.loc 1 314 23 view .LVU37
+ 131 0054 C880     		strh	r0, [r1, #6]	@ unaligned
+ 315:Chassis/remote_control.c ****     rc_ctrl->rc.s[0] = ((sbus_buf[5] >> 4) & 0x0003);                  //!< Switch left
+ 132              		.loc 1 315 5 is_stmt 1 view .LVU38
+ 133              		.loc 1 315 34 is_stmt 0 view .LVU39
+ 134 0056 5C79     		ldrb	r4, [r3, #5]	@ zero_extendqisi2
+ 135              		.loc 1 315 44 view .LVU40
+ 136 0058 C4F30114 		ubfx	r4, r4, #4, #2
+ 137              		.loc 1 315 22 view .LVU41
+ 138 005c 8C72     		strb	r4, [r1, #10]
+ 316:Chassis/remote_control.c ****     rc_ctrl->rc.s[1] = ((sbus_buf[5] >> 4) & 0x000C) >> 2;                       //!< Switch right
+ARM GAS  /tmp/ccXbaTCg.s 			page 9
+
+
+ 139              		.loc 1 316 5 is_stmt 1 view .LVU42
+ 140              		.loc 1 316 34 is_stmt 0 view .LVU43
+ 141 005e 5C79     		ldrb	r4, [r3, #5]	@ zero_extendqisi2
+ 142              		.loc 1 316 54 view .LVU44
+ 143 0060 A409     		lsrs	r4, r4, #6
+ 144              		.loc 1 316 22 view .LVU45
+ 145 0062 CC72     		strb	r4, [r1, #11]
+ 317:Chassis/remote_control.c ****     rc_ctrl->mouse.x = sbus_buf[6] | (sbus_buf[7] << 8);                    //!< Mouse X axis
+ 146              		.loc 1 317 5 is_stmt 1 view .LVU46
+ 147              		.loc 1 317 32 is_stmt 0 view .LVU47
+ 148 0064 9C79     		ldrb	r4, [r3, #6]	@ zero_extendqisi2
+ 149              		.loc 1 317 47 view .LVU48
+ 150 0066 DD79     		ldrb	r5, [r3, #7]	@ zero_extendqisi2
+ 151              		.loc 1 317 36 view .LVU49
+ 152 0068 44EA0524 		orr	r4, r4, r5, lsl #8
+ 153              		.loc 1 317 22 view .LVU50
+ 154 006c 8C81     		strh	r4, [r1, #12]	@ unaligned
+ 318:Chassis/remote_control.c ****     rc_ctrl->mouse.y = sbus_buf[8] | (sbus_buf[9] << 8);                    //!< Mouse Y axis
+ 155              		.loc 1 318 5 is_stmt 1 view .LVU51
+ 156              		.loc 1 318 32 is_stmt 0 view .LVU52
+ 157 006e 1C7A     		ldrb	r4, [r3, #8]	@ zero_extendqisi2
+ 158              		.loc 1 318 47 view .LVU53
+ 159 0070 5D7A     		ldrb	r5, [r3, #9]	@ zero_extendqisi2
+ 160              		.loc 1 318 36 view .LVU54
+ 161 0072 44EA0524 		orr	r4, r4, r5, lsl #8
+ 162              		.loc 1 318 22 view .LVU55
+ 163 0076 CC81     		strh	r4, [r1, #14]	@ unaligned
+ 319:Chassis/remote_control.c ****     rc_ctrl->mouse.z = sbus_buf[10] | (sbus_buf[11] << 8);                  //!< Mouse Z axis
+ 164              		.loc 1 319 5 is_stmt 1 view .LVU56
+ 165              		.loc 1 319 32 is_stmt 0 view .LVU57
+ 166 0078 9C7A     		ldrb	r4, [r3, #10]	@ zero_extendqisi2
+ 167              		.loc 1 319 48 view .LVU58
+ 168 007a DD7A     		ldrb	r5, [r3, #11]	@ zero_extendqisi2
+ 169              		.loc 1 319 37 view .LVU59
+ 170 007c 44EA0524 		orr	r4, r4, r5, lsl #8
+ 171              		.loc 1 319 22 view .LVU60
+ 172 0080 0C82     		strh	r4, [r1, #16]	@ unaligned
+ 320:Chassis/remote_control.c ****     rc_ctrl->mouse.press_l = sbus_buf[12];                                  //!< Mouse Left Is Pres
+ 173              		.loc 1 320 5 is_stmt 1 view .LVU61
+ 174              		.loc 1 320 28 is_stmt 0 view .LVU62
+ 175 0082 1C7B     		ldrb	r4, [r3, #12]	@ zero_extendqisi2
+ 176 0084 8C74     		strb	r4, [r1, #18]
+ 321:Chassis/remote_control.c ****     rc_ctrl->mouse.press_r = sbus_buf[13];                                  //!< Mouse Right Is Pre
+ 177              		.loc 1 321 5 is_stmt 1 view .LVU63
+ 178              		.loc 1 321 28 is_stmt 0 view .LVU64
+ 179 0086 5C7B     		ldrb	r4, [r3, #13]	@ zero_extendqisi2
+ 180 0088 CC74     		strb	r4, [r1, #19]
+ 322:Chassis/remote_control.c ****     rc_ctrl->key.v = sbus_buf[14] | (sbus_buf[15] << 8);                    //!< KeyBoard value
+ 181              		.loc 1 322 5 is_stmt 1 view .LVU65
+ 182              		.loc 1 322 30 is_stmt 0 view .LVU66
+ 183 008a 9C7B     		ldrb	r4, [r3, #14]	@ zero_extendqisi2
+ 184              		.loc 1 322 46 view .LVU67
+ 185 008c DD7B     		ldrb	r5, [r3, #15]	@ zero_extendqisi2
+ 186              		.loc 1 322 35 view .LVU68
+ 187 008e 44EA0524 		orr	r4, r4, r5, lsl #8
+ 188              		.loc 1 322 20 view .LVU69
+ 189 0092 8C82     		strh	r4, [r1, #20]	@ unaligned
+ARM GAS  /tmp/ccXbaTCg.s 			page 10
+
+
+ 323:Chassis/remote_control.c ****     rc_ctrl->rc.ch[4] = sbus_buf[16] | (sbus_buf[17] << 8);                 //NULL
+ 190              		.loc 1 323 5 is_stmt 1 view .LVU70
+ 191              		.loc 1 323 33 is_stmt 0 view .LVU71
+ 192 0094 1C7C     		ldrb	r4, [r3, #16]	@ zero_extendqisi2
+ 193              		.loc 1 323 49 view .LVU72
+ 194 0096 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ 195              	.LVL4:
+ 196              		.loc 1 323 38 view .LVU73
+ 197 0098 44EA0323 		orr	r3, r4, r3, lsl #8
+ 198 009c 1CB2     		sxth	r4, r3
+ 199              		.loc 1 323 23 view .LVU74
+ 200 009e 0B81     		strh	r3, [r1, #8]	@ unaligned
+ 324:Chassis/remote_control.c **** 
+ 325:Chassis/remote_control.c ****     rc_ctrl->rc.ch[0] -= RC_CH_VALUE_OFFSET;
+ 201              		.loc 1 325 5 is_stmt 1 view .LVU75
+ 202              		.loc 1 325 23 is_stmt 0 view .LVU76
+ 203 00a0 ACF5806C 		sub	ip, ip, #1024
+ 204 00a4 A1F800C0 		strh	ip, [r1]	@ unaligned
+ 326:Chassis/remote_control.c ****     rc_ctrl->rc.ch[1] -= RC_CH_VALUE_OFFSET;
+ 205              		.loc 1 326 5 is_stmt 1 view .LVU77
+ 206              		.loc 1 326 23 is_stmt 0 view .LVU78
+ 207 00a8 AEF5806E 		sub	lr, lr, #1024
+ 208 00ac A1F802E0 		strh	lr, [r1, #2]	@ unaligned
+ 327:Chassis/remote_control.c ****     rc_ctrl->rc.ch[2] -= RC_CH_VALUE_OFFSET;
+ 209              		.loc 1 327 5 is_stmt 1 view .LVU79
+ 210              		.loc 1 327 23 is_stmt 0 view .LVU80
+ 211 00b0 A2F58062 		sub	r2, r2, #1024
+ 212 00b4 8A80     		strh	r2, [r1, #4]	@ unaligned
+ 328:Chassis/remote_control.c ****     rc_ctrl->rc.ch[3] -= RC_CH_VALUE_OFFSET;
+ 213              		.loc 1 328 5 is_stmt 1 view .LVU81
+ 214              		.loc 1 328 23 is_stmt 0 view .LVU82
+ 215 00b6 A0F58060 		sub	r0, r0, #1024
+ 216 00ba C880     		strh	r0, [r1, #6]	@ unaligned
+ 329:Chassis/remote_control.c ****     rc_ctrl->rc.ch[4] -= RC_CH_VALUE_OFFSET;
+ 217              		.loc 1 329 5 is_stmt 1 view .LVU83
+ 218              		.loc 1 329 23 is_stmt 0 view .LVU84
+ 219 00bc A4F58063 		sub	r3, r4, #1024
+ 220 00c0 0B81     		strh	r3, [r1, #8]	@ unaligned
+ 330:Chassis/remote_control.c **** }
+ 221              		.loc 1 330 1 view .LVU85
+ 222 00c2 30BD     		pop	{r4, r5, pc}
+ 223              	.LVL5:
+ 224              	.L7:
+ 225              	.LCFI1:
+ 226              		.cfi_def_cfa_offset 0
+ 227              		.cfi_restore 4
+ 228              		.cfi_restore 5
+ 229              		.cfi_restore 14
+ 230              		.loc 1 330 1 view .LVU86
+ 231 00c4 7047     		bx	lr
+ 232              		.cfi_endproc
+ 233              	.LFE140:
+ 235              		.section	.text.RC_Init,"ax",%progbits
+ 236              		.align	1
+ 237              		.global	RC_Init
+ 238              		.syntax unified
+ 239              		.thumb
+ARM GAS  /tmp/ccXbaTCg.s 			page 11
+
+
+ 240              		.thumb_func
+ 242              	RC_Init:
+ 243              	.LVL6:
+ 244              	.LFB130:
+  30:Chassis/remote_control.c **** 
+ 245              		.loc 1 30 1 is_stmt 1 view -0
+ 246              		.cfi_startproc
+ 247              		@ args = 0, pretend = 0, frame = 0
+ 248              		@ frame_needed = 0, uses_anonymous_args = 0
+ 249              		@ link register save eliminated.
+  30:Chassis/remote_control.c **** 
+ 250              		.loc 1 30 1 is_stmt 0 view .LVU88
+ 251 0000 10B4     		push	{r4}
+ 252              	.LCFI2:
+ 253              		.cfi_def_cfa_offset 4
+ 254              		.cfi_offset 4, -4
+  34:Chassis/remote_control.c **** 
+ 255              		.loc 1 34 5 is_stmt 1 view .LVU89
+ 256 0002 164B     		ldr	r3, .L14
+ 257 0004 1B68     		ldr	r3, [r3]
+ 258 0006 5C69     		ldr	r4, [r3, #20]
+ 259 0008 44F04004 		orr	r4, r4, #64
+ 260 000c 5C61     		str	r4, [r3, #20]
+  38:Chassis/remote_control.c **** 
+ 261              		.loc 1 38 5 view .LVU90
+ 262 000e DC68     		ldr	r4, [r3, #12]
+ 263 0010 44F01004 		orr	r4, r4, #16
+ 264 0014 DC60     		str	r4, [r3, #12]
+  42:Chassis/remote_control.c ****     while(hdma_usart3_rx.Instance->CR & DMA_SxCR_EN)
+ 265              		.loc 1 42 5 view .LVU91
+ 266 0016 124B     		ldr	r3, .L14+4
+ 267 0018 1C68     		ldr	r4, [r3]
+ 268 001a 2368     		ldr	r3, [r4]
+ 269 001c 23F00103 		bic	r3, r3, #1
+ 270 0020 2360     		str	r3, [r4]
+  43:Chassis/remote_control.c ****     {
+ 271              		.loc 1 43 5 view .LVU92
+  43:Chassis/remote_control.c ****     {
+ 272              		.loc 1 43 10 is_stmt 0 view .LVU93
+ 273 0022 03E0     		b	.L11
+ 274              	.L12:
+  45:Chassis/remote_control.c ****     }
+ 275              		.loc 1 45 9 is_stmt 1 view .LVU94
+ 276 0024 1C68     		ldr	r4, [r3]
+ 277 0026 24F00104 		bic	r4, r4, #1
+ 278 002a 1C60     		str	r4, [r3]
+ 279              	.L11:
+  43:Chassis/remote_control.c ****     {
+ 280              		.loc 1 43 10 view .LVU95
+  43:Chassis/remote_control.c ****     {
+ 281              		.loc 1 43 25 is_stmt 0 view .LVU96
+ 282 002c 0C4B     		ldr	r3, .L14+4
+ 283 002e 1B68     		ldr	r3, [r3]
+  43:Chassis/remote_control.c ****     {
+ 284              		.loc 1 43 34 view .LVU97
+ 285 0030 1C68     		ldr	r4, [r3]
+  43:Chassis/remote_control.c ****     {
+ARM GAS  /tmp/ccXbaTCg.s 			page 12
+
+
+ 286              		.loc 1 43 10 view .LVU98
+ 287 0032 14F0010F 		tst	r4, #1
+ 288 0036 F5D1     		bne	.L12
+  48:Chassis/remote_control.c ****     //memory buffer 1
+ 289              		.loc 1 48 5 is_stmt 1 view .LVU99
+  48:Chassis/remote_control.c ****     //memory buffer 1
+ 290              		.loc 1 48 34 is_stmt 0 view .LVU100
+ 291 0038 0A4C     		ldr	r4, .L14+8
+ 292 003a 9C60     		str	r4, [r3, #8]
+  51:Chassis/remote_control.c ****     //memory buffer 2
+ 293              		.loc 1 51 5 is_stmt 1 view .LVU101
+  51:Chassis/remote_control.c ****     //memory buffer 2
+ 294              		.loc 1 51 35 is_stmt 0 view .LVU102
+ 295 003c D860     		str	r0, [r3, #12]
+  54:Chassis/remote_control.c ****     //data length
+ 296              		.loc 1 54 5 is_stmt 1 view .LVU103
+  54:Chassis/remote_control.c ****     //data length
+ 297              		.loc 1 54 35 is_stmt 0 view .LVU104
+ 298 003e 1961     		str	r1, [r3, #16]
+  57:Chassis/remote_control.c ****     //enable double memory buffer
+ 299              		.loc 1 57 5 is_stmt 1 view .LVU105
+  57:Chassis/remote_control.c ****     //enable double memory buffer
+ 300              		.loc 1 57 35 is_stmt 0 view .LVU106
+ 301 0040 5A60     		str	r2, [r3, #4]
+  60:Chassis/remote_control.c **** 
+ 302              		.loc 1 60 5 is_stmt 1 view .LVU107
+ 303 0042 1A68     		ldr	r2, [r3]
+ 304              	.LVL7:
+  60:Chassis/remote_control.c **** 
+ 305              		.loc 1 60 5 is_stmt 0 view .LVU108
+ 306 0044 42F48022 		orr	r2, r2, #262144
+ 307 0048 1A60     		str	r2, [r3]
+  64:Chassis/remote_control.c **** 
+ 308              		.loc 1 64 5 is_stmt 1 view .LVU109
+ 309 004a 054B     		ldr	r3, .L14+4
+ 310 004c 1A68     		ldr	r2, [r3]
+ 311 004e 1368     		ldr	r3, [r2]
+ 312 0050 43F00103 		orr	r3, r3, #1
+ 313 0054 1360     		str	r3, [r2]
+  67:Chassis/remote_control.c **** void RC_unable(void)
+ 314              		.loc 1 67 1 is_stmt 0 view .LVU110
+ 315 0056 5DF8044B 		ldr	r4, [sp], #4
+ 316              	.LCFI3:
+ 317              		.cfi_restore 4
+ 318              		.cfi_def_cfa_offset 0
+ 319 005a 7047     		bx	lr
+ 320              	.L15:
+ 321              		.align	2
+ 322              	.L14:
+ 323 005c 00000000 		.word	huart3
+ 324 0060 00000000 		.word	hdma_usart3_rx
+ 325 0064 04480040 		.word	1073760260
+ 326              		.cfi_endproc
+ 327              	.LFE130:
+ 329              		.section	.text.RC_unable,"ax",%progbits
+ 330              		.align	1
+ 331              		.global	RC_unable
+ARM GAS  /tmp/ccXbaTCg.s 			page 13
+
+
+ 332              		.syntax unified
+ 333              		.thumb
+ 334              		.thumb_func
+ 336              	RC_unable:
+ 337              	.LFB131:
+  69:Chassis/remote_control.c ****     __HAL_UART_DISABLE(&huart3);
+ 338              		.loc 1 69 1 is_stmt 1 view -0
+ 339              		.cfi_startproc
+ 340              		@ args = 0, pretend = 0, frame = 0
+ 341              		@ frame_needed = 0, uses_anonymous_args = 0
+ 342              		@ link register save eliminated.
+  70:Chassis/remote_control.c **** }
+ 343              		.loc 1 70 5 view .LVU112
+ 344 0000 034B     		ldr	r3, .L17
+ 345 0002 1A68     		ldr	r2, [r3]
+ 346 0004 D368     		ldr	r3, [r2, #12]
+ 347 0006 23F40053 		bic	r3, r3, #8192
+ 348 000a D360     		str	r3, [r2, #12]
+  71:Chassis/remote_control.c **** void RC_restart(uint16_t dma_buf_num)
+ 349              		.loc 1 71 1 is_stmt 0 view .LVU113
+ 350 000c 7047     		bx	lr
+ 351              	.L18:
+ 352 000e 00BF     		.align	2
+ 353              	.L17:
+ 354 0010 00000000 		.word	huart3
+ 355              		.cfi_endproc
+ 356              	.LFE131:
+ 358              		.section	.text.RC_restart,"ax",%progbits
+ 359              		.align	1
+ 360              		.global	RC_restart
+ 361              		.syntax unified
+ 362              		.thumb
+ 363              		.thumb_func
+ 365              	RC_restart:
+ 366              	.LVL8:
+ 367              	.LFB132:
+  73:Chassis/remote_control.c ****     __HAL_UART_DISABLE(&huart3);
+ 368              		.loc 1 73 1 is_stmt 1 view -0
+ 369              		.cfi_startproc
+ 370              		@ args = 0, pretend = 0, frame = 0
+ 371              		@ frame_needed = 0, uses_anonymous_args = 0
+ 372              		@ link register save eliminated.
+  73:Chassis/remote_control.c ****     __HAL_UART_DISABLE(&huart3);
+ 373              		.loc 1 73 1 is_stmt 0 view .LVU115
+ 374 0000 10B4     		push	{r4}
+ 375              	.LCFI4:
+ 376              		.cfi_def_cfa_offset 4
+ 377              		.cfi_offset 4, -4
+  74:Chassis/remote_control.c ****     __HAL_DMA_DISABLE(&hdma_usart3_rx);
+ 378              		.loc 1 74 5 is_stmt 1 view .LVU116
+ 379 0002 0D49     		ldr	r1, .L21
+ 380 0004 0A68     		ldr	r2, [r1]
+ 381 0006 D368     		ldr	r3, [r2, #12]
+ 382 0008 23F40053 		bic	r3, r3, #8192
+ 383 000c D360     		str	r3, [r2, #12]
+  75:Chassis/remote_control.c **** 
+ 384              		.loc 1 75 5 view .LVU117
+ARM GAS  /tmp/ccXbaTCg.s 			page 14
+
+
+ 385 000e 0B4A     		ldr	r2, .L21+4
+ 386 0010 1468     		ldr	r4, [r2]
+ 387 0012 2368     		ldr	r3, [r4]
+ 388 0014 23F00103 		bic	r3, r3, #1
+ 389 0018 2360     		str	r3, [r4]
+  77:Chassis/remote_control.c **** 
+ 390              		.loc 1 77 5 view .LVU118
+  77:Chassis/remote_control.c **** 
+ 391              		.loc 1 77 19 is_stmt 0 view .LVU119
+ 392 001a 1368     		ldr	r3, [r2]
+  77:Chassis/remote_control.c **** 
+ 393              		.loc 1 77 35 view .LVU120
+ 394 001c 5860     		str	r0, [r3, #4]
+  79:Chassis/remote_control.c ****     __HAL_UART_ENABLE(&huart3);
+ 395              		.loc 1 79 5 is_stmt 1 view .LVU121
+ 396 001e 1A68     		ldr	r2, [r3]
+ 397 0020 42F00102 		orr	r2, r2, #1
+ 398 0024 1A60     		str	r2, [r3]
+  80:Chassis/remote_control.c **** 
+ 399              		.loc 1 80 5 view .LVU122
+ 400 0026 0A68     		ldr	r2, [r1]
+ 401 0028 D368     		ldr	r3, [r2, #12]
+ 402 002a 43F40053 		orr	r3, r3, #8192
+ 403 002e D360     		str	r3, [r2, #12]
+  82:Chassis/remote_control.c **** 
+ 404              		.loc 1 82 1 is_stmt 0 view .LVU123
+ 405 0030 5DF8044B 		ldr	r4, [sp], #4
+ 406              	.LCFI5:
+ 407              		.cfi_restore 4
+ 408              		.cfi_def_cfa_offset 0
+ 409 0034 7047     		bx	lr
+ 410              	.L22:
+ 411 0036 00BF     		.align	2
+ 412              	.L21:
+ 413 0038 00000000 		.word	huart3
+ 414 003c 00000000 		.word	hdma_usart3_rx
+ 415              		.cfi_endproc
+ 416              	.LFE132:
+ 418              		.section	.text.remote_control_init,"ax",%progbits
+ 419              		.align	1
+ 420              		.global	remote_control_init
+ 421              		.syntax unified
+ 422              		.thumb
+ 423              		.thumb_func
+ 425              	remote_control_init:
+ 426              	.LFB133:
+ 126:Chassis/remote_control.c ****     RC_Init(sbus_rx_buf[0], sbus_rx_buf[1], SBUS_RX_BUF_NUM);
+ 427              		.loc 1 126 1 is_stmt 1 view -0
+ 428              		.cfi_startproc
+ 429              		@ args = 0, pretend = 0, frame = 0
+ 430              		@ frame_needed = 0, uses_anonymous_args = 0
+ 431 0000 08B5     		push	{r3, lr}
+ 432              	.LCFI6:
+ 433              		.cfi_def_cfa_offset 8
+ 434              		.cfi_offset 3, -8
+ 435              		.cfi_offset 14, -4
+ 127:Chassis/remote_control.c **** }
+ARM GAS  /tmp/ccXbaTCg.s 			page 15
+
+
+ 436              		.loc 1 127 5 view .LVU125
+ 437 0002 0348     		ldr	r0, .L25
+ 438 0004 2422     		movs	r2, #36
+ 439 0006 8118     		adds	r1, r0, r2
+ 440 0008 FFF7FEFF 		bl	RC_Init
+ 441              	.LVL9:
+ 128:Chassis/remote_control.c **** /**
+ 442              		.loc 1 128 1 is_stmt 0 view .LVU126
+ 443 000c 08BD     		pop	{r3, pc}
+ 444              	.L26:
+ 445 000e 00BF     		.align	2
+ 446              	.L25:
+ 447 0010 00000000 		.word	.LANCHOR0
+ 448              		.cfi_endproc
+ 449              	.LFE133:
+ 451              		.section	.text.get_remote_control_point,"ax",%progbits
+ 452              		.align	1
+ 453              		.global	get_remote_control_point
+ 454              		.syntax unified
+ 455              		.thumb
+ 456              		.thumb_func
+ 458              	get_remote_control_point:
+ 459              	.LFB134:
+ 140:Chassis/remote_control.c ****     return &rc_ctrl;
+ 460              		.loc 1 140 1 is_stmt 1 view -0
+ 461              		.cfi_startproc
+ 462              		@ args = 0, pretend = 0, frame = 0
+ 463              		@ frame_needed = 0, uses_anonymous_args = 0
+ 464              		@ link register save eliminated.
+ 141:Chassis/remote_control.c **** }
+ 465              		.loc 1 141 5 view .LVU128
+ 142:Chassis/remote_control.c **** 
+ 466              		.loc 1 142 1 is_stmt 0 view .LVU129
+ 467 0000 0048     		ldr	r0, .L28
+ 468 0002 7047     		bx	lr
+ 469              	.L29:
+ 470              		.align	2
+ 471              	.L28:
+ 472 0004 00000000 		.word	.LANCHOR1
+ 473              		.cfi_endproc
+ 474              	.LFE134:
+ 476              		.section	.text.RC_data_is_error,"ax",%progbits
+ 477              		.align	1
+ 478              		.global	RC_data_is_error
+ 479              		.syntax unified
+ 480              		.thumb
+ 481              		.thumb_func
+ 483              	RC_data_is_error:
+ 484              	.LFB135:
+ 146:Chassis/remote_control.c ****     //使用了go to语句 方便出错统一处理遥控器变量数据归零
+ 485              		.loc 1 146 1 is_stmt 1 view -0
+ 486              		.cfi_startproc
+ 487              		@ args = 0, pretend = 0, frame = 0
+ 488              		@ frame_needed = 0, uses_anonymous_args = 0
+ 489 0000 08B5     		push	{r3, lr}
+ 490              	.LCFI7:
+ 491              		.cfi_def_cfa_offset 8
+ARM GAS  /tmp/ccXbaTCg.s 			page 16
+
+
+ 492              		.cfi_offset 3, -8
+ 493              		.cfi_offset 14, -4
+ 148:Chassis/remote_control.c ****     {
+ 494              		.loc 1 148 5 view .LVU131
+ 148:Chassis/remote_control.c ****     {
+ 495              		.loc 1 148 9 is_stmt 0 view .LVU132
+ 496 0002 1D4B     		ldr	r3, .L35
+ 497 0004 B3F90000 		ldrsh	r0, [r3]
+ 498 0008 FFF7FEFF 		bl	RC_abs
+ 499              	.LVL10:
+ 148:Chassis/remote_control.c ****     {
+ 500              		.loc 1 148 8 view .LVU133
+ 501 000c B0F52F7F 		cmp	r0, #700
+ 502 0010 1FDC     		bgt	.L31
+ 152:Chassis/remote_control.c ****     {
+ 503              		.loc 1 152 5 is_stmt 1 view .LVU134
+ 152:Chassis/remote_control.c ****     {
+ 504              		.loc 1 152 9 is_stmt 0 view .LVU135
+ 505 0012 194B     		ldr	r3, .L35
+ 506 0014 B3F90200 		ldrsh	r0, [r3, #2]
+ 507 0018 FFF7FEFF 		bl	RC_abs
+ 508              	.LVL11:
+ 152:Chassis/remote_control.c ****     {
+ 509              		.loc 1 152 8 view .LVU136
+ 510 001c B0F52F7F 		cmp	r0, #700
+ 511 0020 17DC     		bgt	.L31
+ 156:Chassis/remote_control.c ****     {
+ 512              		.loc 1 156 5 is_stmt 1 view .LVU137
+ 156:Chassis/remote_control.c ****     {
+ 513              		.loc 1 156 9 is_stmt 0 view .LVU138
+ 514 0022 154B     		ldr	r3, .L35
+ 515 0024 B3F90400 		ldrsh	r0, [r3, #4]
+ 516 0028 FFF7FEFF 		bl	RC_abs
+ 517              	.LVL12:
+ 156:Chassis/remote_control.c ****     {
+ 518              		.loc 1 156 8 view .LVU139
+ 519 002c B0F52F7F 		cmp	r0, #700
+ 520 0030 0FDC     		bgt	.L31
+ 160:Chassis/remote_control.c ****     {
+ 521              		.loc 1 160 5 is_stmt 1 view .LVU140
+ 160:Chassis/remote_control.c ****     {
+ 522              		.loc 1 160 9 is_stmt 0 view .LVU141
+ 523 0032 114B     		ldr	r3, .L35
+ 524 0034 B3F90600 		ldrsh	r0, [r3, #6]
+ 525 0038 FFF7FEFF 		bl	RC_abs
+ 526              	.LVL13:
+ 160:Chassis/remote_control.c ****     {
+ 527              		.loc 1 160 8 view .LVU142
+ 528 003c B0F52F7F 		cmp	r0, #700
+ 529 0040 07DC     		bgt	.L31
+ 164:Chassis/remote_control.c ****     {
+ 530              		.loc 1 164 5 is_stmt 1 view .LVU143
+ 164:Chassis/remote_control.c ****     {
+ 531              		.loc 1 164 21 is_stmt 0 view .LVU144
+ 532 0042 0D4B     		ldr	r3, .L35
+ 533 0044 9B7A     		ldrb	r3, [r3, #10]	@ zero_extendqisi2
+ 164:Chassis/remote_control.c ****     {
+ARM GAS  /tmp/ccXbaTCg.s 			page 17
+
+
+ 534              		.loc 1 164 8 view .LVU145
+ 535 0046 23B1     		cbz	r3, .L31
+ 168:Chassis/remote_control.c ****     {
+ 536              		.loc 1 168 5 is_stmt 1 view .LVU146
+ 168:Chassis/remote_control.c ****     {
+ 537              		.loc 1 168 21 is_stmt 0 view .LVU147
+ 538 0048 0B4B     		ldr	r3, .L35
+ 539 004a DB7A     		ldrb	r3, [r3, #11]	@ zero_extendqisi2
+ 168:Chassis/remote_control.c ****     {
+ 540              		.loc 1 168 8 view .LVU148
+ 541 004c 0BB1     		cbz	r3, .L31
+ 172:Chassis/remote_control.c **** 
+ 542              		.loc 1 172 12 view .LVU149
+ 543 004e 0020     		movs	r0, #0
+ 544 0050 10E0     		b	.L32
+ 545              	.L31:
+ 175:Chassis/remote_control.c ****     rc_ctrl.rc.ch[1] = 0;
+ 546              		.loc 1 175 5 is_stmt 1 view .LVU150
+ 175:Chassis/remote_control.c ****     rc_ctrl.rc.ch[1] = 0;
+ 547              		.loc 1 175 22 is_stmt 0 view .LVU151
+ 548 0052 094B     		ldr	r3, .L35
+ 549 0054 0022     		movs	r2, #0
+ 550 0056 1A80     		strh	r2, [r3]	@ movhi
+ 176:Chassis/remote_control.c ****     rc_ctrl.rc.ch[2] = 0;
+ 551              		.loc 1 176 5 is_stmt 1 view .LVU152
+ 176:Chassis/remote_control.c ****     rc_ctrl.rc.ch[2] = 0;
+ 552              		.loc 1 176 22 is_stmt 0 view .LVU153
+ 553 0058 5A80     		strh	r2, [r3, #2]	@ movhi
+ 177:Chassis/remote_control.c ****     rc_ctrl.rc.ch[3] = 0;
+ 554              		.loc 1 177 5 is_stmt 1 view .LVU154
+ 177:Chassis/remote_control.c ****     rc_ctrl.rc.ch[3] = 0;
+ 555              		.loc 1 177 22 is_stmt 0 view .LVU155
+ 556 005a 9A80     		strh	r2, [r3, #4]	@ movhi
+ 178:Chassis/remote_control.c ****     rc_ctrl.rc.ch[4] = 0;
+ 557              		.loc 1 178 5 is_stmt 1 view .LVU156
+ 178:Chassis/remote_control.c ****     rc_ctrl.rc.ch[4] = 0;
+ 558              		.loc 1 178 22 is_stmt 0 view .LVU157
+ 559 005c DA80     		strh	r2, [r3, #6]	@ movhi
+ 179:Chassis/remote_control.c ****     rc_ctrl.rc.s[0] = RC_SW_DOWN;
+ 560              		.loc 1 179 5 is_stmt 1 view .LVU158
+ 179:Chassis/remote_control.c ****     rc_ctrl.rc.s[0] = RC_SW_DOWN;
+ 561              		.loc 1 179 22 is_stmt 0 view .LVU159
+ 562 005e 1A81     		strh	r2, [r3, #8]	@ movhi
+ 180:Chassis/remote_control.c ****     rc_ctrl.rc.s[1] = RC_SW_DOWN;
+ 563              		.loc 1 180 5 is_stmt 1 view .LVU160
+ 180:Chassis/remote_control.c ****     rc_ctrl.rc.s[1] = RC_SW_DOWN;
+ 564              		.loc 1 180 21 is_stmt 0 view .LVU161
+ 565 0060 0221     		movs	r1, #2
+ 566 0062 9972     		strb	r1, [r3, #10]
+ 181:Chassis/remote_control.c ****     rc_ctrl.mouse.x = 0;
+ 567              		.loc 1 181 5 is_stmt 1 view .LVU162
+ 181:Chassis/remote_control.c ****     rc_ctrl.mouse.x = 0;
+ 568              		.loc 1 181 21 is_stmt 0 view .LVU163
+ 569 0064 D972     		strb	r1, [r3, #11]
+ 182:Chassis/remote_control.c ****     rc_ctrl.mouse.y = 0;
+ 570              		.loc 1 182 5 is_stmt 1 view .LVU164
+ 182:Chassis/remote_control.c ****     rc_ctrl.mouse.y = 0;
+ARM GAS  /tmp/ccXbaTCg.s 			page 18
+
+
+ 571              		.loc 1 182 21 is_stmt 0 view .LVU165
+ 572 0066 9A81     		strh	r2, [r3, #12]	@ movhi
+ 183:Chassis/remote_control.c ****     rc_ctrl.mouse.z = 0;
+ 573              		.loc 1 183 5 is_stmt 1 view .LVU166
+ 183:Chassis/remote_control.c ****     rc_ctrl.mouse.z = 0;
+ 574              		.loc 1 183 21 is_stmt 0 view .LVU167
+ 575 0068 DA81     		strh	r2, [r3, #14]	@ movhi
+ 184:Chassis/remote_control.c ****     rc_ctrl.mouse.press_l = 0;
+ 576              		.loc 1 184 5 is_stmt 1 view .LVU168
+ 184:Chassis/remote_control.c ****     rc_ctrl.mouse.press_l = 0;
+ 577              		.loc 1 184 21 is_stmt 0 view .LVU169
+ 578 006a 1A82     		strh	r2, [r3, #16]	@ movhi
+ 185:Chassis/remote_control.c ****     rc_ctrl.mouse.press_r = 0;
+ 579              		.loc 1 185 5 is_stmt 1 view .LVU170
+ 185:Chassis/remote_control.c ****     rc_ctrl.mouse.press_r = 0;
+ 580              		.loc 1 185 27 is_stmt 0 view .LVU171
+ 581 006c 9A74     		strb	r2, [r3, #18]
+ 186:Chassis/remote_control.c ****     rc_ctrl.key.v = 0;
+ 582              		.loc 1 186 5 is_stmt 1 view .LVU172
+ 186:Chassis/remote_control.c ****     rc_ctrl.key.v = 0;
+ 583              		.loc 1 186 27 is_stmt 0 view .LVU173
+ 584 006e DA74     		strb	r2, [r3, #19]
+ 187:Chassis/remote_control.c ****     return 1;
+ 585              		.loc 1 187 5 is_stmt 1 view .LVU174
+ 187:Chassis/remote_control.c ****     return 1;
+ 586              		.loc 1 187 19 is_stmt 0 view .LVU175
+ 587 0070 9A82     		strh	r2, [r3, #20]	@ movhi
+ 188:Chassis/remote_control.c **** }
+ 588              		.loc 1 188 5 is_stmt 1 view .LVU176
+ 188:Chassis/remote_control.c **** }
+ 589              		.loc 1 188 12 is_stmt 0 view .LVU177
+ 590 0072 0120     		movs	r0, #1
+ 591              	.L32:
+ 189:Chassis/remote_control.c **** 
+ 592              		.loc 1 189 1 view .LVU178
+ 593 0074 08BD     		pop	{r3, pc}
+ 594              	.L36:
+ 595 0076 00BF     		.align	2
+ 596              	.L35:
+ 597 0078 00000000 		.word	.LANCHOR1
+ 598              		.cfi_endproc
+ 599              	.LFE135:
+ 601              		.section	.text.slove_RC_lost,"ax",%progbits
+ 602              		.align	1
+ 603              		.global	slove_RC_lost
+ 604              		.syntax unified
+ 605              		.thumb
+ 606              		.thumb_func
+ 608              	slove_RC_lost:
+ 609              	.LFB136:
+ 192:Chassis/remote_control.c ****     RC_restart(SBUS_RX_BUF_NUM);
+ 610              		.loc 1 192 1 is_stmt 1 view -0
+ 611              		.cfi_startproc
+ 612              		@ args = 0, pretend = 0, frame = 0
+ 613              		@ frame_needed = 0, uses_anonymous_args = 0
+ 614 0000 08B5     		push	{r3, lr}
+ 615              	.LCFI8:
+ARM GAS  /tmp/ccXbaTCg.s 			page 19
+
+
+ 616              		.cfi_def_cfa_offset 8
+ 617              		.cfi_offset 3, -8
+ 618              		.cfi_offset 14, -4
+ 193:Chassis/remote_control.c **** }
+ 619              		.loc 1 193 5 view .LVU180
+ 620 0002 2420     		movs	r0, #36
+ 621 0004 FFF7FEFF 		bl	RC_restart
+ 622              	.LVL14:
+ 194:Chassis/remote_control.c **** void slove_data_error(void)
+ 623              		.loc 1 194 1 is_stmt 0 view .LVU181
+ 624 0008 08BD     		pop	{r3, pc}
+ 625              		.cfi_endproc
+ 626              	.LFE136:
+ 628              		.section	.text.slove_data_error,"ax",%progbits
+ 629              		.align	1
+ 630              		.global	slove_data_error
+ 631              		.syntax unified
+ 632              		.thumb
+ 633              		.thumb_func
+ 635              	slove_data_error:
+ 636              	.LFB137:
+ 196:Chassis/remote_control.c ****     RC_restart(SBUS_RX_BUF_NUM);
+ 637              		.loc 1 196 1 is_stmt 1 view -0
+ 638              		.cfi_startproc
+ 639              		@ args = 0, pretend = 0, frame = 0
+ 640              		@ frame_needed = 0, uses_anonymous_args = 0
+ 641 0000 08B5     		push	{r3, lr}
+ 642              	.LCFI9:
+ 643              		.cfi_def_cfa_offset 8
+ 644              		.cfi_offset 3, -8
+ 645              		.cfi_offset 14, -4
+ 197:Chassis/remote_control.c **** }
+ 646              		.loc 1 197 5 view .LVU183
+ 647 0002 2420     		movs	r0, #36
+ 648 0004 FFF7FEFF 		bl	RC_restart
+ 649              	.LVL15:
+ 198:Chassis/remote_control.c **** 
+ 650              		.loc 1 198 1 is_stmt 0 view .LVU184
+ 651 0008 08BD     		pop	{r3, pc}
+ 652              		.cfi_endproc
+ 653              	.LFE137:
+ 655              		.section	.text.USART3_IRQHandler,"ax",%progbits
+ 656              		.align	1
+ 657              		.global	USART3_IRQHandler
+ 658              		.syntax unified
+ 659              		.thumb
+ 660              		.thumb_func
+ 662              	USART3_IRQHandler:
+ 663              	.LFB138:
+ 202:Chassis/remote_control.c ****     if(huart3.Instance->SR & UART_FLAG_RXNE)//接收到数据
+ 664              		.loc 1 202 1 is_stmt 1 view -0
+ 665              		.cfi_startproc
+ 666              		@ args = 0, pretend = 0, frame = 8
+ 667              		@ frame_needed = 0, uses_anonymous_args = 0
+ 668 0000 00B5     		push	{lr}
+ 669              	.LCFI10:
+ 670              		.cfi_def_cfa_offset 4
+ARM GAS  /tmp/ccXbaTCg.s 			page 20
+
+
+ 671              		.cfi_offset 14, -4
+ 672 0002 83B0     		sub	sp, sp, #12
+ 673              	.LCFI11:
+ 674              		.cfi_def_cfa_offset 16
+ 203:Chassis/remote_control.c ****     {
+ 675              		.loc 1 203 5 view .LVU186
+ 203:Chassis/remote_control.c ****     {
+ 676              		.loc 1 203 14 is_stmt 0 view .LVU187
+ 677 0004 324B     		ldr	r3, .L46
+ 678 0006 1B68     		ldr	r3, [r3]
+ 203:Chassis/remote_control.c ****     {
+ 679              		.loc 1 203 23 view .LVU188
+ 680 0008 1A68     		ldr	r2, [r3]
+ 203:Chassis/remote_control.c ****     {
+ 681              		.loc 1 203 7 view .LVU189
+ 682 000a 12F0200F 		tst	r2, #32
+ 683 000e 09D0     		beq	.L42
+ 205:Chassis/remote_control.c ****     }
+ 684              		.loc 1 205 9 is_stmt 1 view .LVU190
+ 685              	.LBB2:
+ 205:Chassis/remote_control.c ****     }
+ 686              		.loc 1 205 9 view .LVU191
+ 687 0010 0022     		movs	r2, #0
+ 688 0012 0092     		str	r2, [sp]
+ 205:Chassis/remote_control.c ****     }
+ 689              		.loc 1 205 9 view .LVU192
+ 690 0014 1A68     		ldr	r2, [r3]
+ 691 0016 0092     		str	r2, [sp]
+ 205:Chassis/remote_control.c ****     }
+ 692              		.loc 1 205 9 view .LVU193
+ 693 0018 5B68     		ldr	r3, [r3, #4]
+ 694 001a 0093     		str	r3, [sp]
+ 205:Chassis/remote_control.c ****     }
+ 695              		.loc 1 205 9 view .LVU194
+ 696 001c 009B     		ldr	r3, [sp]
+ 697              	.LBE2:
+ 205:Chassis/remote_control.c ****     }
+ 698              		.loc 1 205 9 view .LVU195
+ 699              	.L41:
+ 277:Chassis/remote_control.c **** 
+ 700              		.loc 1 277 1 is_stmt 0 view .LVU196
+ 701 001e 03B0     		add	sp, sp, #12
+ 702              	.LCFI12:
+ 703              		.cfi_remember_state
+ 704              		.cfi_def_cfa_offset 4
+ 705              		@ sp needed
+ 706 0020 5DF804FB 		ldr	pc, [sp], #4
+ 707              	.L42:
+ 708              	.LCFI13:
+ 709              		.cfi_restore_state
+ 207:Chassis/remote_control.c ****     {
+ 710              		.loc 1 207 10 is_stmt 1 view .LVU197
+ 207:Chassis/remote_control.c ****     {
+ 711              		.loc 1 207 19 is_stmt 0 view .LVU198
+ 712 0024 2B4A     		ldr	r2, .L46+4
+ 713 0026 1268     		ldr	r2, [r2]
+ 207:Chassis/remote_control.c ****     {
+ARM GAS  /tmp/ccXbaTCg.s 			page 21
+
+
+ 714              		.loc 1 207 12 view .LVU199
+ 715 0028 12F0100F 		tst	r2, #16
+ 716 002c F7D0     		beq	.L41
+ 717              	.LBB3:
+ 209:Chassis/remote_control.c **** 
+ 718              		.loc 1 209 9 is_stmt 1 view .LVU200
+ 211:Chassis/remote_control.c **** 
+ 719              		.loc 1 211 9 view .LVU201
+ 720              	.LBB4:
+ 211:Chassis/remote_control.c **** 
+ 721              		.loc 1 211 9 view .LVU202
+ 722 002e 0022     		movs	r2, #0
+ 723 0030 0192     		str	r2, [sp, #4]
+ 211:Chassis/remote_control.c **** 
+ 724              		.loc 1 211 9 view .LVU203
+ 725 0032 1A68     		ldr	r2, [r3]
+ 726 0034 0192     		str	r2, [sp, #4]
+ 211:Chassis/remote_control.c **** 
+ 727              		.loc 1 211 9 view .LVU204
+ 728 0036 5B68     		ldr	r3, [r3, #4]
+ 729 0038 0193     		str	r3, [sp, #4]
+ 211:Chassis/remote_control.c **** 
+ 730              		.loc 1 211 9 view .LVU205
+ 731 003a 019B     		ldr	r3, [sp, #4]
+ 732              	.LBE4:
+ 211:Chassis/remote_control.c **** 
+ 733              		.loc 1 211 9 view .LVU206
+ 213:Chassis/remote_control.c ****         {
+ 734              		.loc 1 213 9 view .LVU207
+ 213:Chassis/remote_control.c ****         {
+ 735              		.loc 1 213 28 is_stmt 0 view .LVU208
+ 736 003c 264B     		ldr	r3, .L46+8
+ 737 003e 1B68     		ldr	r3, [r3]
+ 213:Chassis/remote_control.c ****         {
+ 738              		.loc 1 213 37 view .LVU209
+ 739 0040 1A68     		ldr	r2, [r3]
+ 213:Chassis/remote_control.c ****         {
+ 740              		.loc 1 213 12 view .LVU210
+ 741 0042 12F4002F 		tst	r2, #524288
+ 742 0046 20D1     		bne	.L44
+ 219:Chassis/remote_control.c **** 
+ 743              		.loc 1 219 13 is_stmt 1 view .LVU211
+ 744 0048 1A68     		ldr	r2, [r3]
+ 745 004a 22F00102 		bic	r2, r2, #1
+ 746 004e 1A60     		str	r2, [r3]
+ 223:Chassis/remote_control.c **** 
+ 747              		.loc 1 223 13 view .LVU212
+ 223:Chassis/remote_control.c **** 
+ 748              		.loc 1 223 64 is_stmt 0 view .LVU213
+ 749 0050 2148     		ldr	r0, .L46+8
+ 750 0052 0268     		ldr	r2, [r0]
+ 223:Chassis/remote_control.c **** 
+ 751              		.loc 1 223 73 view .LVU214
+ 752 0054 5368     		ldr	r3, [r2, #4]
+ 223:Chassis/remote_control.c **** 
+ 753              		.loc 1 223 48 view .LVU215
+ 754 0056 C3F12403 		rsb	r3, r3, #36
+ARM GAS  /tmp/ccXbaTCg.s 			page 22
+
+
+ 755 005a 9BB2     		uxth	r3, r3
+ 223:Chassis/remote_control.c **** 
+ 756              		.loc 1 223 30 view .LVU216
+ 757 005c 1F49     		ldr	r1, .L46+12
+ 758 005e 0B80     		strh	r3, [r1]	@ movhi
+ 227:Chassis/remote_control.c **** 
+ 759              		.loc 1 227 13 is_stmt 1 view .LVU217
+ 227:Chassis/remote_control.c **** 
+ 760              		.loc 1 227 43 is_stmt 0 view .LVU218
+ 761 0060 2421     		movs	r1, #36
+ 762 0062 5160     		str	r1, [r2, #4]
+ 231:Chassis/remote_control.c ****             
+ 763              		.loc 1 231 13 is_stmt 1 view .LVU219
+ 231:Chassis/remote_control.c ****             
+ 764              		.loc 1 231 41 is_stmt 0 view .LVU220
+ 765 0064 1168     		ldr	r1, [r2]
+ 766 0066 41F40021 		orr	r1, r1, #524288
+ 767 006a 1160     		str	r1, [r2]
+ 235:Chassis/remote_control.c **** 
+ 768              		.loc 1 235 13 is_stmt 1 view .LVU221
+ 769 006c 0168     		ldr	r1, [r0]
+ 770 006e 0A68     		ldr	r2, [r1]
+ 771 0070 42F00102 		orr	r2, r2, #1
+ 772 0074 0A60     		str	r2, [r1]
+ 237:Chassis/remote_control.c ****             {
+ 773              		.loc 1 237 13 view .LVU222
+ 237:Chassis/remote_control.c ****             {
+ 774              		.loc 1 237 15 is_stmt 0 view .LVU223
+ 775 0076 122B     		cmp	r3, #18
+ 776 0078 D1D1     		bne	.L41
+ 239:Chassis/remote_control.c ****                 //记录数据接收时间
+ 777              		.loc 1 239 17 is_stmt 1 view .LVU224
+ 778 007a 1949     		ldr	r1, .L46+16
+ 779 007c 1948     		ldr	r0, .L46+20
+ 780 007e FFF7FEFF 		bl	sbus_to_rc
+ 781              	.LVL16:
+ 241:Chassis/remote_control.c ****             }
+ 782              		.loc 1 241 17 view .LVU225
+ 783 0082 0020     		movs	r0, #0
+ 784 0084 FFF7FEFF 		bl	detect_hook
+ 785              	.LVL17:
+ 786 0088 C9E7     		b	.L41
+ 787              	.L44:
+ 249:Chassis/remote_control.c **** 
+ 788              		.loc 1 249 13 view .LVU226
+ 789 008a 1A68     		ldr	r2, [r3]
+ 790 008c 22F00102 		bic	r2, r2, #1
+ 791 0090 1A60     		str	r2, [r3]
+ 253:Chassis/remote_control.c **** 
+ 792              		.loc 1 253 13 view .LVU227
+ 253:Chassis/remote_control.c **** 
+ 793              		.loc 1 253 64 is_stmt 0 view .LVU228
+ 794 0092 1149     		ldr	r1, .L46+8
+ 795 0094 0868     		ldr	r0, [r1]
+ 253:Chassis/remote_control.c **** 
+ 796              		.loc 1 253 73 view .LVU229
+ 797 0096 4368     		ldr	r3, [r0, #4]
+ARM GAS  /tmp/ccXbaTCg.s 			page 23
+
+
+ 253:Chassis/remote_control.c **** 
+ 798              		.loc 1 253 48 view .LVU230
+ 799 0098 C3F12403 		rsb	r3, r3, #36
+ 253:Chassis/remote_control.c **** 
+ 800              		.loc 1 253 30 view .LVU231
+ 801 009c 0F4A     		ldr	r2, .L46+12
+ 802 009e 1380     		strh	r3, [r2]	@ movhi
+ 257:Chassis/remote_control.c **** 
+ 803              		.loc 1 257 13 is_stmt 1 view .LVU232
+ 257:Chassis/remote_control.c **** 
+ 804              		.loc 1 257 43 is_stmt 0 view .LVU233
+ 805 00a0 2423     		movs	r3, #36
+ 806 00a2 4360     		str	r3, [r0, #4]
+ 261:Chassis/remote_control.c ****             
+ 807              		.loc 1 261 13 is_stmt 1 view .LVU234
+ 261:Chassis/remote_control.c ****             
+ 808              		.loc 1 261 30 is_stmt 0 view .LVU235
+ 809 00a4 1048     		ldr	r0, .L46+24
+ 810 00a6 836A     		ldr	r3, [r0, #40]
+ 811 00a8 23F40023 		bic	r3, r3, #524288
+ 812 00ac 8362     		str	r3, [r0, #40]
+ 265:Chassis/remote_control.c **** 
+ 813              		.loc 1 265 13 is_stmt 1 view .LVU236
+ 814 00ae 0968     		ldr	r1, [r1]
+ 815 00b0 0B68     		ldr	r3, [r1]
+ 816 00b2 43F00103 		orr	r3, r3, #1
+ 817 00b6 0B60     		str	r3, [r1]
+ 267:Chassis/remote_control.c ****             {
+ 818              		.loc 1 267 13 view .LVU237
+ 267:Chassis/remote_control.c ****             {
+ 819              		.loc 1 267 33 is_stmt 0 view .LVU238
+ 820 00b8 1388     		ldrh	r3, [r2]
+ 267:Chassis/remote_control.c ****             {
+ 821              		.loc 1 267 15 view .LVU239
+ 822 00ba 122B     		cmp	r3, #18
+ 823 00bc AFD1     		bne	.L41
+ 270:Chassis/remote_control.c ****                 //记录数据接收时间
+ 824              		.loc 1 270 17 is_stmt 1 view .LVU240
+ 825 00be 0849     		ldr	r1, .L46+16
+ 826 00c0 0A48     		ldr	r0, .L46+28
+ 827 00c2 FFF7FEFF 		bl	sbus_to_rc
+ 828              	.LVL18:
+ 272:Chassis/remote_control.c ****             }
+ 829              		.loc 1 272 17 view .LVU241
+ 830 00c6 0020     		movs	r0, #0
+ 831 00c8 FFF7FEFF 		bl	detect_hook
+ 832              	.LVL19:
+ 833              	.LBE3:
+ 277:Chassis/remote_control.c **** 
+ 834              		.loc 1 277 1 is_stmt 0 view .LVU242
+ 835 00cc A7E7     		b	.L41
+ 836              	.L47:
+ 837 00ce 00BF     		.align	2
+ 838              	.L46:
+ 839 00d0 00000000 		.word	huart3
+ 840 00d4 00480040 		.word	1073760256
+ 841 00d8 00000000 		.word	hdma_usart3_rx
+ARM GAS  /tmp/ccXbaTCg.s 			page 24
+
+
+ 842 00dc 00000000 		.word	.LANCHOR2
+ 843 00e0 00000000 		.word	.LANCHOR1
+ 844 00e4 00000000 		.word	.LANCHOR0
+ 845 00e8 00600240 		.word	1073897472
+ 846 00ec 24000000 		.word	.LANCHOR0+36
+ 847              		.cfi_endproc
+ 848              	.LFE138:
+ 850              		.global	rc_ctrl
+ 851              		.section	.bss.rc_ctrl,"aw",%nobits
+ 852              		.align	2
+ 853              		.set	.LANCHOR1,. + 0
+ 856              	rc_ctrl:
+ 857 0000 00000000 		.space	22
+ 857      00000000 
+ 857      00000000 
+ 857      00000000 
+ 857      00000000 
+ 858              		.section	.bss.sbus_rx_buf,"aw",%nobits
+ 859              		.align	2
+ 860              		.set	.LANCHOR0,. + 0
+ 863              	sbus_rx_buf:
+ 864 0000 00000000 		.space	72
+ 864      00000000 
+ 864      00000000 
+ 864      00000000 
+ 864      00000000 
+ 865              		.section	.bss.this_time_rx_len.0,"aw",%nobits
+ 866              		.align	1
+ 867              		.set	.LANCHOR2,. + 0
+ 870              	this_time_rx_len.0:
+ 871 0000 0000     		.space	2
+ 872              		.text
+ 873              	.Letext0:
+ 874              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 875              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ 876              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 877              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 878              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 879              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 880              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
+ 881              		.file 9 "Chassis/remote_control.h"
+ 882              		.file 10 "Inc/detect_task.h"
+ARM GAS  /tmp/ccXbaTCg.s 			page 25
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 remote_control.c
+     /tmp/ccXbaTCg.s:20     .text.RC_abs:0000000000000000 $t
+     /tmp/ccXbaTCg.s:25     .text.RC_abs:0000000000000000 RC_abs
+     /tmp/ccXbaTCg.s:53     .text.sbus_to_rc:0000000000000000 $t
+     /tmp/ccXbaTCg.s:58     .text.sbus_to_rc:0000000000000000 sbus_to_rc
+     /tmp/ccXbaTCg.s:236    .text.RC_Init:0000000000000000 $t
+     /tmp/ccXbaTCg.s:242    .text.RC_Init:0000000000000000 RC_Init
+     /tmp/ccXbaTCg.s:323    .text.RC_Init:000000000000005c $d
+     /tmp/ccXbaTCg.s:330    .text.RC_unable:0000000000000000 $t
+     /tmp/ccXbaTCg.s:336    .text.RC_unable:0000000000000000 RC_unable
+     /tmp/ccXbaTCg.s:354    .text.RC_unable:0000000000000010 $d
+     /tmp/ccXbaTCg.s:359    .text.RC_restart:0000000000000000 $t
+     /tmp/ccXbaTCg.s:365    .text.RC_restart:0000000000000000 RC_restart
+     /tmp/ccXbaTCg.s:413    .text.RC_restart:0000000000000038 $d
+     /tmp/ccXbaTCg.s:419    .text.remote_control_init:0000000000000000 $t
+     /tmp/ccXbaTCg.s:425    .text.remote_control_init:0000000000000000 remote_control_init
+     /tmp/ccXbaTCg.s:447    .text.remote_control_init:0000000000000010 $d
+     /tmp/ccXbaTCg.s:452    .text.get_remote_control_point:0000000000000000 $t
+     /tmp/ccXbaTCg.s:458    .text.get_remote_control_point:0000000000000000 get_remote_control_point
+     /tmp/ccXbaTCg.s:472    .text.get_remote_control_point:0000000000000004 $d
+     /tmp/ccXbaTCg.s:477    .text.RC_data_is_error:0000000000000000 $t
+     /tmp/ccXbaTCg.s:483    .text.RC_data_is_error:0000000000000000 RC_data_is_error
+     /tmp/ccXbaTCg.s:597    .text.RC_data_is_error:0000000000000078 $d
+     /tmp/ccXbaTCg.s:602    .text.slove_RC_lost:0000000000000000 $t
+     /tmp/ccXbaTCg.s:608    .text.slove_RC_lost:0000000000000000 slove_RC_lost
+     /tmp/ccXbaTCg.s:629    .text.slove_data_error:0000000000000000 $t
+     /tmp/ccXbaTCg.s:635    .text.slove_data_error:0000000000000000 slove_data_error
+     /tmp/ccXbaTCg.s:656    .text.USART3_IRQHandler:0000000000000000 $t
+     /tmp/ccXbaTCg.s:662    .text.USART3_IRQHandler:0000000000000000 USART3_IRQHandler
+     /tmp/ccXbaTCg.s:839    .text.USART3_IRQHandler:00000000000000d0 $d
+     /tmp/ccXbaTCg.s:856    .bss.rc_ctrl:0000000000000000 rc_ctrl
+     /tmp/ccXbaTCg.s:852    .bss.rc_ctrl:0000000000000000 $d
+     /tmp/ccXbaTCg.s:859    .bss.sbus_rx_buf:0000000000000000 $d
+     /tmp/ccXbaTCg.s:863    .bss.sbus_rx_buf:0000000000000000 sbus_rx_buf
+     /tmp/ccXbaTCg.s:866    .bss.this_time_rx_len.0:0000000000000000 $d
+     /tmp/ccXbaTCg.s:870    .bss.this_time_rx_len.0:0000000000000000 this_time_rx_len.0
+
+UNDEFINED SYMBOLS
+huart3
+hdma_usart3_rx
+detect_hook

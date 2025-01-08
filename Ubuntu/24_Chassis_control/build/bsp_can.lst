@@ -1,0 +1,1022 @@
+ARM GAS  /tmp/cc1RZq5D.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"bsp_can.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.can_filter_init,"ax",%progbits
+  20              		.align	1
+  21              		.global	can_filter_init
+  22              		.syntax unified
+  23              		.thumb
+  24              		.thumb_func
+  26              	can_filter_init:
+  27              	.LFB135:
+  28              		.file 1 "Chassis/bsp_can.c"
+   1:Chassis/bsp_can.c **** #include "bsp_can.h"
+   2:Chassis/bsp_can.c **** 
+   3:Chassis/bsp_can.c **** extern CAN_HandleTypeDef hcan1;
+   4:Chassis/bsp_can.c **** extern CAN_HandleTypeDef hcan2;
+   5:Chassis/bsp_can.c **** //motor data read
+   6:Chassis/bsp_can.c **** #define get_motor_measure(ptr, data)                                    \
+   7:Chassis/bsp_can.c ****     {                                                                   \
+   8:Chassis/bsp_can.c ****         (ptr)->last_ecd = (ptr)->ecd;                                   \
+   9:Chassis/bsp_can.c ****         (ptr)->ecd = (uint16_t)((data)[0] << 8 | (data)[1]);            \
+  10:Chassis/bsp_can.c ****         (ptr)->speed_rpm = (uint16_t)((data)[2] << 8 | (data)[3]);      \
+  11:Chassis/bsp_can.c ****         (ptr)->given_current = (uint16_t)((data)[4] << 8 | (data)[5]);  \
+  12:Chassis/bsp_can.c ****         (ptr)->temperate = (data)[6];                                   \
+  13:Chassis/bsp_can.c ****     }
+  14:Chassis/bsp_can.c **** /*
+  15:Chassis/bsp_can.c **** motor data,  0:chassis motor1 3508;1:chassis motor3 3508;2:chassis motor3 3508;3:chassis motor4 350
+  16:Chassis/bsp_can.c **** 4:yaw gimbal motor 6020;5:pitch gimbal motor 6020;6:trigger motor 2006;
+  17:Chassis/bsp_can.c **** 电机数据, 0:底盘电机1 3508电机,  1:底盘电机2 3508电机,2:底盘电机3 3508电机,3:
+  18:Chassis/bsp_can.c **** 4:yaw云台电机 6020电机; 5:pitch云台电机 6020电机; 6:拨弹电机 2006电机*/
+  19:Chassis/bsp_can.c **** static motor_measure_t motor_chassis[7];
+  20:Chassis/bsp_can.c **** 
+  21:Chassis/bsp_can.c **** static CAN_TxHeaderTypeDef  gimbal_tx_message;
+  22:Chassis/bsp_can.c **** static uint8_t              gimbal_can_send_data[8];
+  23:Chassis/bsp_can.c **** static CAN_TxHeaderTypeDef  chassis_tx_message;
+  24:Chassis/bsp_can.c **** static uint8_t              chassis_can_send_data[8];
+  25:Chassis/bsp_can.c **** 
+  26:Chassis/bsp_can.c **** 
+  27:Chassis/bsp_can.c **** void can_filter_init(void)
+  28:Chassis/bsp_can.c **** {
+  29              		.loc 1 28 1 view -0
+  30              		.cfi_startproc
+ARM GAS  /tmp/cc1RZq5D.s 			page 2
+
+
+  31              		@ args = 0, pretend = 0, frame = 40
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33 0000 10B5     		push	{r4, lr}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 4, -8
+  37              		.cfi_offset 14, -4
+  38 0002 8AB0     		sub	sp, sp, #40
+  39              	.LCFI1:
+  40              		.cfi_def_cfa_offset 48
+  29:Chassis/bsp_can.c **** 
+  30:Chassis/bsp_can.c ****     CAN_FilterTypeDef can_filter_st;
+  41              		.loc 1 30 5 view .LVU1
+  31:Chassis/bsp_can.c ****     can_filter_st.FilterActivation = ENABLE;
+  42              		.loc 1 31 5 view .LVU2
+  43              		.loc 1 31 36 is_stmt 0 view .LVU3
+  44 0004 0122     		movs	r2, #1
+  45 0006 0892     		str	r2, [sp, #32]
+  32:Chassis/bsp_can.c ****     can_filter_st.FilterMode = CAN_FILTERMODE_IDMASK;
+  46              		.loc 1 32 5 is_stmt 1 view .LVU4
+  47              		.loc 1 32 30 is_stmt 0 view .LVU5
+  48 0008 0023     		movs	r3, #0
+  49 000a 0693     		str	r3, [sp, #24]
+  33:Chassis/bsp_can.c ****     can_filter_st.FilterScale = CAN_FILTERSCALE_32BIT;
+  50              		.loc 1 33 5 is_stmt 1 view .LVU6
+  51              		.loc 1 33 31 is_stmt 0 view .LVU7
+  52 000c 0792     		str	r2, [sp, #28]
+  34:Chassis/bsp_can.c ****     can_filter_st.FilterIdHigh = 0x0000;
+  53              		.loc 1 34 5 is_stmt 1 view .LVU8
+  54              		.loc 1 34 32 is_stmt 0 view .LVU9
+  55 000e 0093     		str	r3, [sp]
+  35:Chassis/bsp_can.c ****     can_filter_st.FilterIdLow = 0x0000;
+  56              		.loc 1 35 5 is_stmt 1 view .LVU10
+  57              		.loc 1 35 31 is_stmt 0 view .LVU11
+  58 0010 0193     		str	r3, [sp, #4]
+  36:Chassis/bsp_can.c ****     can_filter_st.FilterMaskIdHigh = 0x0000;
+  59              		.loc 1 36 5 is_stmt 1 view .LVU12
+  60              		.loc 1 36 36 is_stmt 0 view .LVU13
+  61 0012 0293     		str	r3, [sp, #8]
+  37:Chassis/bsp_can.c ****     can_filter_st.FilterMaskIdLow = 0x0000;
+  62              		.loc 1 37 5 is_stmt 1 view .LVU14
+  63              		.loc 1 37 35 is_stmt 0 view .LVU15
+  64 0014 0393     		str	r3, [sp, #12]
+  38:Chassis/bsp_can.c ****     can_filter_st.FilterBank = 0;
+  65              		.loc 1 38 5 is_stmt 1 view .LVU16
+  66              		.loc 1 38 30 is_stmt 0 view .LVU17
+  67 0016 0593     		str	r3, [sp, #20]
+  39:Chassis/bsp_can.c ****     can_filter_st.FilterFIFOAssignment = CAN_RX_FIFO0;
+  68              		.loc 1 39 5 is_stmt 1 view .LVU18
+  69              		.loc 1 39 40 is_stmt 0 view .LVU19
+  70 0018 0493     		str	r3, [sp, #16]
+  40:Chassis/bsp_can.c ****     HAL_CAN_ConfigFilter(&hcan1, &can_filter_st);
+  71              		.loc 1 40 5 is_stmt 1 view .LVU20
+  72 001a 0E4C     		ldr	r4, .L3
+  73 001c 6946     		mov	r1, sp
+  74 001e 2046     		mov	r0, r4
+  75 0020 FFF7FEFF 		bl	HAL_CAN_ConfigFilter
+ARM GAS  /tmp/cc1RZq5D.s 			page 3
+
+
+  76              	.LVL0:
+  41:Chassis/bsp_can.c ****     HAL_CAN_Start(&hcan1);
+  77              		.loc 1 41 5 view .LVU21
+  78 0024 2046     		mov	r0, r4
+  79 0026 FFF7FEFF 		bl	HAL_CAN_Start
+  80              	.LVL1:
+  42:Chassis/bsp_can.c ****     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+  81              		.loc 1 42 5 view .LVU22
+  82 002a 0221     		movs	r1, #2
+  83 002c 2046     		mov	r0, r4
+  84 002e FFF7FEFF 		bl	HAL_CAN_ActivateNotification
+  85              	.LVL2:
+  43:Chassis/bsp_can.c **** 
+  44:Chassis/bsp_can.c **** 
+  45:Chassis/bsp_can.c ****     can_filter_st.SlaveStartFilterBank = 14;
+  86              		.loc 1 45 5 view .LVU23
+  87              		.loc 1 45 40 is_stmt 0 view .LVU24
+  88 0032 0E23     		movs	r3, #14
+  89 0034 0993     		str	r3, [sp, #36]
+  46:Chassis/bsp_can.c ****     can_filter_st.FilterBank = 14;
+  90              		.loc 1 46 5 is_stmt 1 view .LVU25
+  91              		.loc 1 46 30 is_stmt 0 view .LVU26
+  92 0036 0593     		str	r3, [sp, #20]
+  47:Chassis/bsp_can.c ****     HAL_CAN_ConfigFilter(&hcan2, &can_filter_st);
+  93              		.loc 1 47 5 is_stmt 1 view .LVU27
+  94 0038 074C     		ldr	r4, .L3+4
+  95 003a 6946     		mov	r1, sp
+  96 003c 2046     		mov	r0, r4
+  97 003e FFF7FEFF 		bl	HAL_CAN_ConfigFilter
+  98              	.LVL3:
+  48:Chassis/bsp_can.c ****     HAL_CAN_Start(&hcan2);
+  99              		.loc 1 48 5 view .LVU28
+ 100 0042 2046     		mov	r0, r4
+ 101 0044 FFF7FEFF 		bl	HAL_CAN_Start
+ 102              	.LVL4:
+  49:Chassis/bsp_can.c ****     HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING);
+ 103              		.loc 1 49 5 view .LVU29
+ 104 0048 0221     		movs	r1, #2
+ 105 004a 2046     		mov	r0, r4
+ 106 004c FFF7FEFF 		bl	HAL_CAN_ActivateNotification
+ 107              	.LVL5:
+  50:Chassis/bsp_can.c **** 
+  51:Chassis/bsp_can.c **** }
+ 108              		.loc 1 51 1 is_stmt 0 view .LVU30
+ 109 0050 0AB0     		add	sp, sp, #40
+ 110              	.LCFI2:
+ 111              		.cfi_def_cfa_offset 8
+ 112              		@ sp needed
+ 113 0052 10BD     		pop	{r4, pc}
+ 114              	.L4:
+ 115              		.align	2
+ 116              	.L3:
+ 117 0054 00000000 		.word	hcan1
+ 118 0058 00000000 		.word	hcan2
+ 119              		.cfi_endproc
+ 120              	.LFE135:
+ 122              		.section	.text.HAL_CAN_RxFifo0MsgPendingCallback,"ax",%progbits
+ARM GAS  /tmp/cc1RZq5D.s 			page 4
+
+
+ 123              		.align	1
+ 124              		.global	HAL_CAN_RxFifo0MsgPendingCallback
+ 125              		.syntax unified
+ 126              		.thumb
+ 127              		.thumb_func
+ 129              	HAL_CAN_RxFifo0MsgPendingCallback:
+ 130              	.LVL6:
+ 131              	.LFB136:
+  52:Chassis/bsp_can.c **** 
+  53:Chassis/bsp_can.c **** /**
+  54:Chassis/bsp_can.c ****   * @brief          hal CAN fifo call back, receive motor data
+  55:Chassis/bsp_can.c ****   * @param[in]      hcan, the point to CAN handle
+  56:Chassis/bsp_can.c ****   * @retval         none
+  57:Chassis/bsp_can.c ****   */
+  58:Chassis/bsp_can.c **** /**
+  59:Chassis/bsp_can.c ****   * @brief          hal库CAN回调函数,接收电机数据
+  60:Chassis/bsp_can.c ****   * @param[in]      hcan:CAN句柄指针
+  61:Chassis/bsp_can.c ****   * @retval         none
+  62:Chassis/bsp_can.c ****   */
+  63:Chassis/bsp_can.c **** void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+  64:Chassis/bsp_can.c **** {
+ 132              		.loc 1 64 1 is_stmt 1 view -0
+ 133              		.cfi_startproc
+ 134              		@ args = 0, pretend = 0, frame = 40
+ 135              		@ frame_needed = 0, uses_anonymous_args = 0
+ 136              		.loc 1 64 1 is_stmt 0 view .LVU32
+ 137 0000 10B5     		push	{r4, lr}
+ 138              	.LCFI3:
+ 139              		.cfi_def_cfa_offset 8
+ 140              		.cfi_offset 4, -8
+ 141              		.cfi_offset 14, -4
+ 142 0002 8AB0     		sub	sp, sp, #40
+ 143              	.LCFI4:
+ 144              		.cfi_def_cfa_offset 48
+  65:Chassis/bsp_can.c ****     CAN_RxHeaderTypeDef rx_header;
+ 145              		.loc 1 65 5 is_stmt 1 view .LVU33
+  66:Chassis/bsp_can.c ****     uint8_t rx_data[8];
+ 146              		.loc 1 66 5 view .LVU34
+  67:Chassis/bsp_can.c **** 
+  68:Chassis/bsp_can.c ****     HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, rx_data);
+ 147              		.loc 1 68 5 view .LVU35
+ 148 0004 01AB     		add	r3, sp, #4
+ 149 0006 03AA     		add	r2, sp, #12
+ 150 0008 0021     		movs	r1, #0
+ 151 000a FFF7FEFF 		bl	HAL_CAN_GetRxMessage
+ 152              	.LVL7:
+  69:Chassis/bsp_can.c **** 
+  70:Chassis/bsp_can.c ****     switch (rx_header.StdId)
+ 153              		.loc 1 70 5 view .LVU36
+ 154              		.loc 1 70 22 is_stmt 0 view .LVU37
+ 155 000e 0398     		ldr	r0, [sp, #12]
+ 156              		.loc 1 70 5 view .LVU38
+ 157 0010 A0F20123 		subw	r3, r0, #513
+ 158 0014 062B     		cmp	r3, #6
+ 159 0016 01D9     		bls	.L8
+ 160              	.L5:
+  71:Chassis/bsp_can.c ****     {
+ARM GAS  /tmp/cc1RZq5D.s 			page 5
+
+
+  72:Chassis/bsp_can.c ****         case CAN_3508_M1_ID:
+  73:Chassis/bsp_can.c ****         case CAN_3508_M2_ID:
+  74:Chassis/bsp_can.c ****         case CAN_3508_M3_ID:
+  75:Chassis/bsp_can.c ****         case CAN_3508_M4_ID:
+  76:Chassis/bsp_can.c ****         case CAN_YAW_MOTOR_ID:
+  77:Chassis/bsp_can.c ****         case CAN_PIT_MOTOR_ID:
+  78:Chassis/bsp_can.c ****         case CAN_TRIGGER_MOTOR_ID:
+  79:Chassis/bsp_can.c ****         {
+  80:Chassis/bsp_can.c ****             static uint8_t i = 0;
+  81:Chassis/bsp_can.c ****             //get motor id
+  82:Chassis/bsp_can.c ****             i = rx_header.StdId - CAN_3508_M1_ID;
+  83:Chassis/bsp_can.c ****             get_motor_measure(&motor_chassis[i], rx_data);
+  84:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+  85:Chassis/bsp_can.c ****             break;
+  86:Chassis/bsp_can.c ****         }
+  87:Chassis/bsp_can.c **** 
+  88:Chassis/bsp_can.c ****         default:
+  89:Chassis/bsp_can.c ****         {
+  90:Chassis/bsp_can.c ****             break;
+  91:Chassis/bsp_can.c ****         }
+  92:Chassis/bsp_can.c ****     }
+  93:Chassis/bsp_can.c **** }
+ 161              		.loc 1 93 1 view .LVU39
+ 162 0018 0AB0     		add	sp, sp, #40
+ 163              	.LCFI5:
+ 164              		.cfi_remember_state
+ 165              		.cfi_def_cfa_offset 8
+ 166              		@ sp needed
+ 167 001a 10BD     		pop	{r4, pc}
+ 168              	.L8:
+ 169              	.LCFI6:
+ 170              		.cfi_restore_state
+ 171              	.LBB2:
+  80:Chassis/bsp_can.c ****             //get motor id
+ 172              		.loc 1 80 13 is_stmt 1 view .LVU40
+  82:Chassis/bsp_can.c ****             get_motor_measure(&motor_chassis[i], rx_data);
+ 173              		.loc 1 82 13 view .LVU41
+  82:Chassis/bsp_can.c ****             get_motor_measure(&motor_chassis[i], rx_data);
+ 174              		.loc 1 82 33 is_stmt 0 view .LVU42
+ 175 001c C0B2     		uxtb	r0, r0
+ 176 001e 431E     		subs	r3, r0, #1
+ 177 0020 DBB2     		uxtb	r3, r3
+  82:Chassis/bsp_can.c ****             get_motor_measure(&motor_chassis[i], rx_data);
+ 178              		.loc 1 82 15 view .LVU43
+ 179 0022 194A     		ldr	r2, .L9
+ 180 0024 1370     		strb	r3, [r2]
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 181              		.loc 1 83 13 is_stmt 1 view .LVU44
+ 182 0026 1949     		ldr	r1, .L9+4
+ 183 0028 03EB830C 		add	ip, r3, r3, lsl #2
+ 184 002c 4FEA4C02 		lsl	r2, ip, #1
+ 185 0030 01EB020C 		add	ip, r1, r2
+ 186 0034 8C5E     		ldrsh	r4, [r1, r2]
+ 187 0036 ACF80840 		strh	r4, [ip, #8]	@ movhi
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 188              		.loc 1 83 13 view .LVU45
+ 189 003a 9DF80440 		ldrb	r4, [sp, #4]	@ zero_extendqisi2
+ARM GAS  /tmp/cc1RZq5D.s 			page 6
+
+
+ 190 003e 9DF805E0 		ldrb	lr, [sp, #5]	@ zero_extendqisi2
+ 191 0042 4EEA042E 		orr	lr, lr, r4, lsl #8
+ 192 0046 21F802E0 		strh	lr, [r1, r2]	@ movhi
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 193              		.loc 1 83 13 view .LVU46
+ 194 004a 9DF80620 		ldrb	r2, [sp, #6]	@ zero_extendqisi2
+ 195 004e 1202     		lsls	r2, r2, #8
+ 196 0050 12B2     		sxth	r2, r2
+ 197 0052 9DF807E0 		ldrb	lr, [sp, #7]	@ zero_extendqisi2
+ 198 0056 42EA0E02 		orr	r2, r2, lr
+ 199 005a ACF80220 		strh	r2, [ip, #2]	@ movhi
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 200              		.loc 1 83 13 view .LVU47
+ 201 005e 9DF80820 		ldrb	r2, [sp, #8]	@ zero_extendqisi2
+ 202 0062 1202     		lsls	r2, r2, #8
+ 203 0064 12B2     		sxth	r2, r2
+ 204 0066 9DF809E0 		ldrb	lr, [sp, #9]	@ zero_extendqisi2
+ 205 006a 42EA0E02 		orr	r2, r2, lr
+ 206 006e ACF80420 		strh	r2, [ip, #4]	@ movhi
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 207              		.loc 1 83 13 view .LVU48
+ 208 0072 9DF80AC0 		ldrb	ip, [sp, #10]	@ zero_extendqisi2
+ 209 0076 03EB8303 		add	r3, r3, r3, lsl #2
+ 210 007a 5A00     		lsls	r2, r3, #1
+ 211 007c 1144     		add	r1, r1, r2
+ 212 007e 81F806C0 		strb	ip, [r1, #6]
+  83:Chassis/bsp_can.c ****             detect_hook(CHASSIS_MOTOR1_TOE + i);
+ 213              		.loc 1 83 58 view .LVU49
+  84:Chassis/bsp_can.c ****             break;
+ 214              		.loc 1 84 13 view .LVU50
+ 215 0082 FFF7FEFF 		bl	detect_hook
+ 216              	.LVL8:
+  85:Chassis/bsp_can.c ****         }
+ 217              		.loc 1 85 13 view .LVU51
+ 218              	.LBE2:
+ 219              		.loc 1 93 1 is_stmt 0 view .LVU52
+ 220 0086 C7E7     		b	.L5
+ 221              	.L10:
+ 222              		.align	2
+ 223              	.L9:
+ 224 0088 00000000 		.word	.LANCHOR0
+ 225 008c 00000000 		.word	.LANCHOR1
+ 226              		.cfi_endproc
+ 227              	.LFE136:
+ 229              		.section	.text.CAN_cmd_gimbal,"ax",%progbits
+ 230              		.align	1
+ 231              		.global	CAN_cmd_gimbal
+ 232              		.syntax unified
+ 233              		.thumb
+ 234              		.thumb_func
+ 236              	CAN_cmd_gimbal:
+ 237              	.LVL9:
+ 238              	.LFB137:
+  94:Chassis/bsp_can.c **** 
+  95:Chassis/bsp_can.c **** 
+  96:Chassis/bsp_can.c **** 
+  97:Chassis/bsp_can.c **** /**
+ARM GAS  /tmp/cc1RZq5D.s 			page 7
+
+
+  98:Chassis/bsp_can.c ****   * @brief          send control current of motor (0x205, 0x206, 0x207, 0x208)
+  99:Chassis/bsp_can.c ****   * @param[in]      yaw: (0x205) 6020 motor control current, range [-30000,30000] 
+ 100:Chassis/bsp_can.c ****   * @param[in]      pitch: (0x206) 6020 motor control current, range [-30000,30000]
+ 101:Chassis/bsp_can.c ****   * @param[in]      shoot: (0x207) 2006 motor control current, range [-10000,10000]
+ 102:Chassis/bsp_can.c ****   * @param[in]      rev: (0x208) reserve motor control current
+ 103:Chassis/bsp_can.c ****   * @retval         none
+ 104:Chassis/bsp_can.c ****   */
+ 105:Chassis/bsp_can.c **** /**
+ 106:Chassis/bsp_can.c ****   * @brief          发送电机控制电流(0x205,0x206,0x207,0x208)
+ 107:Chassis/bsp_can.c ****   * @param[in]      yaw: (0x205) 6020电机控制电流, 范围 [-30000,30000]
+ 108:Chassis/bsp_can.c ****   * @param[in]      pitch: (0x206) 6020电机控制电流, 范围 [-30000,30000]
+ 109:Chassis/bsp_can.c ****   * @param[in]      shoot: (0x207) 2006电机控制电流, 范围 [-10000,10000]
+ 110:Chassis/bsp_can.c ****   * @param[in]      rev: (0x208) 保留，电机控制电流
+ 111:Chassis/bsp_can.c ****   * @retval         none
+ 112:Chassis/bsp_can.c ****   */
+ 113:Chassis/bsp_can.c **** void CAN_cmd_gimbal(int16_t yaw, int16_t pitch, int16_t shoot, int16_t rev)
+ 114:Chassis/bsp_can.c **** {
+ 239              		.loc 1 114 1 is_stmt 1 view -0
+ 240              		.cfi_startproc
+ 241              		@ args = 0, pretend = 0, frame = 8
+ 242              		@ frame_needed = 0, uses_anonymous_args = 0
+ 243              		.loc 1 114 1 is_stmt 0 view .LVU54
+ 244 0000 10B5     		push	{r4, lr}
+ 245              	.LCFI7:
+ 246              		.cfi_def_cfa_offset 8
+ 247              		.cfi_offset 4, -8
+ 248              		.cfi_offset 14, -4
+ 249 0002 82B0     		sub	sp, sp, #8
+ 250              	.LCFI8:
+ 251              		.cfi_def_cfa_offset 16
+ 252 0004 8E46     		mov	lr, r1
+ 253 0006 9446     		mov	ip, r2
+ 115:Chassis/bsp_can.c ****     uint32_t send_mail_box;
+ 254              		.loc 1 115 5 is_stmt 1 view .LVU55
+ 116:Chassis/bsp_can.c ****     gimbal_tx_message.StdId = CAN_GIMBAL_ALL_ID;
+ 255              		.loc 1 116 5 view .LVU56
+ 256              		.loc 1 116 29 is_stmt 0 view .LVU57
+ 257 0008 0F49     		ldr	r1, .L13
+ 258              	.LVL10:
+ 259              		.loc 1 116 29 view .LVU58
+ 260 000a 40F2FF12 		movw	r2, #511
+ 261              	.LVL11:
+ 262              		.loc 1 116 29 view .LVU59
+ 263 000e 0A60     		str	r2, [r1]
+ 117:Chassis/bsp_can.c ****     gimbal_tx_message.IDE = CAN_ID_STD;
+ 264              		.loc 1 117 5 is_stmt 1 view .LVU60
+ 265              		.loc 1 117 27 is_stmt 0 view .LVU61
+ 266 0010 0022     		movs	r2, #0
+ 267 0012 8A60     		str	r2, [r1, #8]
+ 118:Chassis/bsp_can.c ****     gimbal_tx_message.RTR = CAN_RTR_DATA;
+ 268              		.loc 1 118 5 is_stmt 1 view .LVU62
+ 269              		.loc 1 118 27 is_stmt 0 view .LVU63
+ 270 0014 CA60     		str	r2, [r1, #12]
+ 119:Chassis/bsp_can.c ****     gimbal_tx_message.DLC = 0x08;
+ 271              		.loc 1 119 5 is_stmt 1 view .LVU64
+ 272              		.loc 1 119 27 is_stmt 0 view .LVU65
+ 273 0016 0822     		movs	r2, #8
+ARM GAS  /tmp/cc1RZq5D.s 			page 8
+
+
+ 274 0018 0A61     		str	r2, [r1, #16]
+ 120:Chassis/bsp_can.c ****     gimbal_can_send_data[0] = (yaw >> 8);
+ 275              		.loc 1 120 5 is_stmt 1 view .LVU66
+ 276              		.loc 1 120 29 is_stmt 0 view .LVU67
+ 277 001a 0C4A     		ldr	r2, .L13+4
+ 278 001c 0412     		asrs	r4, r0, #8
+ 279 001e 1470     		strb	r4, [r2]
+ 121:Chassis/bsp_can.c ****     gimbal_can_send_data[1] = yaw;
+ 280              		.loc 1 121 5 is_stmt 1 view .LVU68
+ 281              		.loc 1 121 29 is_stmt 0 view .LVU69
+ 282 0020 5070     		strb	r0, [r2, #1]
+ 122:Chassis/bsp_can.c ****     gimbal_can_send_data[2] = (pitch >> 8);
+ 283              		.loc 1 122 5 is_stmt 1 view .LVU70
+ 284              		.loc 1 122 29 is_stmt 0 view .LVU71
+ 285 0022 4FEA2E20 		asr	r0, lr, #8
+ 286              	.LVL12:
+ 287              		.loc 1 122 29 view .LVU72
+ 288 0026 9070     		strb	r0, [r2, #2]
+ 123:Chassis/bsp_can.c ****     gimbal_can_send_data[3] = pitch;
+ 289              		.loc 1 123 5 is_stmt 1 view .LVU73
+ 290              		.loc 1 123 29 is_stmt 0 view .LVU74
+ 291 0028 82F803E0 		strb	lr, [r2, #3]
+ 124:Chassis/bsp_can.c ****     gimbal_can_send_data[4] = (shoot >> 8);
+ 292              		.loc 1 124 5 is_stmt 1 view .LVU75
+ 293              		.loc 1 124 29 is_stmt 0 view .LVU76
+ 294 002c 4FEA2C20 		asr	r0, ip, #8
+ 295 0030 1071     		strb	r0, [r2, #4]
+ 125:Chassis/bsp_can.c ****     gimbal_can_send_data[5] = shoot;
+ 296              		.loc 1 125 5 is_stmt 1 view .LVU77
+ 297              		.loc 1 125 29 is_stmt 0 view .LVU78
+ 298 0032 82F805C0 		strb	ip, [r2, #5]
+ 126:Chassis/bsp_can.c ****     gimbal_can_send_data[6] = (rev >> 8);
+ 299              		.loc 1 126 5 is_stmt 1 view .LVU79
+ 300              		.loc 1 126 29 is_stmt 0 view .LVU80
+ 301 0036 1812     		asrs	r0, r3, #8
+ 302 0038 9071     		strb	r0, [r2, #6]
+ 127:Chassis/bsp_can.c ****     gimbal_can_send_data[7] = rev;
+ 303              		.loc 1 127 5 is_stmt 1 view .LVU81
+ 304              		.loc 1 127 29 is_stmt 0 view .LVU82
+ 305 003a D371     		strb	r3, [r2, #7]
+ 128:Chassis/bsp_can.c ****     HAL_CAN_AddTxMessage(&GIMBAL_CAN, &gimbal_tx_message, gimbal_can_send_data, &send_mail_box);
+ 306              		.loc 1 128 5 is_stmt 1 view .LVU83
+ 307 003c 01AB     		add	r3, sp, #4
+ 308              	.LVL13:
+ 309              		.loc 1 128 5 is_stmt 0 view .LVU84
+ 310 003e 0448     		ldr	r0, .L13+8
+ 311 0040 FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 312              	.LVL14:
+ 129:Chassis/bsp_can.c **** }
+ 313              		.loc 1 129 1 view .LVU85
+ 314 0044 02B0     		add	sp, sp, #8
+ 315              	.LCFI9:
+ 316              		.cfi_def_cfa_offset 8
+ 317              		@ sp needed
+ 318 0046 10BD     		pop	{r4, pc}
+ 319              	.L14:
+ 320              		.align	2
+ARM GAS  /tmp/cc1RZq5D.s 			page 9
+
+
+ 321              	.L13:
+ 322 0048 00000000 		.word	.LANCHOR2
+ 323 004c 00000000 		.word	.LANCHOR3
+ 324 0050 00000000 		.word	hcan2
+ 325              		.cfi_endproc
+ 326              	.LFE137:
+ 328              		.section	.text.CAN_cmd_chassis_reset_ID,"ax",%progbits
+ 329              		.align	1
+ 330              		.global	CAN_cmd_chassis_reset_ID
+ 331              		.syntax unified
+ 332              		.thumb
+ 333              		.thumb_func
+ 335              	CAN_cmd_chassis_reset_ID:
+ 336              	.LFB138:
+ 130:Chassis/bsp_can.c **** 
+ 131:Chassis/bsp_can.c **** /**
+ 132:Chassis/bsp_can.c ****   * @brief          send CAN packet of ID 0x700, it will set chassis motor 3508 to quick ID setting
+ 133:Chassis/bsp_can.c ****   * @param[in]      none
+ 134:Chassis/bsp_can.c ****   * @retval         none
+ 135:Chassis/bsp_can.c ****   */
+ 136:Chassis/bsp_can.c **** /**
+ 137:Chassis/bsp_can.c ****   * @brief          发送ID为0x700的CAN包,它会设置3508电机进入快速设置ID
+ 138:Chassis/bsp_can.c ****   * @param[in]      none
+ 139:Chassis/bsp_can.c ****   * @retval         none
+ 140:Chassis/bsp_can.c ****   */
+ 141:Chassis/bsp_can.c **** void CAN_cmd_chassis_reset_ID(void)
+ 142:Chassis/bsp_can.c **** {
+ 337              		.loc 1 142 1 is_stmt 1 view -0
+ 338              		.cfi_startproc
+ 339              		@ args = 0, pretend = 0, frame = 8
+ 340              		@ frame_needed = 0, uses_anonymous_args = 0
+ 341 0000 00B5     		push	{lr}
+ 342              	.LCFI10:
+ 343              		.cfi_def_cfa_offset 4
+ 344              		.cfi_offset 14, -4
+ 345 0002 83B0     		sub	sp, sp, #12
+ 346              	.LCFI11:
+ 347              		.cfi_def_cfa_offset 16
+ 143:Chassis/bsp_can.c ****     uint32_t send_mail_box;
+ 348              		.loc 1 143 5 view .LVU87
+ 144:Chassis/bsp_can.c ****     chassis_tx_message.StdId = 0x700;
+ 349              		.loc 1 144 5 view .LVU88
+ 350              		.loc 1 144 30 is_stmt 0 view .LVU89
+ 351 0004 0C49     		ldr	r1, .L17
+ 352 0006 4FF4E063 		mov	r3, #1792
+ 353 000a 0B60     		str	r3, [r1]
+ 145:Chassis/bsp_can.c ****     chassis_tx_message.IDE = CAN_ID_STD;
+ 354              		.loc 1 145 5 is_stmt 1 view .LVU90
+ 355              		.loc 1 145 28 is_stmt 0 view .LVU91
+ 356 000c 0023     		movs	r3, #0
+ 357 000e 8B60     		str	r3, [r1, #8]
+ 146:Chassis/bsp_can.c ****     chassis_tx_message.RTR = CAN_RTR_DATA;
+ 358              		.loc 1 146 5 is_stmt 1 view .LVU92
+ 359              		.loc 1 146 28 is_stmt 0 view .LVU93
+ 360 0010 CB60     		str	r3, [r1, #12]
+ 147:Chassis/bsp_can.c ****     chassis_tx_message.DLC = 0x08;
+ 361              		.loc 1 147 5 is_stmt 1 view .LVU94
+ARM GAS  /tmp/cc1RZq5D.s 			page 10
+
+
+ 362              		.loc 1 147 28 is_stmt 0 view .LVU95
+ 363 0012 0822     		movs	r2, #8
+ 364 0014 0A61     		str	r2, [r1, #16]
+ 148:Chassis/bsp_can.c ****     chassis_can_send_data[0] = 0;
+ 365              		.loc 1 148 5 is_stmt 1 view .LVU96
+ 366              		.loc 1 148 30 is_stmt 0 view .LVU97
+ 367 0016 094A     		ldr	r2, .L17+4
+ 368 0018 1370     		strb	r3, [r2]
+ 149:Chassis/bsp_can.c ****     chassis_can_send_data[1] = 0;
+ 369              		.loc 1 149 5 is_stmt 1 view .LVU98
+ 370              		.loc 1 149 30 is_stmt 0 view .LVU99
+ 371 001a 5370     		strb	r3, [r2, #1]
+ 150:Chassis/bsp_can.c ****     chassis_can_send_data[2] = 0;
+ 372              		.loc 1 150 5 is_stmt 1 view .LVU100
+ 373              		.loc 1 150 30 is_stmt 0 view .LVU101
+ 374 001c 9370     		strb	r3, [r2, #2]
+ 151:Chassis/bsp_can.c ****     chassis_can_send_data[3] = 0;
+ 375              		.loc 1 151 5 is_stmt 1 view .LVU102
+ 376              		.loc 1 151 30 is_stmt 0 view .LVU103
+ 377 001e D370     		strb	r3, [r2, #3]
+ 152:Chassis/bsp_can.c ****     chassis_can_send_data[4] = 0;
+ 378              		.loc 1 152 5 is_stmt 1 view .LVU104
+ 379              		.loc 1 152 30 is_stmt 0 view .LVU105
+ 380 0020 1371     		strb	r3, [r2, #4]
+ 153:Chassis/bsp_can.c ****     chassis_can_send_data[5] = 0;
+ 381              		.loc 1 153 5 is_stmt 1 view .LVU106
+ 382              		.loc 1 153 30 is_stmt 0 view .LVU107
+ 383 0022 5371     		strb	r3, [r2, #5]
+ 154:Chassis/bsp_can.c ****     chassis_can_send_data[6] = 0;
+ 384              		.loc 1 154 5 is_stmt 1 view .LVU108
+ 385              		.loc 1 154 30 is_stmt 0 view .LVU109
+ 386 0024 9371     		strb	r3, [r2, #6]
+ 155:Chassis/bsp_can.c ****     chassis_can_send_data[7] = 0;
+ 387              		.loc 1 155 5 is_stmt 1 view .LVU110
+ 388              		.loc 1 155 30 is_stmt 0 view .LVU111
+ 389 0026 D371     		strb	r3, [r2, #7]
+ 156:Chassis/bsp_can.c **** 
+ 157:Chassis/bsp_can.c ****     HAL_CAN_AddTxMessage(&CHASSIS_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
+ 390              		.loc 1 157 5 is_stmt 1 view .LVU112
+ 391 0028 01AB     		add	r3, sp, #4
+ 392 002a 0548     		ldr	r0, .L17+8
+ 393 002c FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 394              	.LVL15:
+ 158:Chassis/bsp_can.c **** }
+ 395              		.loc 1 158 1 is_stmt 0 view .LVU113
+ 396 0030 03B0     		add	sp, sp, #12
+ 397              	.LCFI12:
+ 398              		.cfi_def_cfa_offset 4
+ 399              		@ sp needed
+ 400 0032 5DF804FB 		ldr	pc, [sp], #4
+ 401              	.L18:
+ 402 0036 00BF     		.align	2
+ 403              	.L17:
+ 404 0038 00000000 		.word	.LANCHOR4
+ 405 003c 00000000 		.word	.LANCHOR5
+ 406 0040 00000000 		.word	hcan1
+ 407              		.cfi_endproc
+ARM GAS  /tmp/cc1RZq5D.s 			page 11
+
+
+ 408              	.LFE138:
+ 410              		.section	.text.CAN_cmd_chassis,"ax",%progbits
+ 411              		.align	1
+ 412              		.global	CAN_cmd_chassis
+ 413              		.syntax unified
+ 414              		.thumb
+ 415              		.thumb_func
+ 417              	CAN_cmd_chassis:
+ 418              	.LVL16:
+ 419              	.LFB139:
+ 159:Chassis/bsp_can.c **** 
+ 160:Chassis/bsp_can.c **** 
+ 161:Chassis/bsp_can.c **** /**
+ 162:Chassis/bsp_can.c ****   * @brief          send control current of motor (0x201, 0x202, 0x203, 0x204)
+ 163:Chassis/bsp_can.c ****   * @param[in]      motor1: (0x201) 3508 motor control current, range [-16384,16384] 
+ 164:Chassis/bsp_can.c ****   * @param[in]      motor2: (0x202) 3508 motor control current, range [-16384,16384] 
+ 165:Chassis/bsp_can.c ****   * @param[in]      motor3: (0x203) 3508 motor control current, range [-16384,16384] 
+ 166:Chassis/bsp_can.c ****   * @param[in]      motor4: (0x204) 3508 motor control current, range [-16384,16384] 
+ 167:Chassis/bsp_can.c ****   * @retval         none
+ 168:Chassis/bsp_can.c ****   */
+ 169:Chassis/bsp_can.c **** /**
+ 170:Chassis/bsp_can.c ****   * @brief          发送电机控制电流(0x201,0x202,0x203,0x204)
+ 171:Chassis/bsp_can.c ****   * @param[in]      motor1: (0x201) 3508电机控制电流, 范围 [-16384,16384]
+ 172:Chassis/bsp_can.c ****   * @param[in]      motor2: (0x202) 3508电机控制电流, 范围 [-16384,16384]
+ 173:Chassis/bsp_can.c ****   * @param[in]      motor3: (0x203) 3508电机控制电流, 范围 [-16384,16384]
+ 174:Chassis/bsp_can.c ****   * @param[in]      motor4: (0x204) 3508电机控制电流, 范围 [-16384,16384]
+ 175:Chassis/bsp_can.c ****   * @retval         none
+ 176:Chassis/bsp_can.c ****   */
+ 177:Chassis/bsp_can.c **** void CAN_cmd_chassis(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4)
+ 178:Chassis/bsp_can.c **** {
+ 420              		.loc 1 178 1 is_stmt 1 view -0
+ 421              		.cfi_startproc
+ 422              		@ args = 0, pretend = 0, frame = 8
+ 423              		@ frame_needed = 0, uses_anonymous_args = 0
+ 424              		.loc 1 178 1 is_stmt 0 view .LVU115
+ 425 0000 10B5     		push	{r4, lr}
+ 426              	.LCFI13:
+ 427              		.cfi_def_cfa_offset 8
+ 428              		.cfi_offset 4, -8
+ 429              		.cfi_offset 14, -4
+ 430 0002 82B0     		sub	sp, sp, #8
+ 431              	.LCFI14:
+ 432              		.cfi_def_cfa_offset 16
+ 433 0004 8E46     		mov	lr, r1
+ 434 0006 9446     		mov	ip, r2
+ 179:Chassis/bsp_can.c ****     uint32_t send_mail_box;
+ 435              		.loc 1 179 5 is_stmt 1 view .LVU116
+ 180:Chassis/bsp_can.c ****     chassis_tx_message.StdId = CAN_CHASSIS_ALL_ID;
+ 436              		.loc 1 180 5 view .LVU117
+ 437              		.loc 1 180 30 is_stmt 0 view .LVU118
+ 438 0008 0F49     		ldr	r1, .L21
+ 439              	.LVL17:
+ 440              		.loc 1 180 30 view .LVU119
+ 441 000a 4FF40072 		mov	r2, #512
+ 442              	.LVL18:
+ 443              		.loc 1 180 30 view .LVU120
+ 444 000e 0A60     		str	r2, [r1]
+ARM GAS  /tmp/cc1RZq5D.s 			page 12
+
+
+ 181:Chassis/bsp_can.c ****     chassis_tx_message.IDE = CAN_ID_STD;
+ 445              		.loc 1 181 5 is_stmt 1 view .LVU121
+ 446              		.loc 1 181 28 is_stmt 0 view .LVU122
+ 447 0010 0022     		movs	r2, #0
+ 448 0012 8A60     		str	r2, [r1, #8]
+ 182:Chassis/bsp_can.c ****     chassis_tx_message.RTR = CAN_RTR_DATA;
+ 449              		.loc 1 182 5 is_stmt 1 view .LVU123
+ 450              		.loc 1 182 28 is_stmt 0 view .LVU124
+ 451 0014 CA60     		str	r2, [r1, #12]
+ 183:Chassis/bsp_can.c ****     chassis_tx_message.DLC = 0x08;
+ 452              		.loc 1 183 5 is_stmt 1 view .LVU125
+ 453              		.loc 1 183 28 is_stmt 0 view .LVU126
+ 454 0016 0822     		movs	r2, #8
+ 455 0018 0A61     		str	r2, [r1, #16]
+ 184:Chassis/bsp_can.c ****     chassis_can_send_data[0] = motor1 >> 8;
+ 456              		.loc 1 184 5 is_stmt 1 view .LVU127
+ 457              		.loc 1 184 30 is_stmt 0 view .LVU128
+ 458 001a 0C4A     		ldr	r2, .L21+4
+ 459 001c 0412     		asrs	r4, r0, #8
+ 460 001e 1470     		strb	r4, [r2]
+ 185:Chassis/bsp_can.c ****     chassis_can_send_data[1] = motor1;
+ 461              		.loc 1 185 5 is_stmt 1 view .LVU129
+ 462              		.loc 1 185 30 is_stmt 0 view .LVU130
+ 463 0020 5070     		strb	r0, [r2, #1]
+ 186:Chassis/bsp_can.c ****     chassis_can_send_data[2] = motor2 >> 8;
+ 464              		.loc 1 186 5 is_stmt 1 view .LVU131
+ 465              		.loc 1 186 30 is_stmt 0 view .LVU132
+ 466 0022 4FEA2E20 		asr	r0, lr, #8
+ 467              	.LVL19:
+ 468              		.loc 1 186 30 view .LVU133
+ 469 0026 9070     		strb	r0, [r2, #2]
+ 187:Chassis/bsp_can.c ****     chassis_can_send_data[3] = motor2;
+ 470              		.loc 1 187 5 is_stmt 1 view .LVU134
+ 471              		.loc 1 187 30 is_stmt 0 view .LVU135
+ 472 0028 82F803E0 		strb	lr, [r2, #3]
+ 188:Chassis/bsp_can.c ****     chassis_can_send_data[4] = motor3 >> 8;
+ 473              		.loc 1 188 5 is_stmt 1 view .LVU136
+ 474              		.loc 1 188 30 is_stmt 0 view .LVU137
+ 475 002c 4FEA2C20 		asr	r0, ip, #8
+ 476 0030 1071     		strb	r0, [r2, #4]
+ 189:Chassis/bsp_can.c ****     chassis_can_send_data[5] = motor3;
+ 477              		.loc 1 189 5 is_stmt 1 view .LVU138
+ 478              		.loc 1 189 30 is_stmt 0 view .LVU139
+ 479 0032 82F805C0 		strb	ip, [r2, #5]
+ 190:Chassis/bsp_can.c ****     chassis_can_send_data[6] = motor4 >> 8;
+ 480              		.loc 1 190 5 is_stmt 1 view .LVU140
+ 481              		.loc 1 190 30 is_stmt 0 view .LVU141
+ 482 0036 1812     		asrs	r0, r3, #8
+ 483 0038 9071     		strb	r0, [r2, #6]
+ 191:Chassis/bsp_can.c ****     chassis_can_send_data[7] = motor4;
+ 484              		.loc 1 191 5 is_stmt 1 view .LVU142
+ 485              		.loc 1 191 30 is_stmt 0 view .LVU143
+ 486 003a D371     		strb	r3, [r2, #7]
+ 192:Chassis/bsp_can.c **** 
+ 193:Chassis/bsp_can.c ****     HAL_CAN_AddTxMessage(&CHASSIS_CAN, &chassis_tx_message, chassis_can_send_data, &send_mail_box);
+ 487              		.loc 1 193 5 is_stmt 1 view .LVU144
+ 488 003c 01AB     		add	r3, sp, #4
+ARM GAS  /tmp/cc1RZq5D.s 			page 13
+
+
+ 489              	.LVL20:
+ 490              		.loc 1 193 5 is_stmt 0 view .LVU145
+ 491 003e 0448     		ldr	r0, .L21+8
+ 492 0040 FFF7FEFF 		bl	HAL_CAN_AddTxMessage
+ 493              	.LVL21:
+ 194:Chassis/bsp_can.c **** }
+ 494              		.loc 1 194 1 view .LVU146
+ 495 0044 02B0     		add	sp, sp, #8
+ 496              	.LCFI15:
+ 497              		.cfi_def_cfa_offset 8
+ 498              		@ sp needed
+ 499 0046 10BD     		pop	{r4, pc}
+ 500              	.L22:
+ 501              		.align	2
+ 502              	.L21:
+ 503 0048 00000000 		.word	.LANCHOR4
+ 504 004c 00000000 		.word	.LANCHOR5
+ 505 0050 00000000 		.word	hcan1
+ 506              		.cfi_endproc
+ 507              	.LFE139:
+ 509              		.section	.text.get_yaw_gimbal_motor_measure_point,"ax",%progbits
+ 510              		.align	1
+ 511              		.global	get_yaw_gimbal_motor_measure_point
+ 512              		.syntax unified
+ 513              		.thumb
+ 514              		.thumb_func
+ 516              	get_yaw_gimbal_motor_measure_point:
+ 517              	.LFB140:
+ 195:Chassis/bsp_can.c **** 
+ 196:Chassis/bsp_can.c **** /**
+ 197:Chassis/bsp_can.c ****   * @brief          return the yaw 6020 motor data point
+ 198:Chassis/bsp_can.c ****   * @param[in]      none
+ 199:Chassis/bsp_can.c ****   * @retval         motor data point
+ 200:Chassis/bsp_can.c ****   */
+ 201:Chassis/bsp_can.c **** /**
+ 202:Chassis/bsp_can.c ****   * @brief          返回yaw 6020电机数据指针
+ 203:Chassis/bsp_can.c ****   * @param[in]      none
+ 204:Chassis/bsp_can.c ****   * @retval         电机数据指针
+ 205:Chassis/bsp_can.c ****   */
+ 206:Chassis/bsp_can.c **** const motor_measure_t *get_yaw_gimbal_motor_measure_point(void)
+ 207:Chassis/bsp_can.c **** {
+ 518              		.loc 1 207 1 is_stmt 1 view -0
+ 519              		.cfi_startproc
+ 520              		@ args = 0, pretend = 0, frame = 0
+ 521              		@ frame_needed = 0, uses_anonymous_args = 0
+ 522              		@ link register save eliminated.
+ 208:Chassis/bsp_can.c ****     return &motor_chassis[4];
+ 523              		.loc 1 208 5 view .LVU148
+ 209:Chassis/bsp_can.c **** }
+ 524              		.loc 1 209 1 is_stmt 0 view .LVU149
+ 525 0000 0048     		ldr	r0, .L24
+ 526 0002 7047     		bx	lr
+ 527              	.L25:
+ 528              		.align	2
+ 529              	.L24:
+ 530 0004 28000000 		.word	.LANCHOR1+40
+ 531              		.cfi_endproc
+ARM GAS  /tmp/cc1RZq5D.s 			page 14
+
+
+ 532              	.LFE140:
+ 534              		.section	.text.get_pitch_gimbal_motor_measure_point,"ax",%progbits
+ 535              		.align	1
+ 536              		.global	get_pitch_gimbal_motor_measure_point
+ 537              		.syntax unified
+ 538              		.thumb
+ 539              		.thumb_func
+ 541              	get_pitch_gimbal_motor_measure_point:
+ 542              	.LFB141:
+ 210:Chassis/bsp_can.c **** 
+ 211:Chassis/bsp_can.c **** /**
+ 212:Chassis/bsp_can.c ****   * @brief          return the pitch 6020 motor data point
+ 213:Chassis/bsp_can.c ****   * @param[in]      none
+ 214:Chassis/bsp_can.c ****   * @retval         motor data point
+ 215:Chassis/bsp_can.c ****   */
+ 216:Chassis/bsp_can.c **** /**
+ 217:Chassis/bsp_can.c ****   * @brief          返回pitch 6020电机数据指针
+ 218:Chassis/bsp_can.c ****   * @param[in]      none
+ 219:Chassis/bsp_can.c ****   * @retval         电机数据指针
+ 220:Chassis/bsp_can.c ****   */
+ 221:Chassis/bsp_can.c **** const motor_measure_t *get_pitch_gimbal_motor_measure_point(void)
+ 222:Chassis/bsp_can.c **** {
+ 543              		.loc 1 222 1 is_stmt 1 view -0
+ 544              		.cfi_startproc
+ 545              		@ args = 0, pretend = 0, frame = 0
+ 546              		@ frame_needed = 0, uses_anonymous_args = 0
+ 547              		@ link register save eliminated.
+ 223:Chassis/bsp_can.c ****     return &motor_chassis[5];
+ 548              		.loc 1 223 5 view .LVU151
+ 224:Chassis/bsp_can.c **** }
+ 549              		.loc 1 224 1 is_stmt 0 view .LVU152
+ 550 0000 0048     		ldr	r0, .L27
+ 551 0002 7047     		bx	lr
+ 552              	.L28:
+ 553              		.align	2
+ 554              	.L27:
+ 555 0004 32000000 		.word	.LANCHOR1+50
+ 556              		.cfi_endproc
+ 557              	.LFE141:
+ 559              		.section	.text.get_trigger_motor_measure_point,"ax",%progbits
+ 560              		.align	1
+ 561              		.global	get_trigger_motor_measure_point
+ 562              		.syntax unified
+ 563              		.thumb
+ 564              		.thumb_func
+ 566              	get_trigger_motor_measure_point:
+ 567              	.LFB142:
+ 225:Chassis/bsp_can.c **** 
+ 226:Chassis/bsp_can.c **** 
+ 227:Chassis/bsp_can.c **** /**
+ 228:Chassis/bsp_can.c ****   * @brief          return the trigger 2006 motor data point
+ 229:Chassis/bsp_can.c ****   * @param[in]      none
+ 230:Chassis/bsp_can.c ****   * @retval         motor data point
+ 231:Chassis/bsp_can.c ****   */
+ 232:Chassis/bsp_can.c **** /**
+ 233:Chassis/bsp_can.c ****   * @brief          返回拨弹电机 2006电机数据指针
+ 234:Chassis/bsp_can.c ****   * @param[in]      none
+ARM GAS  /tmp/cc1RZq5D.s 			page 15
+
+
+ 235:Chassis/bsp_can.c ****   * @retval         电机数据指针
+ 236:Chassis/bsp_can.c ****   */
+ 237:Chassis/bsp_can.c **** const motor_measure_t *get_trigger_motor_measure_point(void)
+ 238:Chassis/bsp_can.c **** {
+ 568              		.loc 1 238 1 is_stmt 1 view -0
+ 569              		.cfi_startproc
+ 570              		@ args = 0, pretend = 0, frame = 0
+ 571              		@ frame_needed = 0, uses_anonymous_args = 0
+ 572              		@ link register save eliminated.
+ 239:Chassis/bsp_can.c ****     return &motor_chassis[6];
+ 573              		.loc 1 239 5 view .LVU154
+ 240:Chassis/bsp_can.c **** }
+ 574              		.loc 1 240 1 is_stmt 0 view .LVU155
+ 575 0000 0048     		ldr	r0, .L30
+ 576 0002 7047     		bx	lr
+ 577              	.L31:
+ 578              		.align	2
+ 579              	.L30:
+ 580 0004 3C000000 		.word	.LANCHOR1+60
+ 581              		.cfi_endproc
+ 582              	.LFE142:
+ 584              		.section	.text.get_chassis_motor_measure_point,"ax",%progbits
+ 585              		.align	1
+ 586              		.global	get_chassis_motor_measure_point
+ 587              		.syntax unified
+ 588              		.thumb
+ 589              		.thumb_func
+ 591              	get_chassis_motor_measure_point:
+ 592              	.LVL22:
+ 593              	.LFB143:
+ 241:Chassis/bsp_can.c **** 
+ 242:Chassis/bsp_can.c **** 
+ 243:Chassis/bsp_can.c **** /**
+ 244:Chassis/bsp_can.c ****   * @brief          return the chassis 3508 motor data point
+ 245:Chassis/bsp_can.c ****   * @param[in]      i: motor number,range [0,3]
+ 246:Chassis/bsp_can.c ****   * @retval         motor data point
+ 247:Chassis/bsp_can.c ****   */
+ 248:Chassis/bsp_can.c **** /**
+ 249:Chassis/bsp_can.c ****   * @brief          返回底盘电机 3508电机数据指针
+ 250:Chassis/bsp_can.c ****   * @param[in]      i: 电机编号,范围[0,3]
+ 251:Chassis/bsp_can.c ****   * @retval         电机数据指针
+ 252:Chassis/bsp_can.c ****   */
+ 253:Chassis/bsp_can.c **** const motor_measure_t *get_chassis_motor_measure_point(uint8_t i)
+ 254:Chassis/bsp_can.c **** {
+ 594              		.loc 1 254 1 is_stmt 1 view -0
+ 595              		.cfi_startproc
+ 596              		@ args = 0, pretend = 0, frame = 0
+ 597              		@ frame_needed = 0, uses_anonymous_args = 0
+ 598              		@ link register save eliminated.
+ 255:Chassis/bsp_can.c ****     return &motor_chassis[(i & 0x03)];
+ 599              		.loc 1 255 5 view .LVU157
+ 600              		.loc 1 255 30 is_stmt 0 view .LVU158
+ 601 0000 00F00300 		and	r0, r0, #3
+ 602              	.LVL23:
+ 603              		.loc 1 255 12 view .LVU159
+ 604 0004 00EB8000 		add	r0, r0, r0, lsl #2
+ 256:Chassis/bsp_can.c **** }...
+ARM GAS  /tmp/cc1RZq5D.s 			page 16
+
+
+ 605              		.loc 1 256 1 view .LVU160
+ 606 0008 014B     		ldr	r3, .L33
+ 607 000a 03EB4000 		add	r0, r3, r0, lsl #1
+ 608 000e 7047     		bx	lr
+ 609              	.L34:
+ 610              		.align	2
+ 611              	.L33:
+ 612 0010 00000000 		.word	.LANCHOR1
+ 613              		.cfi_endproc
+ 614              	.LFE143:
+ 616              		.section	.bss.chassis_can_send_data,"aw",%nobits
+ 617              		.align	2
+ 618              		.set	.LANCHOR5,. + 0
+ 621              	chassis_can_send_data:
+ 622 0000 00000000 		.space	8
+ 622      00000000 
+ 623              		.section	.bss.chassis_tx_message,"aw",%nobits
+ 624              		.align	2
+ 625              		.set	.LANCHOR4,. + 0
+ 628              	chassis_tx_message:
+ 629 0000 00000000 		.space	24
+ 629      00000000 
+ 629      00000000 
+ 629      00000000 
+ 629      00000000 
+ 630              		.section	.bss.gimbal_can_send_data,"aw",%nobits
+ 631              		.align	2
+ 632              		.set	.LANCHOR3,. + 0
+ 635              	gimbal_can_send_data:
+ 636 0000 00000000 		.space	8
+ 636      00000000 
+ 637              		.section	.bss.gimbal_tx_message,"aw",%nobits
+ 638              		.align	2
+ 639              		.set	.LANCHOR2,. + 0
+ 642              	gimbal_tx_message:
+ 643 0000 00000000 		.space	24
+ 643      00000000 
+ 643      00000000 
+ 643      00000000 
+ 643      00000000 
+ 644              		.section	.bss.i.0,"aw",%nobits
+ 645              		.set	.LANCHOR0,. + 0
+ 648              	i.0:
+ 649 0000 00       		.space	1
+ 650              		.section	.bss.motor_chassis,"aw",%nobits
+ 651              		.align	2
+ 652              		.set	.LANCHOR1,. + 0
+ 655              	motor_chassis:
+ 656 0000 00000000 		.space	70
+ 656      00000000 
+ 656      00000000 
+ 656      00000000 
+ 656      00000000 
+ 657              		.text
+ 658              	.Letext0:
+ 659              		.file 2 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/machine/_default_types
+ 660              		.file 3 "/home/tianbot/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/sys/_stdint.h"
+ARM GAS  /tmp/cc1RZq5D.s 			page 17
+
+
+ 661              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 662              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
+ 663              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h"
+ 664              		.file 7 "Chassis/bsp_can.h"
+ 665              		.file 8 "Inc/detect_task.h"
+ARM GAS  /tmp/cc1RZq5D.s 			page 18
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 bsp_can.c
+     /tmp/cc1RZq5D.s:20     .text.can_filter_init:0000000000000000 $t
+     /tmp/cc1RZq5D.s:26     .text.can_filter_init:0000000000000000 can_filter_init
+     /tmp/cc1RZq5D.s:117    .text.can_filter_init:0000000000000054 $d
+     /tmp/cc1RZq5D.s:123    .text.HAL_CAN_RxFifo0MsgPendingCallback:0000000000000000 $t
+     /tmp/cc1RZq5D.s:129    .text.HAL_CAN_RxFifo0MsgPendingCallback:0000000000000000 HAL_CAN_RxFifo0MsgPendingCallback
+     /tmp/cc1RZq5D.s:224    .text.HAL_CAN_RxFifo0MsgPendingCallback:0000000000000088 $d
+     /tmp/cc1RZq5D.s:230    .text.CAN_cmd_gimbal:0000000000000000 $t
+     /tmp/cc1RZq5D.s:236    .text.CAN_cmd_gimbal:0000000000000000 CAN_cmd_gimbal
+     /tmp/cc1RZq5D.s:322    .text.CAN_cmd_gimbal:0000000000000048 $d
+     /tmp/cc1RZq5D.s:329    .text.CAN_cmd_chassis_reset_ID:0000000000000000 $t
+     /tmp/cc1RZq5D.s:335    .text.CAN_cmd_chassis_reset_ID:0000000000000000 CAN_cmd_chassis_reset_ID
+     /tmp/cc1RZq5D.s:404    .text.CAN_cmd_chassis_reset_ID:0000000000000038 $d
+     /tmp/cc1RZq5D.s:411    .text.CAN_cmd_chassis:0000000000000000 $t
+     /tmp/cc1RZq5D.s:417    .text.CAN_cmd_chassis:0000000000000000 CAN_cmd_chassis
+     /tmp/cc1RZq5D.s:503    .text.CAN_cmd_chassis:0000000000000048 $d
+     /tmp/cc1RZq5D.s:510    .text.get_yaw_gimbal_motor_measure_point:0000000000000000 $t
+     /tmp/cc1RZq5D.s:516    .text.get_yaw_gimbal_motor_measure_point:0000000000000000 get_yaw_gimbal_motor_measure_point
+     /tmp/cc1RZq5D.s:530    .text.get_yaw_gimbal_motor_measure_point:0000000000000004 $d
+     /tmp/cc1RZq5D.s:535    .text.get_pitch_gimbal_motor_measure_point:0000000000000000 $t
+     /tmp/cc1RZq5D.s:541    .text.get_pitch_gimbal_motor_measure_point:0000000000000000 get_pitch_gimbal_motor_measure_point
+     /tmp/cc1RZq5D.s:555    .text.get_pitch_gimbal_motor_measure_point:0000000000000004 $d
+     /tmp/cc1RZq5D.s:560    .text.get_trigger_motor_measure_point:0000000000000000 $t
+     /tmp/cc1RZq5D.s:566    .text.get_trigger_motor_measure_point:0000000000000000 get_trigger_motor_measure_point
+     /tmp/cc1RZq5D.s:580    .text.get_trigger_motor_measure_point:0000000000000004 $d
+     /tmp/cc1RZq5D.s:585    .text.get_chassis_motor_measure_point:0000000000000000 $t
+     /tmp/cc1RZq5D.s:591    .text.get_chassis_motor_measure_point:0000000000000000 get_chassis_motor_measure_point
+     /tmp/cc1RZq5D.s:612    .text.get_chassis_motor_measure_point:0000000000000010 $d
+     /tmp/cc1RZq5D.s:617    .bss.chassis_can_send_data:0000000000000000 $d
+     /tmp/cc1RZq5D.s:621    .bss.chassis_can_send_data:0000000000000000 chassis_can_send_data
+     /tmp/cc1RZq5D.s:624    .bss.chassis_tx_message:0000000000000000 $d
+     /tmp/cc1RZq5D.s:628    .bss.chassis_tx_message:0000000000000000 chassis_tx_message
+     /tmp/cc1RZq5D.s:631    .bss.gimbal_can_send_data:0000000000000000 $d
+     /tmp/cc1RZq5D.s:635    .bss.gimbal_can_send_data:0000000000000000 gimbal_can_send_data
+     /tmp/cc1RZq5D.s:638    .bss.gimbal_tx_message:0000000000000000 $d
+     /tmp/cc1RZq5D.s:642    .bss.gimbal_tx_message:0000000000000000 gimbal_tx_message
+     /tmp/cc1RZq5D.s:648    .bss.i.0:0000000000000000 i.0
+     /tmp/cc1RZq5D.s:649    .bss.i.0:0000000000000000 $d
+     /tmp/cc1RZq5D.s:651    .bss.motor_chassis:0000000000000000 $d
+     /tmp/cc1RZq5D.s:655    .bss.motor_chassis:0000000000000000 motor_chassis
+
+UNDEFINED SYMBOLS
+HAL_CAN_ConfigFilter
+HAL_CAN_Start
+HAL_CAN_ActivateNotification
+hcan1
+hcan2
+HAL_CAN_GetRxMessage
+detect_hook
+HAL_CAN_AddTxMessage
